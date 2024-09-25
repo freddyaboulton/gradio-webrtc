@@ -28,6 +28,19 @@ import cv2
 import numpy as np
 from gradio_webrtc import WebRTC
 from pathlib import Path
+from twilio.rest import Client
+import os
+
+account_sid = os.environ.get("TWILIO_ACCOUNT_SID")
+auth_token = os.environ.get("TWILIO_AUTH_TOKEN")
+client = Client(account_sid, auth_token)
+
+token = client.tokens.create()
+
+rtc_configuration = {
+    "iceServers": token.ice_servers,
+    "iceTransportPolicy": "relay",
+}
 
 CLASSES = [
     "background",
@@ -113,7 +126,7 @@ with gr.Blocks(css=css) as demo:
         """)
     with gr.Column(elem_classes=["my-column"]):
         with gr.Group(elem_classes=["my-group"]):
-            image = WebRTC(label="Strean")
+            image = WebRTC(label="Strean", rtc_configuration=rtc_configuration)
             conf_threshold = gr.Slider(
                 label="Confidence Threshold",
                 minimum=0.0,
@@ -426,16 +439,16 @@ int | None
 </tr>
 
 <tr>
-<td align="left"><code>streaming</code></td>
+<td align="left"><code>rtc_configuration</code></td>
 <td align="left" style="width: 25%;">
 
 ```python
-bool
+dict[str, Any] | None
 ```
 
 </td>
-<td align="left"><code>False</code></td>
-<td align="left">when used set as an output, takes video chunks yielded from the backend and combines them into one streaming video output. Each chunk should be a video file with a .ts extension using an h.264 encoding. Mp4 files are also accepted but they will be converted to h.264 encoding.</td>
+<td align="left"><code>None</code></td>
+<td align="left">None</td>
 </tr>
 </tbody></table>
 

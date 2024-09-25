@@ -43,6 +43,7 @@
 	};
 
 	let canvas: HTMLCanvasElement;
+    export let rtc_configuration: Object;
 	export let pending = false;
 	export let root = "";
 	export let stream_every = 1;
@@ -121,7 +122,16 @@
 
 	async function start_webrtc(): Promise<void> {
         if (stream_state === 'closed') {
-            pc = new RTCPeerConnection();
+            const fallback_config = {
+                iceServers: [
+                    {
+                        urls: 'stun:stun.l.google.com:19302'
+                    }
+                ]
+            };
+            const configuration = rtc_configuration || fallback_config;
+            console.log("config", configuration);
+            pc = new RTCPeerConnection(configuration);
             pc.addEventListener("connectionstatechange",
                 (event) => {
                    switch(pc.connectionState) {

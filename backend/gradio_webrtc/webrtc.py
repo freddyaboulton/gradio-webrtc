@@ -141,7 +141,7 @@ class WebRTC(Component):
         show_download_button: bool | None = None,
         min_length: int | None = None,
         max_length: int | None = None,
-        streaming: bool = False,
+        rtc_configuration: dict[str, Any] | None = None,
     ):
         """
         Parameters:
@@ -185,7 +185,7 @@ class WebRTC(Component):
         self.show_download_button = show_download_button
         self.min_length = min_length
         self.max_length = max_length
-        self.streaming = streaming
+        self.rtc_configuration = rtc_configuration
         self.event_handler: Callable | None = None
         super().__init__(
             label=label,
@@ -269,6 +269,7 @@ class WebRTC(Component):
             print(pc.iceConnectionState)
             if pc.iceConnectionState == "failed":
                 await pc.close()
+                self.connections.pop(body['webrtc_id'], None)
                 self.pcs.discard(pc)
 
         @pc.on("connectionstatechange")

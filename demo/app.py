@@ -3,6 +3,19 @@ import cv2
 import numpy as np
 from gradio_webrtc import WebRTC
 from pathlib import Path
+from twilio.rest import Client
+import os
+
+account_sid = os.environ.get("TWILIO_ACCOUNT_SID")
+auth_token = os.environ.get("TWILIO_AUTH_TOKEN")
+client = Client(account_sid, auth_token)
+
+token = client.tokens.create()
+
+rtc_configuration = {
+    "iceServers": token.ice_servers,
+    "iceTransportPolicy": "relay",
+}
 
 CLASSES = [
     "background",
@@ -88,7 +101,7 @@ with gr.Blocks(css=css) as demo:
         """)
     with gr.Column(elem_classes=["my-column"]):
         with gr.Group(elem_classes=["my-group"]):
-            image = WebRTC(label="Strean")
+            image = WebRTC(label="Strean", rtc_configuration=rtc_configuration)
             conf_threshold = gr.Slider(
                 label="Confidence Threshold",
                 minimum=0.0,

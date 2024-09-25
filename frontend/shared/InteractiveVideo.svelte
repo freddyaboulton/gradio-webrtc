@@ -19,8 +19,7 @@
 	export let server: {
 		offer: (body: any) => Promise<any>;
 	};
-
-	let has_change_history = false;
+	export let rtc_configuration: Object;
 
 	const dispatch = createEventDispatcher<{
 		change: FileData | null;
@@ -46,6 +45,7 @@
 <div data-testid="video" class="video-container">
 	<Webcam
 		{root}
+		{rtc_configuration}
 		{include_audio}
 		on:error
 		on:start_recording

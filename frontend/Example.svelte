@@ -1,5 +1,4 @@
 <script lang="ts">
-	import Video from "./shared/Video.svelte";
 	import { playable } from "./shared/utils";
 	import { type FileData } from "@gradio/client";
 
@@ -28,16 +27,12 @@
 			class:gallery={type === "gallery"}
 			class:selected
 		>
-			<Video
-				muted
-				playsinline
-				bind:node={video}
+			<video
+				bind:this={video}
 				on:loadeddata={init}
 				on:mouseover={video.play.bind(video)}
 				on:mouseout={video.pause.bind(video)}
 				src={value?.video.url}
-				is_stream={false}
-				{loop}
 			/>
 		</div>
 	{:else}
