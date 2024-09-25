@@ -1,0 +1,59 @@
+{
+  "name": "gradio_webrtc",
+  "version": "0.11.0-beta.3",
+  "description": "Gradio UI packages",
+  "type": "module",
+  "author": "",
+  "license": "ISC",
+  "private": false,
+  "dependencies": {
+    "@ffmpeg/ffmpeg": "^0.12.7",
+    "@ffmpeg/util": "^0.12.1",
+    "@gradio/atoms": "0.9.0-beta.2",
+    "@gradio/client": "1.6.0-beta.3",
+    "@gradio/icons": "0.8.0-beta.2",
+    "@gradio/image": "0.16.0-beta.3",
+    "@gradio/statustracker": "0.8.0-beta.2",
+    "@gradio/upload": "0.13.0-beta.3",
+    "@gradio/utils": "0.7.0-beta.2",
+    "@gradio/wasm": "0.14.0-beta.2",
+    "hls.js": "^1.5.13",
+    "mrmime": "^2.0.0"
+  },
+  "devDependencies": {
+    "@gradio/preview": "0.11.1"
+  },
+  "exports": {
+    "./package.json": "./package.json",
+    ".": {
+      "gradio": "./index.ts",
+      "svelte": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./example": {
+      "gradio": "./Example.svelte",
+      "svelte": "./dist/Example.svelte",
+      "types": "./dist/Example.svelte.d.ts"
+    },
+    "./shared": {
+      "gradio": "./shared/index.ts",
+      "svelte": "./dist/shared/index.js",
+      "types": "./dist/shared/index.d.ts"
+    },
+    "./base": {
+      "gradio": "./shared/VideoPreview.svelte",
+      "svelte": "./dist/shared/VideoPreview.svelte",
+      "types": "./dist/shared/VideoPreview.svelte.d.ts"
+    }
+  },
+  "peerDependencies": {
+    "svelte": "^4.0.0"
+  },
+  "main": "index.ts",
+  "main_changeset": true,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gradio-app/gradio.git",
+    "directory": "js/video"
+  }
+}

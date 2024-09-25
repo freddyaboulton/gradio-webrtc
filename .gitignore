@@ -1,0 +1,14 @@
+.eggs/
+dist/
+*.pyc
+__pycache__/
+*.py[cod]
+*$py.class
+__tmp/*
+*.pyi
+.mypycache
+.ruff_cache
+node_modules
+backend/**/templates/
+demo/MobileNetSSD_deploy.caffemodel
+demo/MobileNetSSD_deploy.prototxt.txt

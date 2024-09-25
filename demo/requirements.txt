@@ -1,0 +1,3 @@
+safetensors==0.4.3
+opencv-python
+https://gradio-builds.s3.amazonaws.com/5.0-dev/e85cc9248cc33e187528f24f3b4415ca7b9e7134/take2/gradio-5.0.0b1-py3-none-any.whl
