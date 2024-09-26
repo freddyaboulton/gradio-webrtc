@@ -30,6 +30,7 @@ else:
 
 rtc_configuration = None
 
+
 def detection(image, conf_threshold=0.3):
     image = cv2.resize(image, (model.input_width, model.input_height))
     new_image = model.detect_objects(image, conf_threshold)

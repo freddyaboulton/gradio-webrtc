@@ -8,7 +8,6 @@ from utils import draw_detections
 
 class YOLOv10:
     def __init__(self, path):
-
         # Initialize model
         self.initialize_model(path)
 
@@ -53,7 +52,11 @@ class YOLOv10:
         )
 
         print(f"Inference time: {(time.perf_counter() - start)*1000:.2f} ms")
-        boxes, scores, class_ids, = self.process_output(outputs, conf_threshold)
+        (
+            boxes,
+            scores,
+            class_ids,
+        ) = self.process_output(outputs, conf_threshold)
         return self.draw_detections(image, boxes, scores, class_ids)
 
     def process_output(self, output, conf_threshold=0.3):
@@ -83,7 +86,7 @@ class YOLOv10:
         boxes = self.rescale_boxes(boxes)
 
         # Convert boxes to xyxy format
-        #boxes = xywh2xyxy(boxes)
+        # boxes = xywh2xyxy(boxes)
 
         return boxes
 
@@ -98,10 +101,10 @@ class YOLOv10:
         )
         return boxes
 
-    def draw_detections(self, image, boxes, scores, class_ids, draw_scores=True, mask_alpha=0.4):
-        return draw_detections(
-            image, boxes, scores, class_ids, mask_alpha
-        )
+    def draw_detections(
+        self, image, boxes, scores, class_ids, draw_scores=True, mask_alpha=0.4
+    ):
+        return draw_detections(image, boxes, scores, class_ids, mask_alpha)
 
     def get_input_details(self):
         model_inputs = self.session.get_inputs()
@@ -138,7 +141,6 @@ if __name__ == "__main__":
 
     # # Detect Objects
     combined_image = yolov8_detector.detect_objects(img)
-
 
     # Draw detections
     cv2.namedWindow("Output", cv2.WINDOW_NORMAL)

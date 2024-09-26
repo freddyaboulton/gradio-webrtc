@@ -164,7 +164,7 @@ def draw_detections(image, boxes, scores, class_ids, mask_alpha=0.3):
     font_size = min([img_height, img_width]) * 0.0006
     text_thickness = int(min([img_height, img_width]) * 0.001)
 
-    #det_img = draw_masks(det_img, boxes, class_ids, mask_alpha)
+    # det_img = draw_masks(det_img, boxes, class_ids, mask_alpha)
 
     # Draw bounding boxes and labels of detections
     for class_id, box, score in zip(class_ids, boxes, scores):
