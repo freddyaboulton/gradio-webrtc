@@ -4,8 +4,7 @@ from __future__ import annotations
 
 import asyncio
 from collections.abc import Callable, Sequence
-from pathlib import Path
-from typing import TYPE_CHECKING, Any, Literal, Optional, cast
+from typing import TYPE_CHECKING, Any, Literal, cast
 
 
 from aiortc import RTCPeerConnection, RTCSessionDescription
@@ -17,7 +16,7 @@ from gradio_client import handle_file
 import numpy as np
 
 
-from gradio import utils, wasm_utils
+from gradio import wasm_utils
 from gradio.components.base import Component, server
 
 if TYPE_CHECKING:
