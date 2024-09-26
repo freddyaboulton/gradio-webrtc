@@ -21,7 +21,8 @@
 	let video_source: HTMLVideoElement;
 	let available_video_devices: MediaDeviceInfo[] = [];
 	let selected_device: MediaDeviceInfo | null = null;
-	let time_limit: number | null = null;
+	let _time_limit: number | null = null;
+    export let time_limit: number | null = null;
 	let stream_state: "open" | "waiting" | "closed" = "closed";
     export const webrtc_id = Math.random().toString(36).substring(2);
 
@@ -29,7 +30,7 @@
 		state: "open" | "closed" | "waiting"
 	) => {
 		if (state === "closed") {
-			time_limit = null;
+			_time_limit = null;
 			stream_state = "closed";
 		} else if (state === "waiting") {
 			stream_state = "waiting";
@@ -38,14 +39,8 @@
 		}
 	};
 
-	export const set_time_limit = (time: number): void => {
-		if (recording) time_limit = time;
-	};
-
 	let canvas: HTMLCanvasElement;
     export let rtc_configuration: Object;
-	export let pending = false;
-	export let root = "";
 	export let stream_every = 1;
 	export let server: {
 		offer: (body: any) => Promise<any>;
@@ -133,10 +128,15 @@
             console.log("config", configuration);
             pc = new RTCPeerConnection(configuration);
             pc.addEventListener("connectionstatechange",
-                (event) => {
+                async (event) => {
                    switch(pc.connectionState) {
                         case "connected":
-                            stream_state = "open"
+                            stream_state = "open";
+                            _time_limit = time_limit;
+                            break;
+                        case "disconnected":
+                            stream_state = "closed";
+                            await access_webcam();
                             break;
                         default:
                             break;
@@ -196,7 +196,7 @@
 </script>
 
 <div class="wrap">
-	<StreamingBar {time_limit} />
+	<StreamingBar time_limit={_time_limit} />
 	<!-- svelte-ignore a11y-media-has-caption -->
 	<!-- need to suppress for video streaming https://github.com/sveltejs/svelte/issues/5967 -->
 	<video

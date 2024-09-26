@@ -11,11 +11,11 @@
 	export let label: string | undefined = undefined;
 	export let show_label = true;
 	export let include_audio: boolean;
-	export let root: string;
 	export let i18n: I18nFormatter;
 	export let active_source: "webcam" | "upload" = "webcam";
 	export let handle_reset_value: () => void = () => {};
 	export let stream_handler: Client["stream"];
+	export let time_limit: number | null = null;
 	export let server: {
 		offer: (body: any) => Promise<any>;
 	};
@@ -44,9 +44,9 @@
 <BlockLabel {show_label} Icon={Video} label={label || "Video"} />
 <div data-testid="video" class="video-container">
 	<Webcam
-		{root}
 		{rtc_configuration}
 		{include_audio}
+		{time_limit}
 		on:error
 		on:start_recording
 		on:stop_recording
