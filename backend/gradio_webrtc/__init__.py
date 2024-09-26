@@ -1,4 +1,3 @@
-
 from .webrtc import WebRTC
 
-__all__ = ['WebRTC']
+__all__ = ["WebRTC"]

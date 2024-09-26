@@ -1,7 +1,6 @@
 <svelte:options accessors={true} />
 
 <script lang="ts">
-
 	import { Block, UploadText } from "@gradio/atoms";
 	import Video from "./shared/InteractiveVideo.svelte";
 	import { StatusTracker } from "@gradio/statustracker";
@@ -27,6 +26,7 @@
 	export let min_width: number | undefined = undefined;
 	export let gradio;
 	export let rtc_configuration: Object;
+	export let time_limit: number | null = null;
 	// export let gradio: Gradio<{
 	// 	change: never;
 	// 	clear: never;
@@ -80,6 +80,7 @@
 		{root}
 		{server}
 		{rtc_configuration}
+		{time_limit}
 		on:clear={() => gradio.dispatch("clear")}
 		on:play={() => gradio.dispatch("play")}
 		on:pause={() => gradio.dispatch("pause")}

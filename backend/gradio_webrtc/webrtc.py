@@ -2,21 +2,21 @@
 
 from __future__ import annotations
 
+import asyncio
 from collections.abc import Callable, Sequence
-from pathlib import Path
-from typing import TYPE_CHECKING, Any, Literal, Optional, cast
+from typing import TYPE_CHECKING, Any, Literal, cast
 
 
 from aiortc import RTCPeerConnection, RTCSessionDescription
 from aiortc.contrib.media import MediaRelay
 from aiortc import VideoStreamTrack
 from aiortc.mediastreams import MediaStreamError
-from aiortc.contrib.media import VideoFrame # type: ignore
+from aiortc.contrib.media import VideoFrame  # type: ignore
 from gradio_client import handle_file
 import numpy as np
 
 
-from gradio import utils, wasm_utils
+from gradio import wasm_utils
 from gradio.components.base import Component, server
 
 if TYPE_CHECKING:
@@ -26,7 +26,6 @@ if TYPE_CHECKING:
 
 if wasm_utils.IS_WASM:
     raise ValueError("Not supported in gradio-lite!")
-
 
 
 class VideoCallback(VideoStreamTrack):
@@ -46,7 +45,9 @@ class VideoCallback(VideoStreamTrack):
         self.event_handler = event_handler
         self.latest_args: str | list[Any] = "not_set"
 
-    def add_frame_to_payload(self, args: list[Any], frame: np.ndarray | None) -> list[Any]:
+    def add_frame_to_payload(
+        self, args: list[Any], frame: np.ndarray | None
+    ) -> list[Any]:
         new_args = []
         for val in args:
             if isinstance(val, str) and val == "__webrtc_value__":
@@ -54,14 +55,12 @@ class VideoCallback(VideoStreamTrack):
             else:
                 new_args.append(val)
         return new_args
-        
 
     def array_to_frame(self, array: np.ndarray) -> VideoFrame:
         return VideoFrame.from_ndarray(array, format="bgr24")
 
     async def recv(self):
         try:
-            
             try:
                 frame = await self.track.recv()
             except MediaStreamError:
@@ -69,12 +68,10 @@ class VideoCallback(VideoStreamTrack):
             frame_array = frame.to_ndarray(format="bgr24")
 
             if self.latest_args == "not_set":
-                print("args not set")
                 return frame
-            
 
-            args = self.add_frame_to_payload(self.latest_args, frame_array)
-            
+            args = self.add_frame_to_payload(cast(list, self.latest_args), frame_array)
+
             array = self.event_handler(*args)
 
             new_frame = self.array_to_frame(array)
@@ -109,18 +106,11 @@ class WebRTC(Component):
     relay = MediaRelay()
     connections: dict[str, VideoCallback] = {}
 
-    EVENTS = [
-        "tick"
-    ]
+    EVENTS = ["tick"]
 
     def __init__(
         self,
-        value: str
-        | Path
-        | tuple[str | Path, str | Path | None]
-        | Callable
-        | None = None,
-        *,
+        value: None = None,
         height: int | str | None = None,
         width: int | str | None = None,
         label: str | None = None,
@@ -137,11 +127,8 @@ class WebRTC(Component):
         render: bool = True,
         key: int | str | None = None,
         mirror_webcam: bool = True,
-        show_share_button: bool | None = None,
-        show_download_button: bool | None = None,
-        min_length: int | None = None,
-        max_length: int | None = None,
         rtc_configuration: dict[str, Any] | None = None,
+        time_limit: float | None = None,
     ):
         """
         Parameters:
@@ -173,18 +160,11 @@ class WebRTC(Component):
             streaming: when used set as an output, takes video chunks yielded from the backend and combines them into one streaming video output. Each chunk should be a video file with a .ts extension using an h.264 encoding. Mp4 files are also accepted but they will be converted to h.264 encoding.
             watermark: an image file to be included as a watermark on the video. The image is not scaled and is displayed on the bottom right of the video. Valid formats for the image are: jpeg, png.
         """
+        self.time_limit = time_limit
         self.height = height
         self.width = width
         self.mirror_webcam = mirror_webcam
         self.concurrency_limit = 1
-        self.show_share_button = (
-            (utils.get_space() is not None)
-            if show_share_button is None
-            else show_share_button
-        )
-        self.show_download_button = show_download_button
-        self.min_length = min_length
-        self.max_length = max_length
         self.rtc_configuration = rtc_configuration
         self.event_handler: Callable | None = None
         super().__init__(
@@ -213,7 +193,6 @@ class WebRTC(Component):
         """
         return payload
 
-
     def postprocess(self, value: Any) -> str:
         """
         Parameters:
@@ -226,40 +205,64 @@ class WebRTC(Component):
     def set_output(self, webrtc_id: str, *args):
         if webrtc_id in self.connections:
             self.connections[webrtc_id].latest_args = ["__webrtc_value__"] + list(args)
-    
-    def webrtc_stream(
+
+    def stream(
         self,
         fn: Callable[..., Any] | None = None,
         inputs: Block | Sequence[Block] | set[Block] | None = None,
+        outputs: Block | Sequence[Block] | set[Block] | None = None,
         js: str | None = None,
         concurrency_limit: int | None | Literal["default"] = "default",
         concurrency_id: str | None = None,
-        stream_every: float = 0.5,
-        time_limit: float | None = None):
+        time_limit: float | None = None,
+    ):
+        from gradio.blocks import Block
 
-        if inputs[0] != self:
-            raise ValueError("In the webrtc_stream event, the first input component must be the WebRTC component.")
-    
-        self.concurrency_limit = 1 if concurrency_limit in ["default", None] else concurrency_limit
+        if isinstance(inputs, Block):
+            inputs = [inputs]
+        if isinstance(outputs, Block):
+            outputs = [outputs]
+
+        if cast(list[Block], inputs)[0] != self:
+            raise ValueError(
+                "In the webrtc stream event, the first input component must be the WebRTC component."
+            )
+
+        if (
+            len(cast(list[Block], outputs)) != 1
+            and cast(list[Block], outputs)[0] != self
+        ):
+            raise ValueError(
+                "In the webrtc stream event, the only output component must be the WebRTC component."
+            )
+
+        self.concurrency_limit = (
+            1 if concurrency_limit in ["default", None] else concurrency_limit
+        )
         self.event_handler = fn
-        return self.tick(self.set_output,
-                    inputs=inputs,
-                    outputs=None,
-                    concurrency_id=concurrency_id,
-                    concurrency_limit=None,
-                    stream_every=stream_every,
-                    time_limit=None,
-                    js=js
-                    )
+        self.time_limit = time_limit
+        return self.tick(  # type: ignore
+            self.set_output,
+            inputs=inputs,
+            outputs=None,
+            concurrency_id=concurrency_id,
+            concurrency_limit=None,
+            stream_every=0.5,
+            time_limit=None,
+            js=js,
+        )
+
+    @staticmethod
+    async def wait_for_time_limit(pc: RTCPeerConnection, time_limit: float):
+        await asyncio.sleep(time_limit)
+        await pc.close()
 
     @server
     async def offer(self, body):
-
-        if len(self.connections) >= self.concurrency_limit:
+        if len(self.connections) >= cast(int, self.concurrency_limit):
             return {"status": "failed"}
 
-        
-        offer = RTCSessionDescription(sdp=body['sdp'], type=body['type'])
+        offer = RTCSessionDescription(sdp=body["sdp"], type=body["type"])
 
         pc = RTCPeerConnection()
         self.pcs.add(pc)
@@ -269,25 +272,28 @@ class WebRTC(Component):
             print(pc.iceConnectionState)
             if pc.iceConnectionState == "failed":
                 await pc.close()
-                self.connections.pop(body['webrtc_id'], None)
+                self.connections.pop(body["webrtc_id"], None)
                 self.pcs.discard(pc)
 
         @pc.on("connectionstatechange")
         async def on_connectionstatechange():
             if pc.connectionState in ["failed", "closed"]:
                 await pc.close()
-                self.connections.pop(body['webrtc_id'], None)
+                self.connections.pop(body["webrtc_id"], None)
                 self.pcs.discard(pc)
+            if pc.connectionState == "connected":
+                if self.time_limit is not None:
+                    asyncio.create_task(self.wait_for_time_limit(pc, self.time_limit))
 
         @pc.on("track")
         def on_track(track):
             cb = VideoCallback(
-                    self.relay.subscribe(track),
-                    event_handler=cast(Callable, self.event_handler)
-                )
-            self.connections[body['webrtc_id']] = cb
+                self.relay.subscribe(track),
+                event_handler=cast(Callable, self.event_handler),
+            )
+            self.connections[body["webrtc_id"]] = cb
             pc.addTrack(cb)
-       
+
         # handle offer
         await pc.setRemoteDescription(offer)
 
@@ -296,9 +302,9 @@ class WebRTC(Component):
         await pc.setLocalDescription(answer)  # type: ignore
 
         return {
-                "sdp": pc.localDescription.sdp,
-                "type": pc.localDescription.type,
-            }
+            "sdp": pc.localDescription.sdp,
+            "type": pc.localDescription.type,
+        }
 
     def example_payload(self) -> Any:
         return {
@@ -310,7 +316,5 @@ class WebRTC(Component):
     def example_value(self) -> Any:
         return "https://github.com/gradio-app/gradio/raw/main/demo/video_component/files/world.mp4"
 
-
     def api_info(self) -> Any:
         return {"type": "number"}
-
