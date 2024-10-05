@@ -161,7 +161,6 @@
 	
     window.setInterval(() => {
         if (stream_state == "open") {
-            console.log("dispatching tick");
             dispatch("tick");
         }
     }, stream_every * 1000);
