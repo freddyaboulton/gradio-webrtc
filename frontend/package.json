@@ -7,21 +7,22 @@
   "license": "ISC",
   "private": false,
   "dependencies": {
-    "@ffmpeg/ffmpeg": "^0.12.7",
+    "@ffmpeg/ffmpeg": "^0.12.10",
     "@ffmpeg/util": "^0.12.1",
-    "@gradio/atoms": "0.9.0-beta.2",
-    "@gradio/client": "1.6.0-beta.3",
-    "@gradio/icons": "0.8.0-beta.2",
-    "@gradio/image": "0.16.0-beta.3",
-    "@gradio/statustracker": "0.8.0-beta.2",
-    "@gradio/upload": "0.13.0-beta.3",
-    "@gradio/utils": "0.7.0-beta.2",
-    "@gradio/wasm": "0.14.0-beta.2",
-    "hls.js": "^1.5.13",
+    "@gradio/atoms": "0.9.0",
+    "@gradio/client": "1.6.0",
+    "@gradio/icons": "0.8.0",
+    "@gradio/image": "0.16.0",
+    "@gradio/markdown": "^0.10.0",
+    "@gradio/statustracker": "0.8.0",
+    "@gradio/upload": "0.13.0",
+    "@gradio/utils": "0.7.0",
+    "@gradio/wasm": "0.14.0",
+    "hls.js": "^1.5.16",
     "mrmime": "^2.0.0"
   },
   "devDependencies": {
-    "@gradio/preview": "0.11.1"
+    "@gradio/preview": "0.12.0"
   },
   "exports": {
     "./package.json": "./package.json",
