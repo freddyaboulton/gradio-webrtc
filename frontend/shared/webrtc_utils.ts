@@ -27,17 +27,25 @@ export function createPeerConnection(pc, node) {
 	// connect audio / video from server to local
 	pc.addEventListener("track", (evt) => {
 		console.log("track event listener");
-		if (evt.track.kind == "video") {
+		if (node.srcObject !== evt.streams[0]) {
 			console.log("streams", evt.streams);
 			node.srcObject = evt.streams[0];
 			console.log("node.srcOject", node.srcObject);
+			if (evt.track.kind === 'audio') {
+				node.volume = 1.0;  // Ensure volume is up
+				node.muted = false;
+				node.autoplay = true;
+				
+				// Attempt to play (needed for some browsers)
+				node.play().catch(e => console.log("Autoplay failed:", e));
+			}
 		}
 	});
 
 	return pc;
 }
 
-export async function start(stream, pc, node, server_fn, webrtc_id) {
+export async function start(stream, pc: RTCPeerConnection, node, server_fn, webrtc_id, modality: "video" | "audio" = "video") {
 	pc = createPeerConnection(pc, node);
 	if (stream) {
 		stream.getTracks().forEach((track) => {
@@ -48,7 +56,7 @@ export async function start(stream, pc, node, server_fn, webrtc_id) {
 		});
 	} else {
 		console.log("Creating transceiver!");
-		pc.addTransceiver("video", { direction: "recvonly" });
+		pc.addTransceiver(modality, { direction: "recvonly" });
 	}
 
 	await negotiate(pc, server_fn, webrtc_id);

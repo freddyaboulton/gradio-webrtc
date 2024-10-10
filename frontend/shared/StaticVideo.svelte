@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { createEventDispatcher, afterUpdate, tick } from "svelte";
+	import { createEventDispatcher, onMount} from "svelte";
 	import {
 		BlockLabel,
 		Empty
@@ -29,15 +29,16 @@
 	}>();
 	
 	let stream_state = "closed";
-	window.setInterval(() => {
-        if (stream_state == "open") {
-            dispatch("tick");
-        }
-    }, 1000);
 
+	onMount(() => {
+		window.setInterval(() => {
+			if (stream_state == "open") {
+				dispatch("tick");
+			}
+   		}, 1000);
+		}
+	)
 
-
-	$: console.log("static video value", value);
 	$: if( value === "start_webrtc_stream") {
 		value = _webrtc_id;
 		const fallback_config = {
@@ -48,8 +49,7 @@
                 ]
             };
             const configuration = rtc_configuration || fallback_config;
-            console.log("config", configuration);
-            pc = new RTCPeerConnection(configuration);
+            pc = new RTCPeerConnection(rtc_configuration);
             pc.addEventListener("connectionstatechange",
                 async (event) => {
                    switch(pc.connectionState) {

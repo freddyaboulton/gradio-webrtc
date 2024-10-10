@@ -6,6 +6,7 @@
 	import { StatusTracker } from "@gradio/statustracker";
 	import type { LoadingStatus } from "@gradio/statustracker";
 	import StaticVideo from "./shared/StaticVideo.svelte";
+	import StaticAudio from "./shared/StaticAudio.svelte";
 
 	export let elem_id = "";
 	export let elem_classes: string[] = [];
@@ -28,7 +29,8 @@
 	export let gradio;
 	export let rtc_configuration: Object;
 	export let time_limit: number | null = null;
-	export let mode: "video-in-out" | "video-out" = "video-in-out";
+	export let modality: "video" | "audio" = "video";
+	export let mode: "send-receive" | "receive" = "send-receive";
 
 	let dragging = false;
 
@@ -57,7 +59,7 @@
 		on:clear_status={() => gradio.dispatch("clear_status", loading_status)}
 	/>
 
-	{#if mode === "video-out"}
+	{#if mode === "receive" && modality === "video"}
 		<StaticVideo
 			bind:value={value}
 			{label}
@@ -67,7 +69,18 @@
 			on:tick={() => gradio.dispatch("tick")}
 			on:error={({ detail }) => gradio.dispatch("error", detail)}
 		/>
-	{:else}
+	{:else if mode == "receive" && modality === "audio"}
+		<StaticAudio
+			bind:value={value}
+			{label}
+			{show_label}
+			{server}
+			{rtc_configuration}
+			i18n={gradio.i18n}
+			on:tick={() => gradio.dispatch("tick")}
+			on:error={({ detail }) => gradio.dispatch("error", detail)}
+		/>
+	{:else if mode === "send-receive" && modality === "video"}
 		<Video
 			bind:value={value}
 			{label}
