@@ -31,7 +31,6 @@ def player_worker_decode(
     generator = None
 
     while not thread_quit.is_set():
-        print("stream.latest_args", stream.latest_args)
         if stream.latest_args == "not_set":
             continue
         if generator is None:
@@ -41,7 +40,7 @@ def player_worker_decode(
         except Exception as exc:
             if isinstance(exc, StopIteration):
                 print("Not iterating")
-                asyncio.run_coroutine_threadsafe(queue.put(frame), loop)
+                asyncio.run_coroutine_threadsafe(queue.put(None), loop)
                 thread_quit.set()
             break
 
@@ -51,7 +50,8 @@ def player_worker_decode(
             if frame_time and frame_time > elapsed_time + 1:
                 time.sleep(0.1)
         sample_rate, audio_array = frame
-        frame = av.AudioFrame.from_ndarray(audio_array, format="s16", layout="mono")
+        format = "s16" if audio_array.dtype == "int16" else "fltp"
+        frame = av.AudioFrame.from_ndarray(audio_array, format=format, layout="mono")
         frame.sample_rate = sample_rate
         for frame in audio_resampler.resample(frame):
             # fix timestamps

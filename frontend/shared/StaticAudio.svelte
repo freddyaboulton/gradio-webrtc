@@ -9,6 +9,7 @@
     import { onMount } from "svelte";
 
     import { start, stop } from "./webrtc_utils";
+    import AudioWave from "./AudioWave.svelte";
 
 
     export let value: string | null = null;
@@ -56,7 +57,6 @@
                 ]
             };
             pc = new RTCPeerConnection(rtc_configuration);
-            console.log("config", pc.getConfiguration());
             pc.addEventListener("connectionstatechange",
                 async (event) => {
                    switch(pc.connectionState) {
@@ -95,12 +95,14 @@
 <audio
     class="standard-player"
     class:hidden={value === "__webrtc_value__"}
-    controls
     on:load
     bind:this={audio_player}
     on:ended={() => dispatch("stop")}
     on:play={() => dispatch("play")}
 />
+{#if value !== "__webrtc_value__"}
+    <AudioWave audio_source={audio_player} {stream_state}/>
+{/if}
 {#if value === "__webrtc_value__"}
 	<Empty size="small">
 		<Music />
