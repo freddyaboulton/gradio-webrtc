@@ -6,9 +6,9 @@
     export let audio_source: HTMLAudioElement;
   
     let audioContext: AudioContext;
-    let analyser;
-    let dataArray;
-    let animationId;
+    let analyser: AnalyserNode;
+    let dataArray: Uint8Array;
+    let animationId: number;
     let is_muted = false;
   
     $: containerWidth = `calc((var(--boxSize) + var(--gutter)) * ${numBars})`;
@@ -51,14 +51,16 @@
       animationId = requestAnimationFrame(updateBars);
     }
   
-    function togglePlayPause() {
-      if (is_muted) {
-        audio_source.muted = false;
-      } else {
-        audio_source.muted = true;
-      }
-      is_muted = !is_muted;
-    }
+    function toggleMute() {
+        if (audio_source && audio_source.srcObject) {
+            const audioTracks = (audio_source.srcObject as MediaStream).getAudioTracks();
+            audioTracks.forEach(track => {
+            track.enabled = !track.enabled;
+            });
+            is_muted = !audioTracks[0].enabled;
+        }
+    }   
+
   </script>
   
   <div class="waveContainer">
@@ -67,8 +69,8 @@
         <div class="box"></div>
       {/each}
     </div>
-    <button class="playPauseButton" on:click={togglePlayPause}>
-      {is_muted ? '🔈' : '🔇'}
+    <button class="muteButton" on:click={toggleMute}>
+      {is_muted ? '🔈' : '🔊'}
     </button>
   </div>
   
@@ -96,7 +98,7 @@
       transition: transform 0.05s ease;
     }
   
-    .playPauseButton {
+    .muteButton {
       margin-top: 10px;
       padding: 10px 20px;
       font-size: 24px;
@@ -104,7 +106,7 @@
       background: none;
       border: none;
       border-radius: 5px;
-      color: black;
+      color: var(--color-accent);
     }
   
     :global(body) {
