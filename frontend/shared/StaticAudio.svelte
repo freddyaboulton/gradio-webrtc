@@ -49,34 +49,27 @@
     $: if( value === "start_webrtc_stream") {
         stream_state = "connecting";
 		value = _webrtc_id;
-		const fallback_config = {
-                iceServers: [
-                    {
-                        urls: 'stun:stun.l.google.com:19302'
-                    }
-                ]
-            };
-            pc = new RTCPeerConnection(rtc_configuration);
-            pc.addEventListener("connectionstatechange",
-                async (event) => {
-                   switch(pc.connectionState) {
-                        case "connected":
-                            console.log("connected");
-							stream_state = "open";
-                            break;
-                        case "disconnected":
-                            console.log("closed");
-							stop(pc);
-                            break;
-                        default:
-                            break;
-                   }
+        pc = new RTCPeerConnection(rtc_configuration);
+        pc.addEventListener("connectionstatechange",
+            async (event) => {
+                switch(pc.connectionState) {
+                    case "connected":
+                        console.info("connected");
+                        stream_state = "open";
+                        break;
+                    case "disconnected":
+                        console.info("closed");
+                        stop(pc);
+                        break;
+                    default:
+                        break;
                 }
-            )
+            }
+        )
 		start(null, pc, audio_player, server.offer, _webrtc_id, "audio").then((connection) => {
 				pc = connection;
 			}).catch(() => {
-                console.log("catching")
+                console.info("catching")
                 dispatch("error", "Too many concurrent users. Come back later!");
             });
 	}
@@ -91,7 +84,6 @@
 	float={false}
 	label={label || i18n("audio.audio")}
 />
-    
 <audio
     class="standard-player"
     class:hidden={value === "__webrtc_value__"}

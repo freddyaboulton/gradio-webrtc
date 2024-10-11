@@ -24,7 +24,7 @@
 	let _time_limit: number | null = null;
     export let time_limit: number | null = null;
 	let stream_state: "open" | "waiting" | "closed" = "closed";
-    export const webrtc_id = Math.random().toString(36).substring(2);
+    const _webrtc_id = Math.random().toString(36).substring(2);
 
 	export const modify_stream: (state: "open" | "closed" | "waiting") => void = (
 		state: "open" | "closed" | "waiting"
@@ -114,19 +114,11 @@
 
 	let webcam_accessed = false;
     let pc: RTCPeerConnection;
+	export let webrtc_id;
 
 	async function start_webrtc(): Promise<void> {
         if (stream_state === 'closed') {
-            const fallback_config = {
-                iceServers: [
-                    {
-                        urls: 'stun:stun.l.google.com:19302'
-                    }
-                ]
-            };
-            const configuration = rtc_configuration || fallback_config;
-            console.log("config", configuration);
-            pc = new RTCPeerConnection(configuration);
+            pc = new RTCPeerConnection(rtc_configuration);
             pc.addEventListener("connectionstatechange",
                 async (event) => {
                    switch(pc.connectionState) {
@@ -136,6 +128,7 @@
                             break;
                         case "disconnected":
                             stream_state = "closed";
+							_time_limit = null;
                             await access_webcam();
                             break;
                         default:
@@ -144,10 +137,11 @@
                 }
             )
             stream_state = "waiting"
+			webrtc_id = _webrtc_id;
             start(stream, pc, video_source, server.offer, webrtc_id).then((connection) => {
 				pc = connection;
 			}).catch(() => {
-                console.log("catching")
+                console.info("catching")
                 stream_state = "closed";
                 dispatch("error", "Too many concurrent users. Come back later!");
             });
