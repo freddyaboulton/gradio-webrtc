@@ -10,7 +10,7 @@ app_file: space.py
 ---
 
 # `gradio_webrtc`
-<img alt="Static Badge" src="https://img.shields.io/badge/version%20-%200.0.1%20-%20orange">  
+<a href="https://pypi.org/project/gradio_webrtc/" target="_blank"><img alt="PyPI - Version" src="https://img.shields.io/pypi/v/gradio_webrtc"></a>  
 
 Stream images in realtime with webrtc
 
@@ -356,6 +356,32 @@ float | None
 
 </td>
 <td align="left"><code>None</code></td>
+<td align="left">None</td>
+</tr>
+
+<tr>
+<td align="left"><code>mode</code></td>
+<td align="left" style="width: 25%;">
+
+```python
+Literal["send-receive", "receive"]
+```
+
+</td>
+<td align="left"><code>"send-receive"</code></td>
+<td align="left">None</td>
+</tr>
+
+<tr>
+<td align="left"><code>modality</code></td>
+<td align="left" style="width: 25%;">
+
+```python
+Literal["video", "audio"]
+```
+
+</td>
+<td align="left"><code>"video"</code></td>
 <td align="left">None</td>
 </tr>
 </tbody></table>
