@@ -8,7 +8,7 @@ import threading
 import time
 import traceback
 from collections.abc import Callable
-from typing import TYPE_CHECKING, Any, Literal, Generator, Sequence, cast
+from typing import TYPE_CHECKING, Any, Generator, Literal, Sequence, cast
 
 import numpy as np
 from aiortc import (
@@ -17,7 +17,7 @@ from aiortc import (
     RTCSessionDescription,
     VideoStreamTrack,
 )
-from aiortc.contrib.media import AudioFrame, MediaRelay, VideoFrame  # type: ignore
+from aiortc.contrib.media import MediaRelay, VideoFrame  # type: ignore
 from aiortc.mediastreams import MediaStreamError
 from gradio import wasm_utils
 from gradio.components.base import Component, server
@@ -477,7 +477,7 @@ class WebRTC(Component):
                 cb = ServerToClientVideo(cast(Callable, self.event_handler))
             elif self.modality == "audio":
                 cb = ServerToClientAudio(cast(Callable, self.event_handler))
-        
+
             logger.debug("Adding track to peer connection", cb)
             pc.addTrack(cb)
             self.connections[body["webrtc_id"]] = cb

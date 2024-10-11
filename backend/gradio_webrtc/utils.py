@@ -1,11 +1,11 @@
 import asyncio
 import fractions
+import logging
 import threading
 import time
 from typing import Callable
 
 import av
-import logging
 
 logger = logging.getLogger(__name__)
 
