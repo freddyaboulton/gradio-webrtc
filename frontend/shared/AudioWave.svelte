@@ -109,15 +109,4 @@
       color: var(--color-accent);
     }
   
-    :global(body) {
-      display: flex;
-      justify-content: center;
-      background: black;
-      margin: 0;
-      padding: 0;
-      align-items: center;
-      height: 100vh;
-      color: white;
-      font-family: Arial, sans-serif;
-    }
   </style>
