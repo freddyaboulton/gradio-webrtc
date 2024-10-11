@@ -148,6 +148,7 @@
         } else {
             stop(pc);
             stream_state = "closed";
+			_time_limit = null;
             await access_webcam();
         }
 

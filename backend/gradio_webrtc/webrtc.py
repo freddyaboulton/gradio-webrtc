@@ -369,6 +369,10 @@ class WebRTC(Component):
     ):
         from gradio.blocks import Block
 
+        if inputs is None:
+            inputs = []
+        if outputs is None:
+            outputs = []
         if isinstance(inputs, Block):
             inputs = [inputs]
         if isinstance(outputs, Block):
@@ -404,7 +408,7 @@ class WebRTC(Component):
                 js=js,
             )
         elif self.mode == "receive":
-            if self in cast(list[Block], inputs):
+            if isinstance(inputs, list) and self in cast(list[Block], inputs):
                 raise ValueError(
                     "In the receive mode stream event, the WebRTC component cannot be an input."
                 )
