@@ -3,7 +3,7 @@ export function createPeerConnection(pc, node) {
 	pc.addEventListener(
 		"icegatheringstatechange",
 		() => {
-			console.log(pc.iceGatheringState);
+			console.debug(pc.iceGatheringState);
 		},
 		false
 	);
@@ -11,7 +11,7 @@ export function createPeerConnection(pc, node) {
 	pc.addEventListener(
 		"iceconnectionstatechange",
 		() => {
-			console.log(pc.iceConnectionState);
+			console.debug(pc.iceConnectionState);
 		},
 		false
 	);
@@ -19,25 +19,25 @@ export function createPeerConnection(pc, node) {
 	pc.addEventListener(
 		"signalingstatechange",
 		() => {
-			console.log(pc.signalingState);
+			console.debug(pc.signalingState);
 		},
 		false
 	);
 
 	// connect audio / video from server to local
 	pc.addEventListener("track", (evt) => {
-		console.log("track event listener");
+		console.debug("track event listener");
 		if (node.srcObject !== evt.streams[0]) {
-			console.log("streams", evt.streams);
+			console.debug("streams", evt.streams);
 			node.srcObject = evt.streams[0];
-			console.log("node.srcOject", node.srcObject);
+			console.debug("node.srcOject", node.srcObject);
 			if (evt.track.kind === 'audio') {
 				node.volume = 1.0;  // Ensure volume is up
 				node.muted = false;
 				node.autoplay = true;
 				
 				// Attempt to play (needed for some browsers)
-				node.play().catch(e => console.log("Autoplay failed:", e));
+				node.play().catch(e => console.debug("Autoplay failed:", e));
 			}
 		}
 	});
@@ -51,11 +51,11 @@ export async function start(stream, pc: RTCPeerConnection, node, server_fn, webr
 		stream.getTracks().forEach((track) => {
 			track.applyConstraints({ frameRate: { max: 30 } });
 
-			console.log("Track stream callback", track);
+			console.debug("Track stream callback", track);
 			pc.addTrack(track, stream);
 		});
 	} else {
-		console.log("Creating transceiver!");
+		console.debug("Creating transceiver!");
 		pc.addTransceiver(modality, { direction: "recvonly" });
 	}
 
@@ -66,9 +66,9 @@ export async function start(stream, pc: RTCPeerConnection, node, server_fn, webr
 function make_offer(server_fn: any, body): Promise<object> {
     return new Promise((resolve, reject) => {
         server_fn(body).then((data) => {
-            console.log("data", data)
+            console.debug("data", data)
             if(data?.status === "failed") {
-                console.log("rejecting")
+                console.debug("rejecting")
                 reject("error")
             }
             resolve(data);
@@ -89,13 +89,13 @@ async function negotiate(
 		.then(() => {
 			// wait for ICE gathering to complete
 			return new Promise<void>((resolve) => {
-				console.log("ice gathering state", pc.iceGatheringState);
+				console.debug("ice gathering state", pc.iceGatheringState);
 				if (pc.iceGatheringState === "complete") {
 					resolve();
 				} else {
 					const checkState = () => {
 						if (pc.iceGatheringState === "complete") {
-							console.log("ice complete");
+							console.debug("ice complete");
 							pc.removeEventListener("icegatheringstatechange", checkState);
 							resolve();
 						}
@@ -124,8 +124,7 @@ async function negotiate(
 }
 
 export function stop(pc: RTCPeerConnection) {
-	console.log("pc", pc);
-	console.log("STOPPING");
+	console.debug("Stopping peer connection");
 	// close transceivers
 	if (pc.getTransceivers) {
 		pc.getTransceivers().forEach((transceiver) => {

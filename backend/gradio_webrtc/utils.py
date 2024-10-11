@@ -1,9 +1,14 @@
-import time
-import fractions
-import av
 import asyncio
+import fractions
+import logging
 import threading
+import time
 from typing import Callable
+
+import av
+
+logger = logging.getLogger(__name__)
+
 
 AUDIO_PTIME = 0.020
 
@@ -39,7 +44,7 @@ def player_worker_decode(
             frame = next(generator)
         except Exception as exc:
             if isinstance(exc, StopIteration):
-                print("Not iterating")
+                logger.debug("Stopping audio stream")
                 asyncio.run_coroutine_threadsafe(queue.put(None), loop)
                 thread_quit.set()
             break

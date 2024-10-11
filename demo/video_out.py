@@ -48,7 +48,7 @@ with gr.Blocks() as demo:
             input_video = gr.Video(sources="upload")
         with gr.Column():
             output_video = WebRTC(label="Video Stream", rtc_configuration=rtc_configuration,
-                           mode="receive", modality="video")
+                            mode="receive", modality="video")
             output_video.stream(
                 fn=generation, inputs=[input_video], outputs=[output_video],
                 trigger=input_video.upload
