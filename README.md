@@ -11,8 +11,9 @@ app_file: space.py
 
 <h1 style='text-align: center; margin-bottom: 1rem'> Gradio WebRTC ⚡️ </h1>
 
-<div>
-<img style="display: block; margin-left: auto; margin-right: auto" alt="Static Badge" src="https://img.shields.io/badge/version%20-%200.0.5%20-%20orange">  
+<div style="display: flex; flex-direction: row; justify-content: center">
+<img style="display: block; padding-right: 5px; height: 20px;" alt="Static Badge" src="https://img.shields.io/badge/version%20-%200.0.5%20-%20orange"> 
+<a href="https://github.com/freddyaboulton/gradio-webrtc" target="_blank"><img alt="Static Badge" src="https://img.shields.io/badge/github-white?logo=github&logoColor=black"></a>
 </div>
 
 <h3 style='text-align: center'>
