@@ -155,3 +155,7 @@ h2 + h3 {
 .gap {
 	gap: 0;
 }
+
+.md-custom {
+	overflow: hidden;
+}
