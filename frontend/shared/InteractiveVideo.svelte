@@ -62,22 +62,6 @@
 </div>
 
 <style>
-	.file-name {
-		padding: var(--size-6);
-		font-size: var(--text-xxl);
-		word-break: break-all;
-	}
-
-	.file-size {
-		padding: var(--size-2);
-		font-size: var(--text-xl);
-	}
-
-	.upload-container {
-		height: 100%;
-		width: 100%;
-	}
-
 	.video-container {
 		display: flex;
 		height: 100%;

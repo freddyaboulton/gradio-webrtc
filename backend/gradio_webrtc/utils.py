@@ -15,8 +15,7 @@ AUDIO_PTIME = 0.020
 
 def player_worker_decode(
     loop,
-    callable: Callable,
-    stream,
+    next: Callable,
     queue: asyncio.Queue,
     throttle_playback: bool,
     thread_quit: threading.Event,
@@ -33,22 +32,10 @@ def player_worker_decode(
 
     frame_time = None
     start_time = time.time()
-    generator = None
 
     while not thread_quit.is_set():
-        if stream.latest_args == "not_set":
-            continue
-        if generator is None:
-            generator = callable(*stream.latest_args)
-        try:
-            frame = next(generator)
-        except Exception as exc:
-            if isinstance(exc, StopIteration):
-                logger.debug("Stopping audio stream")
-                asyncio.run_coroutine_threadsafe(queue.put(None), loop)
-                thread_quit.set()
-            break
-
+        frame = next()
+        logger.debug("emitted %s", frame)
         # read up to 1 second ahead
         if throttle_playback:
             elapsed_time = time.time() - start_time
@@ -56,7 +43,7 @@ def player_worker_decode(
                 time.sleep(0.1)
         sample_rate, audio_array = frame
         format = "s16" if audio_array.dtype == "int16" else "fltp"
-        frame = av.AudioFrame.from_ndarray(audio_array, format=format, layout="mono")
+        frame = av.AudioFrame.from_ndarray(audio_array, format=format, layout="stereo")
         frame.sample_rate = sample_rate
         for frame in audio_resampler.resample(frame):
             # fix timestamps

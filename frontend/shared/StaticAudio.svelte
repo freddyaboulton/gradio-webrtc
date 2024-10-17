@@ -17,13 +17,12 @@
     export let show_label = true;
     export let rtc_configuration: Object | null = null;
     export let i18n: I18nFormatter;
-    export let autoplay: boolean = true;
     
     export let server: {
         offer: (body: any) => Promise<any>;
     };
 
-    let stream_state = "closed";
+    let stream_state: "open" | "closed" | "connecting" = "closed";
     let audio_player: HTMLAudioElement;
     let pc: RTCPeerConnection;
     let _webrtc_id = Math.random().toString(36).substring(2);
@@ -46,33 +45,38 @@
         }
     )
 
-    $: if( value === "start_webrtc_stream") {
-        stream_state = "connecting";
-		value = _webrtc_id;
-        pc = new RTCPeerConnection(rtc_configuration);
-        pc.addEventListener("connectionstatechange",
-            async (event) => {
-                switch(pc.connectionState) {
-                    case "connected":
-                        console.info("connected");
-                        stream_state = "open";
-                        break;
-                    case "disconnected":
-                        console.info("closed");
-                        stop(pc);
-                        break;
-                    default:
-                        break;
+    async function start_stream(value: string): Promise<void> {
+        if( value === "start_webrtc_stream") {
+            stream_state = "connecting";
+            value = _webrtc_id;
+            pc = new RTCPeerConnection(rtc_configuration);
+            pc.addEventListener("connectionstatechange",
+                async (event) => {
+                    switch(pc.connectionState) {
+                        case "connected":
+                            console.info("connected");
+                            stream_state = "open";
+                            break;
+                        case "disconnected":
+                            console.info("closed");
+                            stop(pc);
+                            break;
+                        default:
+                            break;
+                    }
                 }
-            }
-        )
-		start(null, pc, audio_player, server.offer, _webrtc_id, "audio").then((connection) => {
-				pc = connection;
-			}).catch(() => {
-                console.info("catching")
-                dispatch("error", "Too many concurrent users. Come back later!");
-            });
-	}
+            )
+            let stream = null;
+            start(stream, pc, audio_player, server.offer, _webrtc_id, "audio").then((connection) => {
+                    pc = connection;
+                }).catch(() => {
+                    console.info("catching")
+                    dispatch("error", "Too many concurrent users. Come back later!");
+                });
+        }
+    }
+
+    $: start_stream(value);
 
 
     

@@ -30,7 +30,6 @@ def generation():
         yield frame
 
 
-
 with gr.Blocks() as demo:
     gr.HTML(
         """
@@ -39,12 +38,15 @@ with gr.Blocks() as demo:
     </h1>
     """
     )
-    output_video = WebRTC(label="Video Stream", rtc_configuration=rtc_configuration,
-                    mode="receive", modality="video")
+    output_video = WebRTC(
+        label="Video Stream",
+        rtc_configuration=rtc_configuration,
+        mode="receive",
+        modality="video",
+    )
     button = gr.Button("Start", variant="primary")
     output_video.stream(
-        fn=generation, inputs=None, outputs=[output_video],
-        trigger=button.click
+        fn=generation, inputs=None, outputs=[output_video], trigger=button.click
     )
 
 

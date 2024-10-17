@@ -21,8 +21,8 @@ export async function get_video_stream(
 	device_id?: string
 ): Promise<MediaStream> {
 	const size = {
-		width: { ideal: 1920 },
-		height: { ideal: 1440 }
+		width: { ideal: 500 },
+		height: { ideal: 500 }
 	};
 
 	const constraints = {

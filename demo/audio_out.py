@@ -6,7 +6,6 @@ import os
 from pydub import AudioSegment
 
 
-
 account_sid = os.environ.get("TWILIO_ACCOUNT_SID")
 auth_token = os.environ.get("TWILIO_AUTH_TOKEN")
 
@@ -24,10 +23,16 @@ else:
 
 import time
 
+
 def generation(num_steps):
     for _ in range(num_steps):
-        segment = AudioSegment.from_file("/Users/freddy/sources/gradio/demo/audio_debugger/cantina.wav")
-        yield (segment.frame_rate, np.array(segment.get_array_of_samples()).reshape(1, -1))
+        segment = AudioSegment.from_file(
+            "/Users/freddy/sources/gradio/demo/audio_debugger/cantina.wav"
+        )
+        yield (
+            segment.frame_rate,
+            np.array(segment.get_array_of_samples()).reshape(1, -1),
+        )
         time.sleep(3.5)
 
 
@@ -45,8 +50,12 @@ with gr.Blocks() as demo:
     )
     with gr.Column(elem_classes=["my-column"]):
         with gr.Group(elem_classes=["my-group"]):
-            audio = WebRTC(label="Stream", rtc_configuration=rtc_configuration,
-                           mode="receive", modality="audio")
+            audio = WebRTC(
+                label="Stream",
+                rtc_configuration=rtc_configuration,
+                mode="receive",
+                modality="audio",
+            )
             num_steps = gr.Slider(
                 label="Number of Steps",
                 minimum=1,
@@ -57,8 +66,7 @@ with gr.Blocks() as demo:
             button = gr.Button("Generate")
 
         audio.stream(
-            fn=generation, inputs=[num_steps], outputs=[audio],
-            trigger=button.click
+            fn=generation, inputs=[num_steps], outputs=[audio], trigger=button.click
         )
 
 

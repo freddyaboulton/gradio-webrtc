@@ -35,7 +35,6 @@ export function createPeerConnection(pc, node) {
 				node.volume = 1.0;  // Ensure volume is up
 				node.muted = false;
 				node.autoplay = true;
-				
 				// Attempt to play (needed for some browsers)
 				node.play().catch(e => console.debug("Autoplay failed:", e));
 			}
@@ -49,8 +48,8 @@ export async function start(stream, pc: RTCPeerConnection, node, server_fn, webr
 	pc = createPeerConnection(pc, node);
 	if (stream) {
 		stream.getTracks().forEach((track) => {
-			track.applyConstraints({ frameRate: { max: 30 } });
-
+			if(modality == "video") track.applyConstraints({ frameRate: { max: 30 } });
+			else if(modality == "audio") track.applyConstraints({ sampleRate: 48000, channelCount: 1 });
 			console.debug("Track stream callback", track);
 			pc.addTrack(track, stream);
 		});

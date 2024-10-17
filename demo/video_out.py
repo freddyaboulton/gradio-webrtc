@@ -24,7 +24,6 @@ else:
 def generation(input_video):
     cap = cv2.VideoCapture(input_video)
 
-
     iterating = True
 
     while iterating:
@@ -34,6 +33,7 @@ def generation(input_video):
         frame = cv2.flip(frame, 0)
         display_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         yield display_frame
+
 
 with gr.Blocks() as demo:
     gr.HTML(
@@ -47,11 +47,17 @@ with gr.Blocks() as demo:
         with gr.Column():
             input_video = gr.Video(sources="upload")
         with gr.Column():
-            output_video = WebRTC(label="Video Stream", rtc_configuration=rtc_configuration,
-                            mode="receive", modality="video")
+            output_video = WebRTC(
+                label="Video Stream",
+                rtc_configuration=rtc_configuration,
+                mode="receive",
+                modality="video",
+            )
             output_video.stream(
-                fn=generation, inputs=[input_video], outputs=[output_video],
-                trigger=input_video.upload
+                fn=generation,
+                inputs=[input_video],
+                outputs=[output_video],
+                trigger=input_video.upload,
             )
 
 

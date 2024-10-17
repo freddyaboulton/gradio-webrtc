@@ -2,7 +2,7 @@
     import { onMount, onDestroy } from 'svelte';
   
     export let numBars = 16;
-    export let stream_state: "open" | "closed" = "closed";
+    export let stream_state: "open" | "closed" | "waiting" = "closed";
     export let audio_source: HTMLAudioElement;
   
     let audioContext: AudioContext;
@@ -69,17 +69,12 @@
         <div class="box"></div>
       {/each}
     </div>
-    <button class="muteButton" on:click={toggleMute}>
-      {is_muted ? '🔈' : '🔊'}
-    </button>
   </div>
   
   <style>
     .waveContainer {
       position: relative;
       display: flex;
-      flex-direction: column;
-      align-items: center;
     }
   
     .boxContainer {
@@ -96,17 +91,6 @@
       background: var(--color-accent);
       border-radius: 8px;
       transition: transform 0.05s ease;
-    }
-  
-    .muteButton {
-      margin-top: 10px;
-      padding: 10px 20px;
-      font-size: 24px;
-      cursor: pointer;
-      background: none;
-      border: none;
-      border-radius: 5px;
-      color: var(--color-accent);
     }
   
   </style>
