@@ -32,6 +32,7 @@
 	export let time_limit: number | null = null;
 	export let modality: "video" | "audio" = "video";
 	export let mode: "send-receive" | "receive" = "send-receive";
+	export let track_constraints: MediaTrackConstraints = {};
 
 	let dragging = false;
 
@@ -113,6 +114,7 @@
 			{server}
 			{rtc_configuration}
 			{time_limit}
+			{track_constraints}
 			i18n={gradio.i18n}
 			on:tick={() => gradio.dispatch("tick")}
 			on:error={({ detail }) => gradio.dispatch("error", detail)}

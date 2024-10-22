@@ -40,6 +40,7 @@
 	};
 
 	let canvas: HTMLCanvasElement;
+	export let track_constraints: MediaTrackConstraints | null = null;
     export let rtc_configuration: Object;
 	export let stream_every = 1;
 	export let server: {
@@ -63,7 +64,7 @@
 		const target = event.target as HTMLInputElement;
 		const device_id = target.value;
 
-		await get_video_stream(include_audio, video_source, device_id).then(
+		await get_video_stream(include_audio, video_source, device_id, track_constraints).then(
 			async (local_stream) => {
 				stream = local_stream;
 				selected_device =

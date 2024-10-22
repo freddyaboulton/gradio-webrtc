@@ -25,7 +25,6 @@
     });
   
     function setupAudioContext() {
-      console.log("set up")
       audioContext = new (window.AudioContext || window.webkitAudioContext)();
       analyser = audioContext.createAnalyser();
       console.log("audio_source", audio_source.srcObject);
@@ -50,16 +49,6 @@
   
       animationId = requestAnimationFrame(updateBars);
     }
-  
-    function toggleMute() {
-        if (audio_source && audio_source.srcObject) {
-            const audioTracks = (audio_source.srcObject as MediaStream).getAudioTracks();
-            audioTracks.forEach(track => {
-            track.enabled = !track.enabled;
-            });
-            is_muted = !audioTracks[0].enabled;
-        }
-    }   
 
   </script>
   
@@ -75,6 +64,8 @@
     .waveContainer {
       position: relative;
       display: flex;
+      min-height: 100px;
+      max-height: 128px;
     }
   
     .boxContainer {

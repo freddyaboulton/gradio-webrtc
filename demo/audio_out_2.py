@@ -1,10 +1,10 @@
+import os
+
 import gradio as gr
 import numpy as np
 from gradio_webrtc import WebRTC
-from twilio.rest import Client
-import os
 from pydub import AudioSegment
-
+from twilio.rest import Client
 
 account_sid = os.environ.get("TWILIO_ACCOUNT_SID")
 auth_token = os.environ.get("TWILIO_AUTH_TOKEN")

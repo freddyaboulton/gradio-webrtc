@@ -24,6 +24,7 @@
     export let rtc_configuration: Object | null = null;
     export let i18n: I18nFormatter;
     export let time_limit: number | null = null;
+    export let track_constraints: MediaTrackConstraints = {};
     let _time_limit: number | null = null;
 
     $: console.log("time_limit", time_limit);
@@ -87,14 +88,7 @@
             let stream = null
             
             try {
-			    stream = await navigator.mediaDevices.getUserMedia({ audio: {
-                    echoCancellation: true,
-                    noiseSuppression: {exact: true},
-                    autoGainControl: {exact: true},
-                    sampleRate: {ideal: 48000},
-                    sampleSize: {ideal: 16},
-                    channelCount: 2,
-                } });
+			    stream = await navigator.mediaDevices.getUserMedia({ audio: track_constraints });
             } catch (err) {
                 if (!navigator.mediaDevices) {
                     dispatch("error", i18n("audio.no_device_support"));

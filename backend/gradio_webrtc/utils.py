@@ -2,7 +2,6 @@ import asyncio
 import fractions
 import logging
 import threading
-import time
 from typing import Callable
 
 import av
@@ -15,35 +14,44 @@ AUDIO_PTIME = 0.020
 
 def player_worker_decode(
     loop,
-    next: Callable,
+    next_frame: Callable,
     queue: asyncio.Queue,
-    throttle_playback: bool,
     thread_quit: threading.Event,
+    quit_on_none: bool = False,
+    sample_rate: int = 48000,
+    frame_size: int = int(48000 * AUDIO_PTIME),
 ):
-    audio_sample_rate = 48000
     audio_samples = 0
-    audio_time_base = fractions.Fraction(1, audio_sample_rate)
-    audio_resampler = av.AudioResampler(
+    audio_time_base = fractions.Fraction(1, sample_rate)
+    audio_resampler = av.AudioResampler(  # type: ignore
         format="s16",
         layout="stereo",
-        rate=audio_sample_rate,
-        frame_size=int(audio_sample_rate * AUDIO_PTIME),
+        rate=sample_rate,
+        frame_size=frame_size,
     )
 
-    frame_time = None
-    start_time = time.time()
-
     while not thread_quit.is_set():
-        frame = next()
-        logger.debug("emitted %s", frame)
-        # read up to 1 second ahead
-        if throttle_playback:
-            elapsed_time = time.time() - start_time
-            if frame_time and frame_time > elapsed_time + 1:
-                time.sleep(0.1)
-        sample_rate, audio_array = frame
+        frame = next_frame()
+        if frame is None:
+            if quit_on_none:
+                asyncio.run_coroutine_threadsafe(queue.put(None), loop)
+            continue
+
+        if len(frame) == 2:
+            sample_rate, audio_array = frame
+            layout = "mono"
+        elif len(frame) == 3:
+            sample_rate, audio_array, layout = frame
+
+        logger.debug(
+            "received array with shape %s sample rate %s layout %s",
+            audio_array.shape,
+            sample_rate,
+            layout,
+        )
         format = "s16" if audio_array.dtype == "int16" else "fltp"
-        frame = av.AudioFrame.from_ndarray(audio_array, format=format, layout="stereo")
+
+        frame = av.AudioFrame.from_ndarray(audio_array, format=format, layout=layout)  # type: ignore
         frame.sample_rate = sample_rate
         for frame in audio_resampler.resample(frame):
             # fix timestamps
@@ -51,5 +59,4 @@ def player_worker_decode(
             frame.time_base = audio_time_base
             audio_samples += frame.samples
 
-            frame_time = frame.time
             asyncio.run_coroutine_threadsafe(queue.put(frame), loop)

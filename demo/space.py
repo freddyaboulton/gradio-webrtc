@@ -1,5 +1,6 @@
-import gradio as gr
 import os
+
+import gradio as gr
 
 _docs = {
     "WebRTC": {

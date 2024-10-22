@@ -1,9 +1,9 @@
+import os
+
+import cv2
 import gradio as gr
 from gradio_webrtc import WebRTC
 from twilio.rest import Client
-import os
-import cv2
-
 
 account_sid = os.environ.get("TWILIO_ACCOUNT_SID")
 auth_token = os.environ.get("TWILIO_AUTH_TOKEN")
