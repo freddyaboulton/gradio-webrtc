@@ -30,45 +30,44 @@ async def player_worker_decode(
 
     while not thread_quit.is_set():
         try:
-            async with asyncio.timeout(5):
-                # Get next frame
-                frame = await next_frame()
+            # Get next frame
+            frame = await asyncio.wait_for(next_frame(), timeout=5)
 
-                if frame is None:
-                    if quit_on_none:
-                        await queue.put(None)
-                        break
-                    continue
+            if frame is None:
+                if quit_on_none:
+                    await queue.put(None)
+                    break
+                continue
 
-                if len(frame) == 2:
-                    sample_rate, audio_array = frame
-                    layout = "mono"
-                elif len(frame) == 3:
-                    sample_rate, audio_array, layout = frame
+            if len(frame) == 2:
+                sample_rate, audio_array = frame
+                layout = "mono"
+            elif len(frame) == 3:
+                sample_rate, audio_array, layout = frame
 
-                logger.debug(
-                    "received array with shape %s sample rate %s layout %s",
-                    audio_array.shape,
-                    sample_rate,
-                    layout,
-                )
-                format = "s16" if audio_array.dtype == "int16" else "fltp"
+            logger.debug(
+                "received array with shape %s sample rate %s layout %s",
+                audio_array.shape,
+                sample_rate,
+                layout,
+            )
+            format = "s16" if audio_array.dtype == "int16" else "fltp"
 
-                # Convert to audio frame and resample
-                # This runs in the same timeout context
-                frame = av.AudioFrame.from_ndarray(
-                    audio_array, format=format, layout=layout
-                )
-                frame.sample_rate = sample_rate
+            # Convert to audio frame and resample
+            # This runs in the same timeout context
+            frame = av.AudioFrame.from_ndarray(
+                audio_array, format=format, layout=layout
+            )
+            frame.sample_rate = sample_rate
 
-                for processed_frame in audio_resampler.resample(frame):
-                    processed_frame.pts = audio_samples
-                    processed_frame.time_base = audio_time_base
-                    audio_samples += processed_frame.samples
-                    await queue.put(processed_frame)
-                    logger.debug("Queue size utils.py: %s", queue.qsize())
+            for processed_frame in audio_resampler.resample(frame):
+                processed_frame.pts = audio_samples
+                processed_frame.time_base = audio_time_base
+                audio_samples += processed_frame.samples
+                await queue.put(processed_frame)
+                logger.debug("Queue size utils.py: %s", queue.qsize())
 
-        except TimeoutError:
+        except (TimeoutError, asyncio.TimeoutError):
             logger.warning(
                 "Timeout in frame processing cycle after %s seconds - resetting", 5
             )

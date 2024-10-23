@@ -214,7 +214,7 @@ if __name__ == "__main__":
 * An audio frame is represented as a tuple of (frame_rate, audio_samples) where `audio_samples` is a numpy array of shape (num_channels, num_samples).
 * You can also specify the audio layout ("mono" or "stereo") in the emit method by retuning it as the third element of the tuple. If not specified, the default is "mono".
 * The `time_limit` parameter is the maximum time in seconds the conversation will run. If the time limit is reached, the audio stream will stop.
-
+* The `emit` method SHOULD NOT block. If a frame is not ready to be sent, the method should return None.
 
 ## Deployment
 
