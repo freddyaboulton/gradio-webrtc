@@ -20,6 +20,7 @@
 		offer: (body: any) => Promise<any>;
 	};
 	export let rtc_configuration: Object;
+	export let track_constraints: MediaTrackConstraints = {};
 
 	const dispatch = createEventDispatcher<{
 		change: FileData | null;
@@ -48,6 +49,7 @@
 		{rtc_configuration}
 		{include_audio}
 		{time_limit}
+		{track_constraints}
 		on:error
 		on:start_recording
 		on:stop_recording
@@ -62,22 +64,6 @@
 </div>
 
 <style>
-	.file-name {
-		padding: var(--size-6);
-		font-size: var(--text-xxl);
-		word-break: break-all;
-	}
-
-	.file-size {
-		padding: var(--size-2);
-		font-size: var(--text-xl);
-	}
-
-	.upload-container {
-		height: 100%;
-		width: 100%;
-	}
-
 	.video-container {
 		display: flex;
 		height: 100%;

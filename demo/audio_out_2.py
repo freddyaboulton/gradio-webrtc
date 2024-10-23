@@ -1,11 +1,10 @@
+import os
+
 import gradio as gr
 import numpy as np
 from gradio_webrtc import WebRTC
-from twilio.rest import Client
-import os
 from pydub import AudioSegment
-
-
+from twilio.rest import Client
 
 account_sid = os.environ.get("TWILIO_ACCOUNT_SID")
 auth_token = os.environ.get("TWILIO_AUTH_TOKEN")
@@ -24,10 +23,16 @@ else:
 
 import time
 
+
 def generation(num_steps):
     for _ in range(num_steps):
-        segment = AudioSegment.from_file("/Users/freddy/sources/gradio/demo/audio_debugger/cantina.wav")
-        yield (segment.frame_rate, np.array(segment.get_array_of_samples()).reshape(1, -1))
+        segment = AudioSegment.from_file(
+            "/Users/freddy/sources/gradio/demo/audio_debugger/cantina.wav"
+        )
+        yield (
+            segment.frame_rate,
+            np.array(segment.get_array_of_samples()).reshape(1, -1),
+        )
         time.sleep(3.5)
 
 
@@ -48,9 +53,12 @@ with gr.Blocks() as demo:
             gr.Slider()
         with gr.Column():
             # audio = gr.Audio(interactive=False)
-            audio = WebRTC(label="Stream", rtc_configuration=rtc_configuration,
-                           mode="receive", modality="audio")
-
+            audio = WebRTC(
+                label="Stream",
+                rtc_configuration=rtc_configuration,
+                mode="receive",
+                modality="audio",
+            )
 
 
 if __name__ == "__main__":

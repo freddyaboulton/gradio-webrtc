@@ -17,13 +17,12 @@
     export let show_label = true;
     export let rtc_configuration: Object | null = null;
     export let i18n: I18nFormatter;
-    export let autoplay: boolean = true;
     
     export let server: {
         offer: (body: any) => Promise<any>;
     };
 
-    let stream_state = "closed";
+    let stream_state: "open" | "closed" | "waiting" = "closed";
     let audio_player: HTMLAudioElement;
     let pc: RTCPeerConnection;
     let _webrtc_id = Math.random().toString(36).substring(2);
@@ -36,7 +35,6 @@
         stop: undefined;
 	}>();
 
-
     onMount(() => {
         window.setInterval(() => {
             if (stream_state == "open") {
@@ -46,33 +44,43 @@
         }
     )
 
-    $: if( value === "start_webrtc_stream") {
-        stream_state = "connecting";
-		value = _webrtc_id;
-        pc = new RTCPeerConnection(rtc_configuration);
-        pc.addEventListener("connectionstatechange",
-            async (event) => {
-                switch(pc.connectionState) {
-                    case "connected":
-                        console.info("connected");
-                        stream_state = "open";
-                        break;
-                    case "disconnected":
-                        console.info("closed");
-                        stop(pc);
-                        break;
-                    default:
-                        break;
+    async function start_stream(value: string): Promise<string> {
+        if( value === "start_webrtc_stream") {
+            stream_state = "waiting";
+            _webrtc_id = Math.random().toString(36).substring(2)
+            value = _webrtc_id;
+            console.log("set value to ", value);
+            pc = new RTCPeerConnection(rtc_configuration);
+            pc.addEventListener("connectionstatechange",
+                async (event) => {
+                    switch(pc.connectionState) {
+                        case "connected":
+                            console.info("connected");
+                            stream_state = "open";
+                            break;
+                        case "disconnected":
+                            console.info("closed");
+                            stop(pc);
+                            break;
+                        default:
+                            break;
+                    }
                 }
-            }
-        )
-		start(null, pc, audio_player, server.offer, _webrtc_id, "audio").then((connection) => {
-				pc = connection;
-			}).catch(() => {
-                console.info("catching")
-                dispatch("error", "Too many concurrent users. Come back later!");
-            });
-	}
+            )
+            let stream = null;
+            start(stream, pc, audio_player, server.offer, _webrtc_id, "audio").then((connection) => {
+                    pc = connection;
+                }).catch(() => {
+                    console.info("catching")
+                    dispatch("error", "Too many concurrent users. Come back later!");
+                });
+        }
+        return value;
+    }
+
+    $: start_stream(value).then((val) => {
+        value = val;
+    });
 
 
     
@@ -93,23 +101,28 @@
     on:play={() => dispatch("play")}
 />
 {#if value !== "__webrtc_value__"}
+    <div class="audio-container">
     <AudioWave audio_source={audio_player} {stream_state}/>
+    </div>  
 {/if}
 {#if value === "__webrtc_value__"}
-	<Empty size="small">
-		<Music />
-	</Empty>
+    <Empty size="small">
+        <Music />
+    </Empty>
 {/if}
 
 
 <style>
-    :global(::part(wrapper)) {
-        margin-bottom: var(--size-2);
-    }
+    .audio-container {
+		display: flex;
+		height: 100%;
+		flex-direction: column;
+		justify-content: center;
+		align-items: center;
+	}
 
     .standard-player {
         width: 100%;
-        padding: var(--size-2);
     }
 
     .hidden {

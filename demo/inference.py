@@ -1,8 +1,8 @@
 import time
+
 import cv2
 import numpy as np
 import onnxruntime
-
 from utils import draw_detections
 
 
@@ -120,8 +120,9 @@ class YOLOv10:
 
 
 if __name__ == "__main__":
-    import requests
     import tempfile
+
+    import requests
     from huggingface_hub import hf_hub_download
 
     model_file = hf_hub_download(

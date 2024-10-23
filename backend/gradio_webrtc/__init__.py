@@ -1,3 +1,3 @@
-from .webrtc import WebRTC
+from .webrtc import StreamHandler, WebRTC
 
-__all__ = ["WebRTC"]
+__all__ = ["StreamHandler", "WebRTC"]

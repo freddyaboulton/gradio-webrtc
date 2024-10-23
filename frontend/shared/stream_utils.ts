@@ -18,15 +18,16 @@ export function set_local_stream(
 export async function get_video_stream(
 	include_audio: boolean,
 	video_source: HTMLVideoElement,
-	device_id?: string
+	device_id?: string,
+	track_constraints?: MediaTrackConstraints,
 ): Promise<MediaStream> {
-	const size = {
-		width: { ideal: 1920 },
-		height: { ideal: 1440 }
+	const fallback_constraints = track_constraints || {
+		width: { ideal: 500 },
+		height: { ideal: 500 }
 	};
 
 	const constraints = {
-		video: device_id ? { deviceId: { exact: device_id }, ...size } : size,
+		video: device_id ? { deviceId: { exact: device_id }, ...fallback_constraints } : fallback_constraints,
 		audio: include_audio
 	};
 

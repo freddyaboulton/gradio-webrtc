@@ -3,21 +3,26 @@
 from __future__ import annotations
 
 import asyncio
+import functools
 import logging
 import threading
 import time
 import traceback
+from abc import ABC, abstractmethod
 from collections.abc import Callable
 from typing import TYPE_CHECKING, Any, Generator, Literal, Sequence, cast
 
+import anyio.to_thread
+import av
 import numpy as np
 from aiortc import (
     AudioStreamTrack,
+    MediaStreamTrack,
     RTCPeerConnection,
     RTCSessionDescription,
     VideoStreamTrack,
 )
-from aiortc.contrib.media import MediaRelay, VideoFrame  # type: ignore
+from aiortc.contrib.media import AudioFrame, MediaRelay, VideoFrame  # type: ignore
 from aiortc.mediastreams import MediaStreamError
 from gradio import wasm_utils
 from gradio.components.base import Component, server
@@ -47,7 +52,7 @@ class VideoCallback(VideoStreamTrack):
 
     def __init__(
         self,
-        track,
+        track: MediaStreamTrack,
         event_handler: Callable,
     ) -> None:
         super().__init__()  # don't forget this!
@@ -72,7 +77,7 @@ class VideoCallback(VideoStreamTrack):
     async def recv(self):
         try:
             try:
-                frame = await self.track.recv()
+                frame = cast(VideoFrame, await self.track.recv())
             except MediaStreamError:
                 return
             frame_array = frame.to_ndarray(format="bgr24")
@@ -95,9 +100,127 @@ class VideoCallback(VideoStreamTrack):
 
             return new_frame
         except Exception as e:
-            logger.debug(e)
+            logger.debug("exception %s", e)
             exec = traceback.format_exc()
-            logger.debug(exec)
+            logger.debug("traceback %s", exec)
+
+
+class StreamHandler(ABC):
+    def __init__(
+        self,
+        expected_layout: Literal["mono", "stereo"] = "mono",
+        output_sample_rate: int = 24000,
+        output_frame_size: int = 960,
+    ) -> None:
+        self.expected_layout = expected_layout
+        self.output_sample_rate = output_sample_rate
+        self.output_frame_size = output_frame_size
+        self._resampler = None
+
+    def resample(self, frame: AudioFrame) -> Generator[AudioFrame, None, None]:
+        if self._resampler is None:
+            self._resampler = av.AudioResampler(  # type: ignore
+                format="s16",
+                layout=self.expected_layout,
+                rate=frame.sample_rate,
+                frame_size=frame.samples,
+            )
+        yield from self._resampler.resample(frame)
+
+    @abstractmethod
+    def receive(self, frame: tuple[int, np.ndarray] | np.ndarray) -> None:
+        pass
+
+    @abstractmethod
+    def emit(self) -> None:
+        pass
+
+
+class AudioCallback(AudioStreamTrack):
+    kind = "audio"
+
+    def __init__(
+        self,
+        track: MediaStreamTrack,
+        event_handler: StreamHandler,
+    ) -> None:
+        self.track = track
+        self.event_handler = event_handler
+        self.current_timestamp = 0
+        self.latest_args: str | list[Any] = "not_set"
+        self.queue = asyncio.Queue()
+        self.thread_quit = asyncio.Event()
+        self._start: float | None = None
+        self.has_started = False
+        self.last_timestamp = 0
+        super().__init__()
+
+    async def process_input_frames(self) -> None:
+        while not self.thread_quit.is_set():
+            try:
+                frame = cast(AudioFrame, await self.track.recv())
+                for frame in self.event_handler.resample(frame):
+                    numpy_array = frame.to_ndarray()
+                    await anyio.to_thread.run_sync(
+                        self.event_handler.receive, (frame.sample_rate, numpy_array)
+                    )
+            except MediaStreamError:
+                logger.debug("MediaStreamError in process_input_frames")
+                break
+
+    def start(self):
+        if not self.has_started:
+            loop = asyncio.get_running_loop()
+            callable = functools.partial(
+                loop.run_in_executor, None, self.event_handler.emit
+            )
+            asyncio.create_task(self.process_input_frames())
+            asyncio.create_task(
+                player_worker_decode(
+                    callable,
+                    self.queue,
+                    self.thread_quit,
+                    False,
+                    self.event_handler.output_sample_rate,
+                    self.event_handler.output_frame_size,
+                )
+            )
+            self.has_started = True
+
+    async def recv(self):
+        try:
+            if self.readyState != "live":
+                raise MediaStreamError
+
+            self.start()
+            frame = await self.queue.get()
+            logger.debug("frame %s", frame)
+
+            data_time = frame.time
+
+            if time.time() - self.last_timestamp > 10 * (
+                self.event_handler.output_frame_size
+                / self.event_handler.output_sample_rate
+            ):
+                self._start = None
+
+            # control playback rate
+            if self._start is None:
+                self._start = time.time() - data_time
+            else:
+                wait = self._start + data_time - time.time()
+                await asyncio.sleep(wait)
+            self.last_timestamp = time.time()
+            return frame
+        except Exception as e:
+            logger.debug("exception %s", e)
+            exec = traceback.format_exc()
+            logger.debug("traceback %s", exec)
+
+    def stop(self):
+        logger.debug("audio callback stop")
+        self.thread_quit.set()
+        super().stop()
 
 
 class ServerToClientVideo(VideoStreamTrack):
@@ -113,19 +236,9 @@ class ServerToClientVideo(VideoStreamTrack):
     ) -> None:
         super().__init__()  # don't forget this!
         self.event_handler = event_handler
+        self.args_set = asyncio.Event()
         self.latest_args: str | list[Any] = "not_set"
         self.generator: Generator[Any, None, Any] | None = None
-
-    def add_frame_to_payload(
-        self, args: list[Any], frame: np.ndarray | None
-    ) -> list[Any]:
-        new_args = []
-        for val in args:
-            if isinstance(val, str) and val == "__webrtc_value__":
-                new_args.append(frame)
-            else:
-                new_args.append(val)
-        return new_args
 
     def array_to_frame(self, array: np.ndarray) -> VideoFrame:
         return VideoFrame.from_ndarray(array, format="bgr24")
@@ -133,12 +246,8 @@ class ServerToClientVideo(VideoStreamTrack):
     async def recv(self):
         try:
             pts, time_base = await self.next_timestamp()
-            if self.latest_args == "not_set":
-                frame = self.array_to_frame(np.zeros((480, 640, 3), dtype=np.uint8))
-                frame.pts = pts
-                frame.time_base = time_base
-                return frame
-            elif self.generator is None:
+            await self.args_set.wait()
+            if self.generator is None:
                 self.generator = cast(
                     Generator[Any, None, Any], self.event_handler(*self.latest_args)
                 )
@@ -154,9 +263,9 @@ class ServerToClientVideo(VideoStreamTrack):
             next_frame.time_base = time_base
             return next_frame
         except Exception as e:
-            logger.debug(e)
+            logger.debug("exception %s", e)
             exec = traceback.format_exc()
-            logger.debug(exec)
+            logger.debug("traceback %s ", exec)
 
 
 class ServerToClientAudio(AudioStreamTrack):
@@ -169,28 +278,38 @@ class ServerToClientAudio(AudioStreamTrack):
         self.generator: Generator[Any, None, Any] | None = None
         self.event_handler = event_handler
         self.current_timestamp = 0
-        self.latest_args = "not_set"
+        self.latest_args: str | list[Any] = "not_set"
+        self.args_set = threading.Event()
         self.queue = asyncio.Queue()
-        self.thread_quit = threading.Event()
-        self.__thread = None
+        self.thread_quit = asyncio.Event()
+        self.has_started = False
         self._start: float | None = None
         super().__init__()
 
+    def next(self) -> tuple[int, np.ndarray] | None:
+        self.args_set.wait()
+        if self.generator is None:
+            self.generator = self.event_handler(*self.latest_args)
+        if self.generator is not None:
+            try:
+                frame = next(self.generator)
+                return frame
+            except StopIteration:
+                self.thread_quit.set()
+
     def start(self):
-        if self.__thread is None:
-            self.__thread = threading.Thread(
-                name="generator-runner",
-                target=player_worker_decode,
-                args=(
-                    asyncio.get_event_loop(),
-                    self.event_handler,
-                    self,
+        if not self.has_started:
+            loop = asyncio.get_running_loop()
+            callable = functools.partial(loop.run_in_executor, None, self.next)
+            asyncio.create_task(
+                player_worker_decode(
+                    callable,
                     self.queue,
-                    False,
                     self.thread_quit,
-                ),
+                    True,
+                )
             )
-            self.__thread.start()
+            self.has_started = True
 
     async def recv(self):
         try:
@@ -215,15 +334,13 @@ class ServerToClientAudio(AudioStreamTrack):
 
             return data
         except Exception as e:
-            logger.debug(e)
+            logger.debug("exception %s", e)
             exec = traceback.format_exc()
-            logger.debug(exec)
+            logger.debug("traceback %s", exec)
 
     def stop(self):
+        logger.debug("audio-to-client stop callback")
         self.thread_quit.set()
-        if self.__thread is not None:
-            self.__thread.join()
-            self.__thread = None
         super().stop()
 
 
@@ -241,7 +358,7 @@ class WebRTC(Component):
     pcs: set[RTCPeerConnection] = set([])
     relay = MediaRelay()
     connections: dict[
-        str, VideoCallback | ServerToClientVideo | ServerToClientAudio
+        str, VideoCallback | ServerToClientVideo | ServerToClientAudio | AudioCallback
     ] = {}
 
     EVENTS = ["tick"]
@@ -266,6 +383,7 @@ class WebRTC(Component):
         key: int | str | None = None,
         mirror_webcam: bool = True,
         rtc_configuration: dict[str, Any] | None = None,
+        track_constraints: dict[str, Any] | None = None,
         time_limit: float | None = None,
         mode: Literal["send-receive", "receive"] = "send-receive",
         modality: Literal["video", "audio"] = "video",
@@ -300,9 +418,6 @@ class WebRTC(Component):
             streaming: when used set as an output, takes video chunks yielded from the backend and combines them into one streaming video output. Each chunk should be a video file with a .ts extension using an h.264 encoding. Mp4 files are also accepted but they will be converted to h.264 encoding.
             watermark: an image file to be included as a watermark on the video. The image is not scaled and is displayed on the bottom right of the video. Valid formats for the image are: jpeg, png.
         """
-        if modality == "audio" and mode == "send-receive":
-            raise ValueError("Audio modality is not supported in send-receive mode")
-
         self.time_limit = time_limit
         self.height = height
         self.width = width
@@ -311,7 +426,24 @@ class WebRTC(Component):
         self.rtc_configuration = rtc_configuration
         self.mode = mode
         self.modality = modality
-        self.event_handler: Callable | None = None
+        if track_constraints is None and modality == "audio":
+            track_constraints = {
+                "echoCancellation": True,
+                "noiseSuppression": {"exact": True},
+                "autoGainControl": {"exact": True},
+                "sampleRate": {"ideal": 24000},
+                "sampleSize": {"ideal": 16},
+                "channelCount": {"exact": 1},
+            }
+        if track_constraints is None and modality == "video":
+            track_constraints = {
+                "facingMode": "user",
+                "width": {"ideal": 500},
+                "height": {"ideal": 500},
+                "frameRate": {"ideal": 30},
+            }
+        self.track_constraints = track_constraints
+        self.event_handler: Callable | StreamHandler | None = None
         super().__init__(
             label=label,
             every=every,
@@ -355,10 +487,11 @@ class WebRTC(Component):
                 )
             elif self.mode == "receive":
                 self.connections[webrtc_id].latest_args = list(args)
+                self.connections[webrtc_id].args_set.set()  # type: ignore
 
     def stream(
         self,
-        fn: Callable[..., Any] | None = None,
+        fn: Callable[..., Any] | StreamHandler | None = None,
         inputs: Block | Sequence[Block] | set[Block] | None = None,
         outputs: Block | Sequence[Block] | set[Block] | None = None,
         js: str | None = None,
@@ -383,6 +516,15 @@ class WebRTC(Component):
         )
         self.event_handler = fn
         self.time_limit = time_limit
+
+        if (
+            self.mode == "send-receive"
+            and self.modality == "audio"
+            and not isinstance(self.event_handler, StreamHandler)
+        ):
+            raise ValueError(
+                "In the send-receive mode for audio, the event handler must be an instance of StreamHandler."
+            )
 
         if self.mode == "send-receive":
             if cast(list[Block], inputs)[0] != self:
@@ -424,9 +566,9 @@ class WebRTC(Component):
                     "In the receive mode stream event, the trigger parameter must be provided"
                 )
             trigger(lambda: "start_webrtc_stream", inputs=None, outputs=self)
-            self.tick(
+            self.tick(  # type: ignore
                 self.set_output,
-                inputs=[self] + inputs,
+                inputs=[self] + list(inputs),
                 outputs=None,
                 concurrency_id=concurrency_id,
             )
@@ -439,7 +581,7 @@ class WebRTC(Component):
     @server
     async def offer(self, body):
         logger.debug("Starting to handle offer")
-        logger.debug("Offer body", body)
+        logger.debug("Offer body %s", body)
         if len(self.connections) >= cast(int, self.concurrency_limit):
             return {"status": "failed"}
 
@@ -450,7 +592,7 @@ class WebRTC(Component):
 
         @pc.on("iceconnectionstatechange")
         async def on_iceconnectionstatechange():
-            logger.debug("ICE connection state change", pc.iceConnectionState)
+            logger.debug("ICE connection state change %s", pc.iceConnectionState)
             if pc.iceConnectionState == "failed":
                 await pc.close()
                 self.connections.pop(body["webrtc_id"], None)
@@ -458,9 +600,12 @@ class WebRTC(Component):
 
         @pc.on("connectionstatechange")
         async def on_connectionstatechange():
+            logger.debug("pc.connectionState %s", pc.connectionState)
             if pc.connectionState in ["failed", "closed"]:
                 await pc.close()
-                self.connections.pop(body["webrtc_id"], None)
+                connection = self.connections.pop(body["webrtc_id"], None)
+                if connection:
+                    connection.stop()
                 self.pcs.discard(pc)
             if pc.connectionState == "connected":
                 if self.time_limit is not None:
@@ -468,12 +613,19 @@ class WebRTC(Component):
 
         @pc.on("track")
         def on_track(track):
-            cb = VideoCallback(
-                self.relay.subscribe(track),
-                event_handler=cast(Callable, self.event_handler),
-            )
+            relay = MediaRelay()
+            if self.modality == "video":
+                cb = VideoCallback(
+                    relay.subscribe(track),
+                    event_handler=cast(Callable, self.event_handler),
+                )
+            elif self.modality == "audio":
+                cb = AudioCallback(
+                    relay.subscribe(track),
+                    event_handler=cast(StreamHandler, self.event_handler),
+                )
             self.connections[body["webrtc_id"]] = cb
-            logger.debug("Adding track to peer connection", cb)
+            logger.debug("Adding track to peer connection %s", cb)
             pc.addTrack(cb)
 
         if self.mode == "receive":
@@ -482,7 +634,7 @@ class WebRTC(Component):
             elif self.modality == "audio":
                 cb = ServerToClientAudio(cast(Callable, self.event_handler))
 
-            logger.debug("Adding track to peer connection", cb)
+            logger.debug("Adding track to peer connection %s", cb)
             pc.addTrack(cb)
             self.connections[body["webrtc_id"]] = cb
             cb.on("ended", lambda: self.connections.pop(body["webrtc_id"], None))

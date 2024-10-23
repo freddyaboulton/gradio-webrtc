@@ -1,9 +1,9 @@
+import os
+
+import cv2
 import gradio as gr
 from gradio_webrtc import WebRTC
 from twilio.rest import Client
-import os
-import cv2
-
 
 account_sid = os.environ.get("TWILIO_ACCOUNT_SID")
 auth_token = os.environ.get("TWILIO_AUTH_TOKEN")
@@ -30,7 +30,6 @@ def generation():
         yield frame
 
 
-
 with gr.Blocks() as demo:
     gr.HTML(
         """
@@ -39,12 +38,15 @@ with gr.Blocks() as demo:
     </h1>
     """
     )
-    output_video = WebRTC(label="Video Stream", rtc_configuration=rtc_configuration,
-                    mode="receive", modality="video")
+    output_video = WebRTC(
+        label="Video Stream",
+        rtc_configuration=rtc_configuration,
+        mode="receive",
+        modality="video",
+    )
     button = gr.Button("Start", variant="primary")
     output_video.stream(
-        fn=generation, inputs=None, outputs=[output_video],
-        trigger=button.click
+        fn=generation, inputs=None, outputs=[output_video], trigger=button.click
     )
 
 

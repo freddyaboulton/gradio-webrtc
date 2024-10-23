@@ -2,7 +2,7 @@
     import { onMount, onDestroy } from 'svelte';
   
     export let numBars = 16;
-    export let stream_state: "open" | "closed" = "closed";
+    export let stream_state: "open" | "closed" | "waiting" = "closed";
     export let audio_source: HTMLAudioElement;
   
     let audioContext: AudioContext;
@@ -25,7 +25,6 @@
     });
   
     function setupAudioContext() {
-      console.log("set up")
       audioContext = new (window.AudioContext || window.webkitAudioContext)();
       analyser = audioContext.createAnalyser();
       console.log("audio_source", audio_source.srcObject);
@@ -50,16 +49,6 @@
   
       animationId = requestAnimationFrame(updateBars);
     }
-  
-    function toggleMute() {
-        if (audio_source && audio_source.srcObject) {
-            const audioTracks = (audio_source.srcObject as MediaStream).getAudioTracks();
-            audioTracks.forEach(track => {
-            track.enabled = !track.enabled;
-            });
-            is_muted = !audioTracks[0].enabled;
-        }
-    }   
 
   </script>
   
@@ -69,17 +58,14 @@
         <div class="box"></div>
       {/each}
     </div>
-    <button class="muteButton" on:click={toggleMute}>
-      {is_muted ? '🔈' : '🔊'}
-    </button>
   </div>
   
   <style>
     .waveContainer {
       position: relative;
       display: flex;
-      flex-direction: column;
-      align-items: center;
+      min-height: 100px;
+      max-height: 128px;
     }
   
     .boxContainer {
@@ -96,17 +82,6 @@
       background: var(--color-accent);
       border-radius: 8px;
       transition: transform 0.05s ease;
-    }
-  
-    .muteButton {
-      margin-top: 10px;
-      padding: 10px 20px;
-      font-size: 24px;
-      cursor: pointer;
-      background: none;
-      border: none;
-      border-radius: 5px;
-      color: var(--color-accent);
     }
   
   </style>

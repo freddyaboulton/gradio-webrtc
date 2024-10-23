@@ -7,6 +7,7 @@
 	import type { LoadingStatus } from "@gradio/statustracker";
 	import StaticVideo from "./shared/StaticVideo.svelte";
 	import StaticAudio from "./shared/StaticAudio.svelte";
+	import InteractiveAudio from "./shared/InteractiveAudio.svelte";
 
 	export let elem_id = "";
 	export let elem_classes: string[] = [];
@@ -31,14 +32,14 @@
 	export let time_limit: number | null = null;
 	export let modality: "video" | "audio" = "video";
 	export let mode: "send-receive" | "receive" = "send-receive";
+	export let track_constraints: MediaTrackConstraints = {};
 
 	let dragging = false;
 
 	$: console.log("value", value);
 </script>
 
-{#if mode == "receive" && modality === "video"}
-	<Block
+<Block
 		{visible}
 		variant={"solid"}
 		border_mode={dragging ? "focus" : "base"}
@@ -59,6 +60,7 @@
 			on:clear_status={() => gradio.dispatch("clear_status", loading_status)}
 		/>
 
+	{#if mode == "receive" && modality === "video"}
 		<StaticVideo
 			bind:value={value}
 			{label}
@@ -68,27 +70,7 @@
 			on:tick={() => gradio.dispatch("tick")}
 			on:error={({ detail }) => gradio.dispatch("error", detail)}
 		/>
-	</Block>
-
-{:else if mode == "receive" && modality === "audio"}
-	<Block
-		variant={"solid"}
-		border_mode={dragging ? "focus" : "base"}
-		padding={false}
-		allow_overflow={false}
-		{elem_id}
-		{elem_classes}
-		{visible}
-		{container}
-		{scale}
-		{min_width}
-	>
-		<StatusTracker
-		autoscroll={gradio.autoscroll}
-		i18n={gradio.i18n}
-		{...loading_status}
-		on:clear_status={() => gradio.dispatch("clear_status", loading_status)}
-	/>
+	{:else if mode == "receive" && modality === "audio"}
 		<StaticAudio
 			bind:value={value}
 			{label}
@@ -99,28 +81,7 @@
 			on:tick={() => gradio.dispatch("tick")}
 			on:error={({ detail }) => gradio.dispatch("error", detail)}
 		/>
-	</Block>
-{:else if mode === "send-receive" && modality === "video"}
-	<Block
-	{visible}
-	variant={"solid"}
-	border_mode={dragging ? "focus" : "base"}
-	padding={false}
-	{elem_id}
-	{elem_classes}
-	{height}
-	{width}
-	{container}
-	{scale}
-	{min_width}
-	allow_overflow={false}
-	>
-		<StatusTracker
-		autoscroll={gradio.autoscroll}
-		i18n={gradio.i18n}
-		{...loading_status}
-		on:clear_status={() => gradio.dispatch("clear_status", loading_status)}
-	/>
+	{:else if mode === "send-receive" && modality === "video"}
 		<Video
 			bind:value={value}
 			{label}
@@ -145,5 +106,18 @@
 		>
 			<UploadText i18n={gradio.i18n} type="video" />
 		</Video>
-	</Block>
-{/if}
+	{:else if mode === "send-receive" && modality === "audio"}
+		<InteractiveAudio
+			bind:value={value}
+			{label}
+			{show_label}
+			{server}
+			{rtc_configuration}
+			{time_limit}
+			{track_constraints}
+			i18n={gradio.i18n}
+			on:tick={() => gradio.dispatch("tick")}
+			on:error={({ detail }) => gradio.dispatch("error", detail)}
+		/>
+	{/if}
+</Block>
