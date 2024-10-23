@@ -57,7 +57,7 @@ pip install gradio_webrtc
 1. [Object Detection from Webcam with YOLOv10](https://huggingface.co/spaces/freddyaboulton/webrtc-yolov10n) 📷
 2. [Streaming Object Detection from Video with RT-DETR](https://huggingface.co/spaces/freddyaboulton/rt-detr-object-detection-webrtc) 🎥
 3. [Text-to-Speech](https://huggingface.co/spaces/freddyaboulton/parler-tts-streaming-webrtc) 🗣️
-4. [Conversational AI]()
+4. [Conversational AI](https://huggingface.co/spaces/freddyaboulton/omni-mini-webrtc) 🤖🗣️
 
 ## Usage
 

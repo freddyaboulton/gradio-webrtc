@@ -138,7 +138,7 @@
                 }
             )
             stream_state = "waiting"
-			webrtc_id = _webrtc_id;
+			webrtc_id = Math.random().toString(36).substring(2);
             start(stream, pc, video_source, server.offer, webrtc_id).then((connection) => {
 				pc = connection;
 			}).catch(() => {

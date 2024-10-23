@@ -36,7 +36,7 @@
     let stream_state: "open" | "closed" | "waiting" = "closed";
     let audio_player: HTMLAudioElement;
     let pc: RTCPeerConnection;
-    let _webrtc_id = Math.random().toString(36).substring(2);
+    let _webrtc_id = null;
 
 
     const dispatch = createEventDispatcher<{
@@ -63,6 +63,7 @@
             _time_limit = null;
             return;
         }
+            _webrtc_id = Math.random().toString(36).substring(2);
             value = _webrtc_id;
             pc = new RTCPeerConnection(rtc_configuration);
             pc.addEventListener("connectionstatechange",

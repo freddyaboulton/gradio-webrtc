@@ -12,3 +12,5 @@ node_modules
 backend/**/templates/
 demo/MobileNetSSD_deploy.caffemodel
 demo/MobileNetSSD_deploy.prototxt.txt
+.DS_Store
+test/

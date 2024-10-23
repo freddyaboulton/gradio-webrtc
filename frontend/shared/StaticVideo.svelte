@@ -40,6 +40,7 @@
 	)
 
 	$: if( value === "start_webrtc_stream") {
+		_webrtc_id = Math.random().toString(36).substring(2);
 		value = _webrtc_id;
 		pc = new RTCPeerConnection(rtc_configuration);
 		pc.addEventListener("connectionstatechange",

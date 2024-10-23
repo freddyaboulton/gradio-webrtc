@@ -58,5 +58,5 @@ def player_worker_decode(
             frame.pts = audio_samples
             frame.time_base = audio_time_base
             audio_samples += frame.samples
-
             asyncio.run_coroutine_threadsafe(queue.put(frame), loop)
+            logger.debug("Queue size utils.py: %s", queue.qsize())

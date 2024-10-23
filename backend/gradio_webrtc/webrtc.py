@@ -99,9 +99,9 @@ class VideoCallback(VideoStreamTrack):
 
             return new_frame
         except Exception as e:
-            logger.debug(e)
+            logger.debug("exception %s", e)
             exec = traceback.format_exc()
-            logger.debug(exec)
+            logger.debug("traceback %s", exec)
 
 
 class StreamHandler(ABC):
@@ -161,20 +161,19 @@ class AudioCallback(AudioStreamTrack):
                 frame = cast(AudioFrame, await self.track.recv())
                 for frame in self.event_handler.resample(frame):
                     numpy_array = frame.to_ndarray()
-                    logger.debug("numpy array shape %s", numpy_array.shape)
                     await anyio.to_thread.run_sync(
                         self.event_handler.receive, (frame.sample_rate, numpy_array)
                     )
-            except MediaStreamError as e:
-                print("MediaStreamError", e)
-                break
+            except MediaStreamError:
+               logger.debug("MediaStreamError in process_input_frames")
+               break
 
     def start(self):
         if not self.has_started:
             asyncio.create_task(self.process_input_frames())
             self.__thread = threading.Thread(
-                name="audio-output-decoders",
                 target=player_worker_decode,
+                daemon=False,
                 args=(
                     asyncio.get_event_loop(),
                     self.event_handler.emit,
@@ -214,11 +213,12 @@ class AudioCallback(AudioStreamTrack):
             self.last_timestamp = time.time()
             return frame
         except Exception as e:
-            logger.debug(e)
+            logger.debug("exception %s", e)
             exec = traceback.format_exc()
-            logger.debug(exec)
+            logger.debug("traceback %s", exec)
 
     def stop(self):
+        logger.debug("audio callback stop")
         self.thread_quit.set()
         if self.__thread is not None:
             self.__thread.join()
@@ -266,9 +266,9 @@ class ServerToClientVideo(VideoStreamTrack):
             next_frame.time_base = time_base
             return next_frame
         except Exception as e:
-            logger.debug(e)
+            logger.debug("exception %s", e)
             exec = traceback.format_exc()
-            logger.debug(exec)
+            logger.debug("traceback %s ", exec)
 
 
 class ServerToClientAudio(AudioStreamTrack):
@@ -298,13 +298,14 @@ class ServerToClientAudio(AudioStreamTrack):
                 frame = next(self.generator)
                 return frame
             except StopIteration:
-                pass
+                self.thread_quit.set()
 
     def start(self):
         if self.__thread is None:
             self.__thread = threading.Thread(
                 name="generator-runner",
                 target=player_worker_decode,
+                daemon=True,
                 args=(
                     asyncio.get_event_loop(),
                     self.next,
@@ -338,9 +339,9 @@ class ServerToClientAudio(AudioStreamTrack):
 
             return data
         except Exception as e:
-            logger.debug(e)
+            logger.debug("exception %s", e)
             exec = traceback.format_exc()
-            logger.debug(exec)
+            logger.debug("traceback %s", exec)
 
     def stop(self):
         self.thread_quit.set()
@@ -606,9 +607,12 @@ class WebRTC(Component):
 
         @pc.on("connectionstatechange")
         async def on_connectionstatechange():
+            logger.debug("pc.connectionState %s", pc.connectionState)
             if pc.connectionState in ["failed", "closed"]:
                 await pc.close()
-                self.connections.pop(body["webrtc_id"], None)
+                connection = self.connections.pop(body["webrtc_id"], None)
+                if connection:
+                    connection.stop()
                 self.pcs.discard(pc)
             if pc.connectionState == "connected":
                 if self.time_limit is not None:

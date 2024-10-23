@@ -134,6 +134,7 @@ export function stop(pc: RTCPeerConnection) {
 	// close local audio / video
 	if (pc.getSenders()) {
 		pc.getSenders().forEach((sender) => {
+			console.log("sender", sender);
 			if (sender.track && sender.track.stop) sender.track.stop();
 		});
 	}

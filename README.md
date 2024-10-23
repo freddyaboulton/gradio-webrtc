@@ -1,14 +1,3 @@
----
-tags: [gradio-custom-component, Video, streaming, webrtc, realtime]
-title: gradio_webrtc
-short_description: Stream images in realtime with webrtc
-colorFrom: blue
-colorTo: yellow
-sdk: gradio
-pinned: false
-app_file: space.py
----
-
 <h1 style='text-align: center; margin-bottom: 1rem'> Gradio WebRTC ⚡️ </h1>
 
 <div style="display: flex; flex-direction: row; justify-content: center">
@@ -30,15 +19,15 @@ pip install gradio_webrtc
 1. [Object Detection from Webcam with YOLOv10](https://huggingface.co/spaces/freddyaboulton/webrtc-yolov10n) 📷
 2. [Streaming Object Detection from Video with RT-DETR](https://huggingface.co/spaces/freddyaboulton/rt-detr-object-detection-webrtc) 🎥
 3. [Text-to-Speech](https://huggingface.co/spaces/freddyaboulton/parler-tts-streaming-webrtc) 🗣️
+4. [Conversational AI](https://huggingface.co/spaces/freddyaboulton/omni-mini-webrtc) 🤖🗣️
 
 ## Usage
 
 The WebRTC component supports the following three use cases:
-1. Streaming video from the user webcam to the server and back
-2. Streaming Video from the server to the client
-3. Streaming Audio from the server to the client
-
-Streaming Audio from client to the server and back (conversational AI) is not supported yet.
+1. [Streaming video from the user webcam to the server and back](#h-streaming-video-from-the-user-webcam-to-the-server-and-back)
+2. [Streaming Video from the server to the client](#h-streaming-video-from-the-server-to-the-client)
+3. [Streaming Audio from the server to the client](#h-streaming-audio-from-the-server-to-the-client)
+4. [Streaming Audio from the client to the server and back (conversational AI)](#h-conversational-ai)
 
 
 ## Streaming Video from the User Webcam to the Server and Back
@@ -78,7 +67,7 @@ as a **numpy array** and returns the processed frame also as a **numpy array**.
 * The `inputs` parameter should be a list where the first element is the WebRTC component. The only output allowed is the WebRTC component.
 * The `time_limit` parameter is the maximum time in seconds the video stream will run. If the time limit is reached, the video stream will stop.
 
-## Streaming Video from the User Webcam to the Server and Back
+## Streaming Video from the server to the client
 
 ```python
 import gradio as gr
@@ -142,6 +131,52 @@ with gr.Blocks() as demo:
 * The `stream` event's `fn` parameter is a generator function that yields the next audio segment as a tuple of (frame_rate, audio_samples).
 * The numpy array should be of shape (1, num_samples).
 * The `outputs` parameter should be a list with the WebRTC component as the only element.
+
+## Conversational AI
+
+```python
+import gradio as gr
+import numpy as np
+from gradio_webrtc import WebRTC, StreamHandler
+from queue import Queue
+import time
+
+
+class EchoHandler(StreamHandler):
+    def __init__(self) -> None:
+        super().__init__()
+        self.queue = Queue()
+
+    def receive(self, frame: tuple[int, np.ndarray] | np.ndarray) -> None:
+        self.queue.put(frame)
+
+    def emit(self) -> None:
+        return self.queue.get()
+
+
+with gr.Blocks() as demo:
+    with gr.Column():
+        with gr.Group():
+            audio = WebRTC(
+                label="Stream",
+                rtc_configuration=None,
+                mode="send-receive",
+                modality="audio",
+            )
+
+        audio.stream(fn=EchoHandler(), inputs=[audio], outputs=[audio], time_limit=15)
+
+
+if __name__ == "__main__":
+    demo.launch()
+```
+
+* Instead of passing a function to the `stream` event's `fn` parameter, pass a `StreamHandler` implementation. The `StreamHandler` above simply echoes the audio back to the client.
+* The `StreamHandler` class has two methods: `receive` and `emit`. The `receive` method is called when a new frame is received from the client, and the `emit` method returns the next frame to send to the client.
+* An audio frame is represented as a tuple of (frame_rate, audio_samples) where `audio_samples` is a numpy array of shape (num_channels, num_samples).
+* You can also specify the audio layout ("mono" or "stereo") in the emit method by retuning it as the third element of the tuple. If not specified, the default is "mono".
+* The `time_limit` parameter is the maximum time in seconds the conversation will run. If the time limit is reached, the audio stream will stop.
+
 
 ## Deployment
 
