@@ -31,7 +31,7 @@ async def player_worker_decode(
     while not thread_quit.is_set():
         try:
             # Get next frame
-            frame = await asyncio.wait_for(next_frame(), timeout=5)
+            frame = await asyncio.wait_for(next_frame(), timeout=60)
 
             if frame is None:
                 if quit_on_none:
