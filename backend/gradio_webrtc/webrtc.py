@@ -10,8 +10,8 @@ import time
 import traceback
 from abc import ABC, abstractmethod
 from collections.abc import Callable
-from typing import TYPE_CHECKING, Any, Generator, Literal, Sequence, cast
 from copy import deepcopy
+from typing import TYPE_CHECKING, Any, Generator, Literal, Sequence, cast
 
 import anyio.to_thread
 import av
@@ -122,7 +122,9 @@ class StreamHandler(ABC):
         try:
             return deepcopy(self)
         except Exception:
-            raise ValueError("Current StreamHandler implementation cannot be deepcopied. Implement the copy method.")
+            raise ValueError(
+                "Current StreamHandler implementation cannot be deepcopied. Implement the copy method."
+            )
 
     def resample(self, frame: AudioFrame) -> Generator[AudioFrame, None, None]:
         if self._resampler is None:

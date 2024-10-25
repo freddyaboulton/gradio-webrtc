@@ -55,7 +55,7 @@ async def player_worker_decode(
 
             # Convert to audio frame and resample
             # This runs in the same timeout context
-            frame = av.AudioFrame.from_ndarray( # type: ignore
+            frame = av.AudioFrame.from_ndarray(  # type: ignore
                 audio_array, format=format, layout=layout
             )
             frame.sample_rate = sample_rate

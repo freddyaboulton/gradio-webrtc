@@ -1,13 +1,15 @@
 import logging
 import warnings
 from dataclasses import dataclass
-from huggingface_hub import hf_hub_download
-
 from typing import List
 
 import numpy as np
+from huggingface_hub import hf_hub_download
 
 logger = logging.getLogger(__name__)
+
+# The code below is adapted from https://github.com/snakers4/silero-vad.
+# The code below is adapted from https://github.com/gpt-omni/mini-omni/blob/main/utils/vad.py
 
 
 @dataclass
@@ -235,9 +237,10 @@ class SileroVADModel:
         return speeches
 
     def vad(
-        self, audio_tuple: tuple[int, np.ndarray], vad_parameters: None | SileroVadOptions
+        self,
+        audio_tuple: tuple[int, np.ndarray],
+        vad_parameters: None | SileroVadOptions,
     ) -> float:
-
         sampling_rate, audio = audio_tuple
         logger.debug("VAD audio shape input: %s", audio.shape)
         try:
@@ -245,7 +248,7 @@ class SileroVADModel:
             sr = 16000
             if sr != sampling_rate:
                 try:
-                    import librosa # type: ignore
+                    import librosa  # type: ignore
                 except ImportError as e:
                     raise RuntimeError(
                         "Applying the VAD filter requires the librosa if the input sampling rate is not 16000hz"
@@ -264,6 +267,7 @@ class SileroVADModel:
         except Exception as e:
             import math
             import traceback
+
             logger.debug("VAD Exception: %s", str(e))
             exec = traceback.format_exc()
             logger.debug("traceback %s", exec)
