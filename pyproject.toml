@@ -8,12 +8,12 @@ build-backend = "hatchling.build"
 
 [project]
 name = "gradio_webrtc"
-version = "0.0.8"
+version = "0.0.9"
 description = "Stream images in realtime with webrtc"
 readme = "README.md"
 license = "apache-2.0"
 requires-python = ">=3.10"
-authors = [{ name = "YOUR NAME", email = "YOUREMAIL@domain.com" }]
+authors = [{ name = "Freddy Boulton", email = "YOUREMAIL@domain.com" }]
 keywords = ["gradio-custom-component", "gradio-template-Video", "streaming", "webrtc", "realtime"]
 # Add dependencies here
 dependencies = ["gradio>=4.0,<6.0", "aiortc"]
@@ -22,10 +22,10 @@ classifiers = [
   'Operating System :: OS Independent',
   'Programming Language :: Python :: 3',
   'Programming Language :: Python :: 3 :: Only',
-  'Programming Language :: Python :: 3.8',
   'Programming Language :: Python :: 3.9',
   'Programming Language :: Python :: 3.10',
   'Programming Language :: Python :: 3.11',
+  'Programming Language :: Python :: 3.12',
   'Topic :: Scientific/Engineering',
   'Topic :: Scientific/Engineering :: Artificial Intelligence',
   'Topic :: Scientific/Engineering :: Visualization',
@@ -43,6 +43,7 @@ classifiers = [
 
 [project.optional-dependencies]
 dev = ["build", "twine"]
+vad = ["librosa", "onnxruntime"]
 
 [tool.hatch.build]
 artifacts = ["/backend/gradio_webrtc/templates", "*.pyi"]

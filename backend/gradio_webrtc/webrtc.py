@@ -10,6 +10,7 @@ import time
 import traceback
 from abc import ABC, abstractmethod
 from collections.abc import Callable
+from copy import deepcopy
 from typing import TYPE_CHECKING, Any, Generator, Literal, Sequence, cast
 
 import anyio.to_thread
@@ -116,6 +117,14 @@ class StreamHandler(ABC):
         self.output_sample_rate = output_sample_rate
         self.output_frame_size = output_frame_size
         self._resampler = None
+
+    def copy(self) -> "StreamHandler":
+        try:
+            return deepcopy(self)
+        except Exception:
+            raise ValueError(
+                "Current StreamHandler implementation cannot be deepcopied. Implement the copy method."
+            )
 
     def resample(self, frame: AudioFrame) -> Generator[AudioFrame, None, None]:
         if self._resampler is None:
@@ -622,7 +631,7 @@ class WebRTC(Component):
             elif self.modality == "audio":
                 cb = AudioCallback(
                     relay.subscribe(track),
-                    event_handler=cast(StreamHandler, self.event_handler),
+                    event_handler=cast(StreamHandler, self.event_handler).copy(),
                 )
             self.connections[body["webrtc_id"]] = cb
             logger.debug("Adding track to peer connection %s", cb)
