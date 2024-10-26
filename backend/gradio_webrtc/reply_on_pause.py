@@ -58,7 +58,7 @@ class ReplyOnPause(StreamHandler):
         model_options: SileroVadOptions | None = None,
         expected_layout: Literal["mono", "stereo"] = "mono",
         output_sample_rate: int = 24000,
-        output_frame_size: int = 960,
+        output_frame_size: int = 480,
     ):
         super().__init__(expected_layout, output_sample_rate, output_frame_size)
         self.expected_layout: Literal["mono", "stereo"] = expected_layout
