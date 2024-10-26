@@ -15,6 +15,12 @@ Stream video and audio in real time with Gradio using WebRTC.
 pip install gradio_webrtc
 ```
 
+to use built-in pause detection (see [conversational ai](#conversational-ai)), install the `vad` extra:
+
+```bash
+pip install gradio_webrtc[vad]
+```
+
 ## Examples:
 1. [Object Detection from Webcam with YOLOv10](https://huggingface.co/spaces/freddyaboulton/webrtc-yolov10n) 📷
 2. [Streaming Object Detection from Video with RT-DETR](https://huggingface.co/spaces/freddyaboulton/rt-detr-object-detection-webrtc) 🎥
@@ -176,7 +182,44 @@ if __name__ == "__main__":
 * An audio frame is represented as a tuple of (frame_rate, audio_samples) where `audio_samples` is a numpy array of shape (num_channels, num_samples).
 * You can also specify the audio layout ("mono" or "stereo") in the emit method by retuning it as the third element of the tuple. If not specified, the default is "mono".
 * The `time_limit` parameter is the maximum time in seconds the conversation will run. If the time limit is reached, the audio stream will stop.
-* The `emit` method SHOULD NOT block. If a frame is not ready to be sent, the method should return None.
+* The `emit` method SHOULD NOT block. If a frame is not ready to be sent, the method should return `None`.
+
+An easy way to get started with Conversational AI is to use the `ReplyOnPause` stream handler. This will automatically run your function when the speaker has stopped speaking. In order to use `ReplyOnPause`, the `[vad]` extra dependencies must be installed.
+
+```python
+import gradio as gr
+from gradio_webrtc import WebRTC, ReplyOnPause
+
+def response(audio: tuple[int, np.ndarray]):
+    """This function must yield audio frames"""
+    ...
+    for numpy_array in generated_audio:
+        yield (sampling_rate, numpy_array, "mono")
+
+
+with gr.Blocks() as demo:
+    gr.HTML(
+    """
+    <h1 style='text-align: center'>
+    Chat (Powered by WebRTC ⚡️)
+    </h1>
+    """
+    )
+    with gr.Column():
+        with gr.Group():
+            audio = WebRTC(
+                label="Stream",
+                rtc_configuration=rtc_configuration,
+                mode="send-receive",
+                modality="audio",
+            )
+        audio.stream(fn=ReplyOnPause(response), inputs=[audio], outputs=[audio], time_limit=60)
+
+
+demo.launch(ssr_mode=False)
+```
+
+
 
 ## Deployment
 
