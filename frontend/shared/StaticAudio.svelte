@@ -17,6 +17,7 @@
     export let show_label = true;
     export let rtc_configuration: Object | null = null;
     export let i18n: I18nFormatter;
+    export let on_change_cb: () => void;
     
     export let server: {
         offer: (body: any) => Promise<any>;
@@ -68,7 +69,7 @@
                 }
             )
             let stream = null;
-            start(stream, pc, audio_player, server.offer, _webrtc_id, "audio").then((connection) => {
+            start(stream, pc, audio_player, server.offer, _webrtc_id, "audio", on_change_cb).then((connection) => {
                     pc = connection;
                 }).catch(() => {
                     console.info("catching")

@@ -21,6 +21,7 @@
 	};
 	export let rtc_configuration: Object;
 	export let track_constraints: MediaTrackConstraints = {};
+	export let on_change_cb: () => void;
 
 	const dispatch = createEventDispatcher<{
 		change: FileData | null;
@@ -50,6 +51,7 @@
 		{include_audio}
 		{time_limit}
 		{track_constraints}
+		{on_change_cb}
 		on:error
 		on:start_recording
 		on:stop_recording

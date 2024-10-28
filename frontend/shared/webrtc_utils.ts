@@ -44,8 +44,24 @@ export function createPeerConnection(pc, node) {
 	return pc;
 }
 
-export async function start(stream, pc: RTCPeerConnection, node, server_fn, webrtc_id, modality: "video" | "audio" = "video") {
+export async function start(stream, pc: RTCPeerConnection, node, server_fn, webrtc_id,
+	modality: "video" | "audio" = "video", on_change_cb: () => void = () => {}) {
 	pc = createPeerConnection(pc, node);
+	const data_channel = pc.createDataChannel("text");
+
+	data_channel.onopen = () => {
+		console.debug("Data channel is open");
+		data_channel.send("handshake");
+	};
+
+	data_channel.onmessage = (event) => {
+		console.debug("Received message:", event.data);
+		if (event.data === "change") {
+			console.debug("Change event received");
+			on_change_cb();
+		}
+	};
+
 	if (stream) {
 		stream.getTracks().forEach((track) => {
 			console.debug("Track stream callback", track);
