@@ -34,6 +34,10 @@
 	export let mode: "send-receive" | "receive" = "send-receive";
 	export let track_constraints: MediaTrackConstraints = {};
 
+	const on_change_cb = () => {
+		gradio.dispatch("state_change");
+	}
+
 	let dragging = false;
 
 	$: console.log("value", value);
@@ -63,6 +67,7 @@
 	{#if mode == "receive" && modality === "video"}
 		<StaticVideo
 			bind:value={value}
+			{on_change_cb}
 			{label}
 			{show_label}
 			{server}
@@ -73,6 +78,7 @@
 	{:else if mode == "receive" && modality === "audio"}
 		<StaticAudio
 			bind:value={value}
+			{on_change_cb}
 			{label}
 			{show_label}
 			{server}
@@ -91,6 +97,7 @@
 			{server}
 			{rtc_configuration}
 			{time_limit}
+			{on_change_cb}
 			on:clear={() => gradio.dispatch("clear")}
 			on:play={() => gradio.dispatch("play")}
 			on:pause={() => gradio.dispatch("pause")}
@@ -109,6 +116,7 @@
 	{:else if mode === "send-receive" && modality === "audio"}
 		<InteractiveAudio
 			bind:value={value}
+			{on_change_cb}
 			{label}
 			{show_label}
 			{server}

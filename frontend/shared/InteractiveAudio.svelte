@@ -25,9 +25,9 @@
     export let i18n: I18nFormatter;
     export let time_limit: number | null = null;
     export let track_constraints: MediaTrackConstraints = {};
-    let _time_limit: number | null = null;
+    export let on_change_cb: () => void;
 
-    $: console.log("time_limit", time_limit);
+    let _time_limit: number | null = null;
     
     export let server: {
         offer: (body: any) => Promise<any>;
@@ -41,10 +41,13 @@
 
     const dispatch = createEventDispatcher<{
         tick: undefined;
+        state_change: undefined;
         error: string
         play: undefined;
         stop: undefined;
 	}>();
+
+
 
 
     onMount(() => {
@@ -103,7 +106,7 @@
             }
             if (stream == null) return;
 
-            start(stream, pc, audio_player, server.offer, _webrtc_id, "audio").then((connection) => {
+            start(stream, pc, audio_player, server.offer, _webrtc_id, "audio", on_change_cb).then((connection) => {
                     pc = connection;
                 }).catch(() => {
                     console.info("catching")

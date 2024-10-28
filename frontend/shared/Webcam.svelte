@@ -24,6 +24,7 @@
 	let _time_limit: number | null = null;
     export let time_limit: number | null = null;
 	let stream_state: "open" | "waiting" | "closed" = "closed";
+	export let on_change_cb: () => void;
     const _webrtc_id = Math.random().toString(36).substring(2);
 
 	export const modify_stream: (state: "open" | "closed" | "waiting") => void = (
@@ -139,7 +140,7 @@
             )
             stream_state = "waiting"
 			webrtc_id = Math.random().toString(36).substring(2);
-            start(stream, pc, video_source, server.offer, webrtc_id).then((connection) => {
+            start(stream, pc, video_source, server.offer, webrtc_id, "video", on_change_cb).then((connection) => {
 				pc = connection;
 			}).catch(() => {
                 console.info("catching")
