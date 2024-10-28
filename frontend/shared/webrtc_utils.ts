@@ -27,7 +27,7 @@ export function createPeerConnection(pc, node) {
 	// connect audio / video from server to local
 	pc.addEventListener("track", (evt) => {
 		console.debug("track event listener");
-		if (node.srcObject !== evt.streams[0]) {
+		if (node && node.srcObject !== evt.streams[0]) {
 			console.debug("streams", evt.streams);
 			node.srcObject = evt.streams[0];
 			console.debug("node.srcOject", node.srcObject);

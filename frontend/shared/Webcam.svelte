@@ -25,7 +25,10 @@
     export let time_limit: number | null = null;
 	let stream_state: "open" | "waiting" | "closed" = "closed";
 	export let on_change_cb: () => void;
+	export let mode: "send-receive" | "send";
     const _webrtc_id = Math.random().toString(36).substring(2);
+
+	console.log("mode", mode);
 
 	export const modify_stream: (state: "open" | "closed" | "waiting") => void = (
 		state: "open" | "closed" | "waiting"
@@ -131,6 +134,7 @@
                         case "disconnected":
                             stream_state = "closed";
 							_time_limit = null;
+							stop(pc);
                             await access_webcam();
                             break;
                         default:
@@ -140,7 +144,7 @@
             )
             stream_state = "waiting"
 			webrtc_id = Math.random().toString(36).substring(2);
-            start(stream, pc, video_source, server.offer, webrtc_id, "video", on_change_cb).then((connection) => {
+            start(stream, pc, mode === "send" ? null: video_source, server.offer, webrtc_id, "video", on_change_cb).then((connection) => {
 				pc = connection;
 			}).catch(() => {
                 console.info("catching")

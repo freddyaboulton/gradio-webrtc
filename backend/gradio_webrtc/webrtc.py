@@ -74,6 +74,7 @@ class VideoCallback(VideoStreamTrack):
         event_handler: Callable,
         channel: DataChannel | None = None,
         set_additional_outputs: Callable | None = None,
+        mode: Literal["send-receive", "send"] = "send-receive",
     ) -> None:
         super().__init__()  # don't forget this!
         self.track = track
@@ -81,6 +82,8 @@ class VideoCallback(VideoStreamTrack):
         self.latest_args: str | list[Any] = "not_set"
         self.channel = channel
         self.set_additional_outputs = set_additional_outputs
+        self.thread_quit = asyncio.Event()
+        self.mode = mode
 
     def add_frame_to_payload(
         self, args: list[Any], frame: np.ndarray | None
@@ -96,11 +99,29 @@ class VideoCallback(VideoStreamTrack):
     def array_to_frame(self, array: np.ndarray) -> VideoFrame:
         return VideoFrame.from_ndarray(array, format="bgr24")
 
+    async def process_frames(self):
+        while not self.thread_quit.is_set():
+            try:
+                await self.recv()
+            except TimeoutError:
+                continue
+
+    def start(
+        self,
+    ):
+        asyncio.create_task(self.process_frames())
+
+    def stop(self):
+        super().stop()
+        logger.debug("video callback stop")
+        self.thread_quit.set()
+
     async def recv(self):
         try:
             try:
                 frame = cast(VideoFrame, await self.track.recv())
             except MediaStreamError:
+                self.stop()
                 return
             frame_array = frame.to_ndarray(format="bgr24")
 
@@ -117,6 +138,8 @@ class VideoCallback(VideoStreamTrack):
             ):
                 self.set_additional_outputs(outputs)
                 self.channel.send("change")
+            if array is None and self.mode == "send":
+                return
 
             new_frame = self.array_to_frame(array)
             if frame:
@@ -453,7 +476,7 @@ class WebRTC(Component):
         rtc_configuration: dict[str, Any] | None = None,
         track_constraints: dict[str, Any] | None = None,
         time_limit: float | None = None,
-        mode: Literal["send-receive", "receive"] = "send-receive",
+        mode: Literal["send-receive", "receive", "send"] = "send-receive",
         modality: Literal["video", "audio"] = "video",
     ):
         """
@@ -557,7 +580,7 @@ class WebRTC(Component):
 
     def set_output(self, webrtc_id: str, *args):
         if webrtc_id in self.connections:
-            if self.mode == "send-receive":
+            if self.mode == "send-receive" or self.mode == "send":
                 self.connections[webrtc_id].latest_args = ["__webrtc_value__"] + list(
                     args
                 )
@@ -634,7 +657,7 @@ class WebRTC(Component):
                 "In the send-receive mode for audio, the event handler must be an instance of StreamHandler."
             )
 
-        if self.mode == "send-receive":
+        if self.mode == "send-receive" or self.mode == "send":
             if cast(list[Block], inputs)[0] != self:
                 raise ValueError(
                     "In the webrtc stream event, the first input component must be the WebRTC component."
@@ -686,6 +709,12 @@ class WebRTC(Component):
         await asyncio.sleep(time_limit)
         await pc.close()
 
+    def clean_up(self, webrtc_id: str):
+        connection = self.connections.pop(webrtc_id, None)
+        self.additional_outputs.pop(webrtc_id, None)
+        self.data_channels.pop(webrtc_id, None)
+        return connection
+
     @server
     async def offer(self, body):
         logger.debug("Starting to handle offer")
@@ -713,7 +742,7 @@ class WebRTC(Component):
             logger.debug("pc.connectionState %s", pc.connectionState)
             if pc.connectionState in ["failed", "closed"]:
                 await pc.close()
-                connection = self.connections.pop(body["webrtc_id"], None)
+                connection = self.clean_up(body["webrtc_id"])
                 if connection:
                     connection.stop()
                 self.pcs.discard(pc)
@@ -729,6 +758,7 @@ class WebRTC(Component):
                     relay.subscribe(track),
                     event_handler=cast(Callable, self.event_handler),
                     set_additional_outputs=set_outputs,
+                    mode=cast(Literal["send", "send-receive"], self.mode),
                 )
             elif self.modality == "audio":
                 cb = AudioCallback(
@@ -741,8 +771,11 @@ class WebRTC(Component):
                 self.connections[body["webrtc_id"]].channel = self.data_channels[
                     body["webrtc_id"]
                 ]
-            logger.debug("Adding track to peer connection %s", cb)
-            pc.addTrack(cb)
+            if self.mode == "send-receive":
+                logger.debug("Adding track to peer connection %s", cb)
+                pc.addTrack(cb)
+            elif self.mode == "send":
+                cast(AudioCallback | VideoCallback, cb).start()
 
         if self.mode == "receive":
             if self.modality == "video":
@@ -759,7 +792,7 @@ class WebRTC(Component):
             logger.debug("Adding track to peer connection %s", cb)
             pc.addTrack(cb)
             self.connections[body["webrtc_id"]] = cb
-            cb.on("ended", lambda: self.connections.pop(body["webrtc_id"], None))
+            cb.on("ended", lambda: self.clean_up(body["webrtc_id"]))
 
         @pc.on("datachannel")
         def on_datachannel(channel):
@@ -769,10 +802,9 @@ class WebRTC(Component):
             self.data_channels[body["webrtc_id"]] = channel
 
             async def set_channel(webrtc_id: str):
-                print("webrtc_id", webrtc_id)
                 while not self.connections.get(webrtc_id):
                     await asyncio.sleep(0.05)
-                print("setting channel")
+                logger.debug("setting channel for webrtc id %s", webrtc_id)
                 self.connections[webrtc_id].channel = channel
 
             asyncio.create_task(set_channel(body["webrtc_id"]))

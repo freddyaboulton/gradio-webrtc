@@ -17,7 +17,7 @@
     import AudioWave from "./AudioWave.svelte";
 
 
-
+    export let mode: "send-receive" | "send";
     export let value: string | null = null;
     export let label: string | undefined = undefined;
     export let show_label = true;
@@ -37,6 +37,12 @@
     let audio_player: HTMLAudioElement;
     let pc: RTCPeerConnection;
     let _webrtc_id = null;
+    let stream: MediaStream;
+
+    const audio_source_callback = () => {
+        if(mode==="send") return stream;
+        else return audio_player.srcObject as MediaStream
+    }
 
 
     const dispatch = createEventDispatcher<{
@@ -89,7 +95,7 @@
                 }
             )
             stream_state = "waiting"
-            let stream = null
+            stream = null
             
             try {
 			    stream = await navigator.mediaDevices.getUserMedia({ audio: track_constraints });
@@ -106,7 +112,7 @@
             }
             if (stream == null) return;
 
-            start(stream, pc, audio_player, server.offer, _webrtc_id, "audio", on_change_cb).then((connection) => {
+            start(stream, pc, mode === "send" ? null: audio_player, server.offer, _webrtc_id, "audio", on_change_cb).then((connection) => {
                     pc = connection;
                 }).catch(() => {
                     console.info("catching")
@@ -133,7 +139,7 @@
         on:ended={() => dispatch("stop")}
         on:play={() => dispatch("play")}
     />
-    <AudioWave audio_source={audio_player} {stream_state}/>
+    <AudioWave {audio_source_callback} {stream_state}/>
     <StreamingBar time_limit={_time_limit} />
     <div class="button-wrap">
         <button

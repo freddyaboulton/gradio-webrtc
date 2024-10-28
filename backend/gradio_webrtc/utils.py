@@ -22,6 +22,8 @@ class DataChannel(Protocol):
 
 
 def split_output(data: tuple | Any) -> tuple[Any, AdditionalOutputs | None]:
+    if isinstance(data, AdditionalOutputs):
+        return None, data
     if isinstance(data, tuple):
         # handle the bare audio case
         if 2 <= len(data) <= 3 and isinstance(data[1], np.ndarray):
