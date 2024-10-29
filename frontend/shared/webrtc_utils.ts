@@ -51,7 +51,7 @@ export async function start(
   server_fn,
   webrtc_id,
   modality: "video" | "audio" = "video",
-  on_change_cb: () => void = () => {},
+  on_change_cb: (msg: "change" | "tick") => void = () => {},
 ) {
   pc = createPeerConnection(pc, node);
   const data_channel = pc.createDataChannel("text");
@@ -63,9 +63,9 @@ export async function start(
 
   data_channel.onmessage = (event) => {
     console.debug("Received message:", event.data);
-    if (event.data === "change") {
-      console.debug("Change event received");
-      on_change_cb();
+    if (event.data === "change" || event.data === "tick") {
+      console.debug(`${event.data} event received`);
+      on_change_cb(event.data);
     }
   };
 

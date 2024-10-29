@@ -13,7 +13,7 @@
 	export let label: string | undefined = undefined;
 	export let show_label = true;
 	export let rtc_configuration: Object | null = null;
-	export let on_change_cb: () => void;
+	export let on_change_cb: (msg: "change" | "tick") => void;
 	export let server: {
 		offer: (body: any) => Promise<any>;
 	};

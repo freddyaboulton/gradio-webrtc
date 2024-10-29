@@ -1,30 +1,11 @@
-import logging
 import os
-import random
 
 import cv2
 import gradio as gr
-from gradio_webrtc import AdditionalOutputs, WebRTC
+from gradio_webrtc import WebRTC
 from huggingface_hub import hf_hub_download
 from inference import YOLOv10
 from twilio.rest import Client
-
-# Configure the root logger to WARNING to suppress debug messages from other libraries
-logging.basicConfig(level=logging.WARNING)
-
-# Create a console handler
-console_handler = logging.FileHandler("gradio_webrtc.log")
-console_handler.setLevel(logging.DEBUG)
-
-# Create a formatter
-formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-console_handler.setFormatter(formatter)
-
-# Configure the logger for your specific library
-logger = logging.getLogger("gradio_webrtc")
-logger.setLevel(logging.DEBUG)
-logger.addHandler(console_handler)
-
 
 model_file = hf_hub_download(
     repo_id="onnx-community/yolov10n", filename="onnx/model.onnx"
@@ -50,10 +31,7 @@ else:
 
 def detection(frame, conf_threshold=0.3):
     frame = cv2.flip(frame, 0)
-    global count
-    if random.random() > 0.98:
-        return AdditionalOutputs(count)
-    count += 1
+    return cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
 
 css = """.my-group {max-width: 600px !important; max-height: 600 !important;}
@@ -77,9 +55,7 @@ with gr.Blocks(css=css) as demo:
     )
     with gr.Column(elem_classes=["my-column"]):
         with gr.Group(elem_classes=["my-group"]):
-            image = WebRTC(
-                label="Stream", rtc_configuration=rtc_configuration, mode="send"
-            )
+            image = WebRTC(label="Stream", rtc_configuration=rtc_configuration)
             conf_threshold = gr.Slider(
                 label="Confidence Threshold",
                 minimum=0.0,
@@ -92,6 +68,7 @@ with gr.Blocks(css=css) as demo:
         image.stream(
             fn=detection, inputs=[image, conf_threshold], outputs=[image], time_limit=10
         )
-        image.change(lambda n: n, outputs=[number])
+        image.on_additional_outputs(lambda n: n, outputs=[number])
 
-demo.launch()
+if __name__ == "__main__":
+    demo.launch()

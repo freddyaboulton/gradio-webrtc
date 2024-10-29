@@ -30,26 +30,22 @@ logger.addHandler(console_handler)
 
 client = OpenAI()
 
-def transcribe(audio: tuple[int, np.ndarray]):
+
+def transcribe(audio: tuple[int, np.ndarray], transcript: list[dict]):
     segment = AudioSegment(
-       audio[1].tobytes(),
+        audio[1].tobytes(),
         frame_rate=audio[0],
         sample_width=audio[1].dtype.itemsize,
-        channels=1)
-    
+        channels=1,
+    )
+
     with tempfile.NamedTemporaryFile(suffix=".mp3") as temp_audio:
         segment.export(temp_audio.name, format="mp3")
         next_chunk = client.audio.transcriptions.create(
-            model="whisper-1",
-            file=open(temp_audio.name, "rb")
+            model="whisper-1", file=open(temp_audio.name, "rb")
         ).text
-        yield AdditionalOutputs({"role": "user",
-                                   "content": next_chunk})
-
-
-def update_transcript(transcript: list[dict], next_chunk: dict):
-    transcript.append(next_chunk)
-    return transcript
+        transcript.append({"role": "user", "content": next_chunk})
+        yield AdditionalOutputs(transcript)
 
 
 with gr.Blocks() as demo:
@@ -62,12 +58,9 @@ with gr.Blocks() as demo:
             )
         with gr.Column():
             transcript = gr.Chatbot(label="transcript", type="messages")
-    
-    audio.stream(ReplyOnPause(transcribe), inputs=[audio], outputs=[audio])
-    audio.change(update_transcript, inputs=transcript, outputs=transcript)
+
+    audio.stream(ReplyOnPause(transcribe), inputs=[audio, transcript], outputs=[audio])
+    audio.on_additional_outputs(lambda s: s, outputs=transcript)
 
 if __name__ == "__main__":
     demo.launch()
-
-
-

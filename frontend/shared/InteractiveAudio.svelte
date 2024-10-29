@@ -31,7 +31,7 @@
     export let i18n: I18nFormatter;
     export let time_limit: number | null = null;
     export let track_constraints: MediaTrackConstraints = {};
-    export let on_change_cb: () => void;
+    export let on_change_cb: (mg: "tick" | "change") => void;
 
     let options_open = false;
 
@@ -50,8 +50,6 @@
     let selected_device: MediaDeviceInfo | null = null;
     let mic_accessed = false;
 
-    console.log("mode", mode);
-
     const audio_source_callback = () => {
         console.log("stream in callback", stream);
         if(mode==="send") return stream;
@@ -68,21 +66,10 @@
 	}>();
 
 
-
-
-    onMount(() => {
-        window.setInterval(() => {
-            if (stream_state == "open") {
-                dispatch("tick");
-            }
-        }, 1000);
-        }
-    )
-
     async function access_mic(): Promise<void> {
         
         try {
-            const constraints = selected_device ? { deviceId: { exact: selected_device.deviceId }, ...track_constraints } : track_constraints,
+            const constraints = selected_device ? { deviceId: { exact: selected_device.deviceId }, ...track_constraints } : track_constraints;
             const stream_ = await navigator.mediaDevices.getUserMedia({ audio: constraints });
             stream = stream_;
         } catch (err) {

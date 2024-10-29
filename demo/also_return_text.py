@@ -46,9 +46,16 @@ def generation(num_steps):
             "/Users/freddy/sources/gradio/demo/scratch/audio-streaming/librispeech.mp3"
         )
         yield (
-            segment.frame_rate,
-            np.array(segment.get_array_of_samples()).reshape(1, -1),
-        ), AdditionalOutputs(f"Hello, from step {i}!", "/Users/freddy/sources/gradio/demo/scratch/audio-streaming/librispeech.mp3")
+            (
+                segment.frame_rate,
+                np.array(segment.get_array_of_samples()).reshape(1, -1),
+            ),
+            AdditionalOutputs(
+                f"Hello, from step {i}!",
+                "/Users/freddy/sources/gradio/demo/scratch/audio-streaming/librispeech.mp3",
+            ),
+        )
+
 
 css = """.my-group {max-width: 600px !important; max-height: 600 !important;}
                       .my-column {display: flex !important; justify-content: center !important; align-items: center !important};"""
@@ -85,10 +92,14 @@ with gr.Blocks() as demo:
             fn=generation, inputs=[num_steps], outputs=[audio], trigger=button.click
         )
         audio.on_additional_outputs(
-            fn=lambda t,a: (f"State changed to {t}.", a),
+            fn=lambda t, a: (f"State changed to {t}.", a),
             outputs=[textbox, audio_file],
         )
 
 
 if __name__ == "__main__":
-    demo.launch(allowed_paths=["/Users/freddy/sources/gradio/demo/scratch/audio-streaming/librispeech.mp3"])
+    demo.launch(
+        allowed_paths=[
+            "/Users/freddy/sources/gradio/demo/scratch/audio-streaming/librispeech.mp3"
+        ]
+    )

@@ -22,7 +22,6 @@ logger.setLevel(logging.DEBUG)
 logger.addHandler(console_handler)
 
 
-
 class EchoHandler(StreamHandler):
     def __init__(self) -> None:
         super().__init__()
@@ -33,7 +32,7 @@ class EchoHandler(StreamHandler):
 
     def emit(self) -> None:
         return self.queue.get()
-    
+
     def copy(self) -> StreamHandler:
         return EchoHandler()
 

@@ -34,8 +34,8 @@
 	export let mode: "send-receive" | "receive" | "send" = "send-receive";
 	export let track_constraints: MediaTrackConstraints = {};
 
-	const on_change_cb = () => {
-		gradio.dispatch("state_change");
+	const on_change_cb = (msg: "change" | "tick") => {
+		gradio.dispatch(msg === "change" ? "state_change" : "tick");
 	}
 
 	let dragging = false;

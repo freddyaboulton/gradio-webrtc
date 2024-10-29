@@ -22,7 +22,6 @@ else:
     rtc_configuration = None
 
 
-
 def generation(num_steps):
     for _ in range(num_steps):
         segment = AudioSegment.from_file(
@@ -32,6 +31,7 @@ def generation(num_steps):
             segment.frame_rate,
             np.array(segment.get_array_of_samples()).reshape(1, -1),
         )
+
 
 css = """.my-group {max-width: 600px !important; max-height: 600 !important;}
                       .my-column {display: flex !important; justify-content: center !important; align-items: center !important};"""

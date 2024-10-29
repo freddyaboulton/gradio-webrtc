@@ -24,7 +24,7 @@
 	let _time_limit: number | null = null;
     export let time_limit: number | null = null;
 	let stream_state: "open" | "waiting" | "closed" = "closed";
-	export let on_change_cb: () => void;
+	export let on_change_cb: (msg: "tick" | "change") => void;
 	export let mode: "send-receive" | "send";
     const _webrtc_id = Math.random().toString(36).substring(2);
 
