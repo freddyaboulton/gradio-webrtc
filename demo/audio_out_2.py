@@ -1,4 +1,5 @@
 import os
+import time
 
 import gradio as gr
 import numpy as np
@@ -20,8 +21,6 @@ if account_sid and auth_token:
     }
 else:
     rtc_configuration = None
-
-import time
 
 
 def generation(num_steps):

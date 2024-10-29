@@ -1,11 +1,13 @@
-from dotenv import load_dotenv
-from openai import OpenAI
-import gradio as gr
-from gradio_webrtc import WebRTC, ReplyOnPause, AdditionalOutputs
-import numpy as np
-from pydub import AudioSegment
-import tempfile
 import logging
+import tempfile
+
+import gradio as gr
+import numpy as np
+from dotenv import load_dotenv
+from gradio_webrtc import AdditionalOutputs, ReplyOnPause, WebRTC
+from openai import OpenAI
+from pydub import AudioSegment
+
 load_dotenv()
 
 

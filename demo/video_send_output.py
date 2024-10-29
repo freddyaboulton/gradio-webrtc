@@ -1,4 +1,13 @@
 import logging
+import os
+import random
+
+import cv2
+import gradio as gr
+from gradio_webrtc import AdditionalOutputs, WebRTC
+from huggingface_hub import hf_hub_download
+from inference import YOLOv10
+from twilio.rest import Client
 
 # Configure the root logger to WARNING to suppress debug messages from other libraries
 logging.basicConfig(level=logging.WARNING)
@@ -16,15 +25,6 @@ logger = logging.getLogger("gradio_webrtc")
 logger.setLevel(logging.DEBUG)
 logger.addHandler(console_handler)
 
-
-import os
-
-import cv2
-import gradio as gr
-from gradio_webrtc import WebRTC, AdditionalOutputs
-from huggingface_hub import hf_hub_download
-from inference import YOLOv10
-from twilio.rest import Client
 
 model_file = hf_hub_download(
     repo_id="onnx-community/yolov10n", filename="onnx/model.onnx"
@@ -47,9 +47,6 @@ if account_sid and auth_token:
 else:
     rtc_configuration = None
 
-
-count = 0
-import random
 
 
 def detection(frame, conf_threshold=0.3):

@@ -1,4 +1,11 @@
 import logging
+import os
+
+import gradio as gr
+import numpy as np
+from gradio_webrtc import AdditionalOutputs, WebRTC
+from pydub import AudioSegment
+from twilio.rest import Client
 
 # Configure the root logger to WARNING to suppress debug messages from other libraries
 logging.basicConfig(level=logging.WARNING)
@@ -17,14 +24,6 @@ logger.setLevel(logging.DEBUG)
 logger.addHandler(console_handler)
 
 
-import os
-
-import gradio as gr
-import numpy as np
-from gradio_webrtc import WebRTC, AdditionalOutputs
-from pydub import AudioSegment
-from twilio.rest import Client
-
 account_sid = os.environ.get("TWILIO_ACCOUNT_SID")
 auth_token = os.environ.get("TWILIO_AUTH_TOKEN")
 
@@ -39,8 +38,6 @@ if account_sid and auth_token:
     }
 else:
     rtc_configuration = None
-
-import time
 
 
 def generation(num_steps):
@@ -87,7 +84,7 @@ with gr.Blocks() as demo:
         audio.stream(
             fn=generation, inputs=[num_steps], outputs=[audio], trigger=button.click
         )
-        audio.change(
+        audio.on_additional_outputs(
             fn=lambda t,a: (f"State changed to {t}.", a),
             outputs=[textbox, audio_file],
         )

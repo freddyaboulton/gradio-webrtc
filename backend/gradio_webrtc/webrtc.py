@@ -582,7 +582,7 @@ class WebRTC(Component):
                 self.connections[webrtc_id].latest_args = list(args)
                 self.connections[webrtc_id].args_set.set()  # type: ignore
 
-    def change(
+    def on_additional_outputs(
         self,
         fn: Callable[Concatenate[P], R],
         inputs: Block | Sequence[Block] | set[Block] | None = None,

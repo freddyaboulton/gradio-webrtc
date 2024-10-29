@@ -21,7 +21,6 @@ if account_sid and auth_token:
 else:
     rtc_configuration = None
 
-import time
 
 
 def generation(num_steps):
