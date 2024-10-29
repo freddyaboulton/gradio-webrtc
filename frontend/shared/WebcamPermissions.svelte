@@ -2,6 +2,9 @@
 	import { Webcam } from "@gradio/icons";
 	import { createEventDispatcher } from "svelte";
 
+	export let icon = Webcam;
+	$: text = icon === Webcam ? "Click to Access Webcam" : "Click to Access Microphone";
+
 	const dispatch = createEventDispatcher<{
 		click: undefined;
 	}>();
@@ -10,9 +13,9 @@
 <button style:height="100%" on:click={() => dispatch("click")}>
 	<div class="wrap">
 		<span class="icon-wrap">
-			<Webcam />
+			<svelte:component this={icon} />
 		</span>
-		{"Click to Access Webcam"}
+		{text}
 	</div>
 </button>
 

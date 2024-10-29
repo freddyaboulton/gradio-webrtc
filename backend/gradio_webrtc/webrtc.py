@@ -790,7 +790,6 @@ class WebRTC(Component):
 
         @pc.on("datachannel")
         def on_datachannel(channel):
-            print("data channel established")
             logger.debug(f"Data channel established: {channel.label}")
 
             self.data_channels[body["webrtc_id"]] = channel

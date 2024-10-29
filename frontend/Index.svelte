@@ -124,6 +124,7 @@
 			{rtc_configuration}
 			{time_limit}
 			{track_constraints}
+			{mode}
 			i18n={gradio.i18n}
 			on:tick={() => gradio.dispatch("tick")}
 			on:error={({ detail }) => gradio.dispatch("error", detail)}

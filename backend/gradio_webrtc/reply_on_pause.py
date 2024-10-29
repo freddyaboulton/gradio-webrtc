@@ -7,6 +7,7 @@ from typing import Callable, Generator, Literal, cast
 import numpy as np
 
 from gradio_webrtc.pause_detection import SileroVADModel, SileroVadOptions
+from gradio_webrtc.utils import AdditionalOutputs
 from gradio_webrtc.webrtc import StreamHandler
 
 logger = getLogger(__name__)
@@ -43,7 +44,10 @@ class AppState:
 ReplyFnGenerator = Callable[
     [tuple[int, np.ndarray]],
     Generator[
-        tuple[int, np.ndarray] | tuple[int, np.ndarray, Literal["mono", "stereo"]],
+        tuple[int, np.ndarray]
+        | tuple[int, np.ndarray, Literal["mono", "stereo"]]
+        | AdditionalOutputs
+        | tuple[tuple[int, np.ndarray], AdditionalOutputs],
         None,
         None,
     ],

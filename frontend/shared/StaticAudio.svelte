@@ -103,7 +103,7 @@
 />
 {#if value !== "__webrtc_value__"}
     <div class="audio-container">
-    <AudioWave audio_source={audio_player} {stream_state}/>
+    <AudioWave audio_source_callback={() => audio_player.srcObject} {stream_state}/>
     </div>  
 {/if}
 {#if value === "__webrtc_value__"}
