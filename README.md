@@ -158,6 +158,9 @@ class EchoHandler(StreamHandler):
 
     def emit(self) -> None:
         return self.queue.get()
+    
+    def copy(self) -> StreamHandler:
+        return EchoHandler()
 
 
 with gr.Blocks() as demo:
@@ -178,7 +181,7 @@ if __name__ == "__main__":
 ```
 
 * Instead of passing a function to the `stream` event's `fn` parameter, pass a `StreamHandler` implementation. The `StreamHandler` above simply echoes the audio back to the client.
-* The `StreamHandler` class has two methods: `receive` and `emit`. The `receive` method is called when a new frame is received from the client, and the `emit` method returns the next frame to send to the client.
+* The `StreamHandler` class has two methods: `receive` and `emit` and `copy`. The `receive` method is called when a new frame is received from the client, and the `emit` method returns the next frame to send to the client. The `copy` method is called at the beginning of the stream to ensure each user has a unique stream handler.
 * An audio frame is represented as a tuple of (frame_rate, audio_samples) where `audio_samples` is a numpy array of shape (num_channels, num_samples).
 * You can also specify the audio layout ("mono" or "stereo") in the emit method by retuning it as the third element of the tuple. If not specified, the default is "mono".
 * The `time_limit` parameter is the maximum time in seconds the conversation will run. If the time limit is reached, the audio stream will stop.

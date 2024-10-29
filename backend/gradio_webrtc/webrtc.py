@@ -10,11 +10,9 @@ import time
 import traceback
 from abc import ABC, abstractmethod
 from collections.abc import Callable
-from copy import deepcopy
 from typing import (
     TYPE_CHECKING,
     Any,
-    Callable,
     Concatenate,
     Generator,
     Iterable,
@@ -146,13 +144,9 @@ class StreamHandler(ABC):
         self.output_frame_size = output_frame_size
         self._resampler = None
 
+    @abstractmethod
     def copy(self) -> "StreamHandler":
-        try:
-            return deepcopy(self)
-        except Exception:
-            raise ValueError(
-                "Current StreamHandler implementation cannot be deepcopied. Implement the copy method."
-            )
+        pass
 
     def resample(self, frame: AudioFrame) -> Generator[AudioFrame, None, None]:
         if self._resampler is None:
