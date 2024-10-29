@@ -110,7 +110,7 @@ async def player_worker_decode(
 
         except (TimeoutError, asyncio.TimeoutError):
             logger.warning(
-                "Timeout in frame processing cycle after %s seconds - resetting", 5
+                "Timeout in frame processing cycle after %s seconds - resetting", 60
             )
             continue
         except Exception as e:
