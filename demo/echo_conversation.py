@@ -35,6 +35,9 @@ class EchoHandler(StreamHandler):
 
     def emit(self) -> None:
         return self.queue.get()
+    
+    def copy(self) -> StreamHandler:
+        return EchoHandler()
 
 
 with gr.Blocks() as demo:
