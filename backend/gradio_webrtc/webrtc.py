@@ -174,7 +174,7 @@ class StreamHandler(ABC):
         self.latest_args: str | list[Any] = "not_set"
         self._resampler = None
         self._channel: DataChannel | None = None
-        self._loop = None
+        self._loop: asyncio.AbstractEventLoop
 
     @property
     def loop(self) -> asyncio.AbstractEventLoop:

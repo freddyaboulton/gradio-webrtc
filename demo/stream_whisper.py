@@ -59,7 +59,8 @@ with gr.Blocks() as demo:
         with gr.Column():
             transcript = gr.Chatbot(label="transcript", type="messages")
 
-    audio.stream(ReplyOnPause(transcribe), inputs=[audio, transcript], outputs=[audio])
+    audio.stream(ReplyOnPause(transcribe), inputs=[audio, transcript], outputs=[audio],
+                 time_limit=30)
     audio.on_additional_outputs(lambda s: s, outputs=transcript)
 
 if __name__ == "__main__":
