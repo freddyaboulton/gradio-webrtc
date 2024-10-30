@@ -3,13 +3,12 @@
   
     export let numBars = 16;
     export let stream_state: "open" | "closed" | "waiting" = "closed";
-    export let audio_source: HTMLAudioElement;
+    export let audio_source_callback: () => MediaStream;
   
     let audioContext: AudioContext;
     let analyser: AnalyserNode;
     let dataArray: Uint8Array;
     let animationId: number;
-    let is_muted = false;
   
     $: containerWidth = `calc((var(--boxSize) + var(--gutter)) * ${numBars})`;
 
@@ -27,7 +26,7 @@
     function setupAudioContext() {
       audioContext = new (window.AudioContext || window.webkitAudioContext)();
       analyser = audioContext.createAnalyser();
-      const source = audioContext.createMediaStreamSource(audio_source.srcObject);
+      const source = audioContext.createMediaStreamSource(audio_source_callback());
       
       // Only connect to analyser, not to destination
       source.connect(analyser);

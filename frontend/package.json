@@ -22,7 +22,8 @@
     "mrmime": "^2.0.0"
   },
   "devDependencies": {
-    "@gradio/preview": "0.12.0"
+    "@gradio/preview": "0.12.0",
+    "prettier": "3.3.3"
   },
   "exports": {
     "./package.json": "./package.json",

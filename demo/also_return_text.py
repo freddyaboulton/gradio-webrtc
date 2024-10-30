@@ -1,10 +1,28 @@
+import logging
 import os
 
 import gradio as gr
 import numpy as np
-from gradio_webrtc import WebRTC
+from gradio_webrtc import AdditionalOutputs, WebRTC
 from pydub import AudioSegment
 from twilio.rest import Client
+
+# Configure the root logger to WARNING to suppress debug messages from other libraries
+logging.basicConfig(level=logging.WARNING)
+
+# Create a console handler
+console_handler = logging.FileHandler("gradio_webrtc.log")
+console_handler.setLevel(logging.DEBUG)
+
+# Create a formatter
+formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+console_handler.setFormatter(formatter)
+
+# Configure the logger for your specific library
+logger = logging.getLogger("gradio_webrtc")
+logger.setLevel(logging.DEBUG)
+logger.addHandler(console_handler)
+
 
 account_sid = os.environ.get("TWILIO_ACCOUNT_SID")
 auth_token = os.environ.get("TWILIO_AUTH_TOKEN")
@@ -23,13 +41,19 @@ else:
 
 
 def generation(num_steps):
-    for _ in range(num_steps):
+    for i in range(num_steps):
         segment = AudioSegment.from_file(
-            "/Users/freddy/sources/gradio/demo/audio_debugger/cantina.wav"
+            "/Users/freddy/sources/gradio/demo/scratch/audio-streaming/librispeech.mp3"
         )
         yield (
-            segment.frame_rate,
-            np.array(segment.get_array_of_samples()).reshape(1, -1),
+            (
+                segment.frame_rate,
+                np.array(segment.get_array_of_samples()).reshape(1, -1),
+            ),
+            AdditionalOutputs(
+                f"Hello, from step {i}!",
+                "/Users/freddy/sources/gradio/demo/scratch/audio-streaming/librispeech.mp3",
+            ),
         )
 
 
@@ -61,11 +85,21 @@ with gr.Blocks() as demo:
                 value=5,
             )
             button = gr.Button("Generate")
+            textbox = gr.Textbox(placeholder="Output will appear here.")
+            audio_file = gr.Audio()
 
         audio.stream(
             fn=generation, inputs=[num_steps], outputs=[audio], trigger=button.click
         )
+        audio.on_additional_outputs(
+            fn=lambda t, a: (f"State changed to {t}.", a),
+            outputs=[textbox, audio_file],
+        )
 
 
 if __name__ == "__main__":
-    demo.launch()
+    demo.launch(
+        allowed_paths=[
+            "/Users/freddy/sources/gradio/demo/scratch/audio-streaming/librispeech.mp3"
+        ]
+    )

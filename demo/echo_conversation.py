@@ -1,4 +1,9 @@
 import logging
+from queue import Queue
+
+import gradio as gr
+import numpy as np
+from gradio_webrtc import StreamHandler, WebRTC
 
 # Configure the root logger to WARNING to suppress debug messages from other libraries
 logging.basicConfig(level=logging.WARNING)
@@ -17,14 +22,6 @@ logger.setLevel(logging.DEBUG)
 logger.addHandler(console_handler)
 
 
-import time
-from queue import Queue
-
-import gradio as gr
-import numpy as np
-from gradio_webrtc import StreamHandler, WebRTC
-
-
 class EchoHandler(StreamHandler):
     def __init__(self) -> None:
         super().__init__()
@@ -35,7 +32,7 @@ class EchoHandler(StreamHandler):
 
     def emit(self) -> None:
         return self.queue.get()
-    
+
     def copy(self) -> StreamHandler:
         return EchoHandler()
 

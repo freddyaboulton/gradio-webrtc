@@ -14,3 +14,4 @@ demo/MobileNetSSD_deploy.caffemodel
 demo/MobileNetSSD_deploy.prototxt.txt
 .DS_Store
 test/
+.env

@@ -17,7 +17,7 @@
     export let show_label = true;
     export let rtc_configuration: Object | null = null;
     export let i18n: I18nFormatter;
-    export let on_change_cb: () => void;
+    export let on_change_cb: (msg: "change" | "tick") => void;
     
     export let server: {
         offer: (body: any) => Promise<any>;
@@ -103,7 +103,7 @@
 />
 {#if value !== "__webrtc_value__"}
     <div class="audio-container">
-    <AudioWave audio_source={audio_player} {stream_state}/>
+    <AudioWave audio_source_callback={() => audio_player.srcObject} {stream_state}/>
     </div>  
 {/if}
 {#if value === "__webrtc_value__"}

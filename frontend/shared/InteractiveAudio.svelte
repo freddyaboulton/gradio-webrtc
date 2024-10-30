@@ -5,19 +5,25 @@
 	import type { I18nFormatter } from "@gradio/utils";
 	import { createEventDispatcher } from "svelte";
     import { onMount } from "svelte";
+    import { fade } from "svelte/transition";
     import { StreamingBar } from "@gradio/statustracker";
     import {
 		Circle,
 		Square,
 		Spinner,
-        Music
+        Music,
+        DropdownArrow,
+        Microphone
 	} from "@gradio/icons";
 
     import { start, stop } from "./webrtc_utils";
+    import { get_devices, set_available_devices } from "./stream_utils";
     import AudioWave from "./AudioWave.svelte";
+    import WebcamPermissions from "./WebcamPermissions.svelte";
 
 
 
+    export let mode: "send-receive" | "send";
     export let value: string | null = null;
     export let label: string | undefined = undefined;
     export let show_label = true;
@@ -25,7 +31,9 @@
     export let i18n: I18nFormatter;
     export let time_limit: number | null = null;
     export let track_constraints: MediaTrackConstraints = {};
-    export let on_change_cb: () => void;
+    export let on_change_cb: (mg: "tick" | "change") => void;
+
+    let options_open = false;
 
     let _time_limit: number | null = null;
     
@@ -37,6 +45,16 @@
     let audio_player: HTMLAudioElement;
     let pc: RTCPeerConnection;
     let _webrtc_id = null;
+    let stream: MediaStream;
+    let available_audio_devices: MediaDeviceInfo[];
+    let selected_device: MediaDeviceInfo | null = null;
+    let mic_accessed = false;
+
+    const audio_source_callback = () => {
+        console.log("stream in callback", stream);
+        if(mode==="send") return stream;
+        else return audio_player.srcObject as MediaStream
+    }
 
 
     const dispatch = createEventDispatcher<{
@@ -48,22 +66,41 @@
 	}>();
 
 
-
-
-    onMount(() => {
-        window.setInterval(() => {
-            if (stream_state == "open") {
-                dispatch("tick");
+    async function access_mic(): Promise<void> {
+        
+        try {
+            const constraints = selected_device ? { deviceId: { exact: selected_device.deviceId }, ...track_constraints } : track_constraints;
+            const stream_ = await navigator.mediaDevices.getUserMedia({ audio: constraints });
+            stream = stream_;
+        } catch (err) {
+            if (!navigator.mediaDevices) {
+                dispatch("error", i18n("audio.no_device_support"));
+                return;
             }
-        }, 1000);
+            if (err instanceof DOMException && err.name == "NotAllowedError") {
+                dispatch("error", i18n("audio.allow_recording_access"));
+                return;
+            }
+            throw err;
         }
-    )
+        available_audio_devices = set_available_devices(await get_devices(), "audioinput");
+        mic_accessed = true;
+        const used_devices = stream
+                    .getTracks()
+                    .map((track) => track.getSettings()?.deviceId)[0];
+
+        selected_device = used_devices
+            ? available_audio_devices.find((device) => device.deviceId === used_devices) ||
+                available_audio_devices[0]
+            : available_audio_devices[0];
+    }
 
     async function start_stream(): Promise<void> {
         if( stream_state === "open"){
             stop(pc);
             stream_state = "closed";
             _time_limit = null;
+            await access_mic();
             return;
         }
             _webrtc_id = Math.random().toString(36).substring(2);
@@ -89,10 +126,10 @@
                 }
             )
             stream_state = "waiting"
-            let stream = null
+            stream = null
             
             try {
-			    stream = await navigator.mediaDevices.getUserMedia({ audio: track_constraints });
+                await access_mic();
             } catch (err) {
                 if (!navigator.mediaDevices) {
                     dispatch("error", i18n("audio.no_device_support"));
@@ -106,13 +143,51 @@
             }
             if (stream == null) return;
 
-            start(stream, pc, audio_player, server.offer, _webrtc_id, "audio", on_change_cb).then((connection) => {
+            start(stream, pc, mode === "send" ? null: audio_player, server.offer, _webrtc_id, "audio", on_change_cb).then((connection) => {
                     pc = connection;
                 }).catch(() => {
                     console.info("catching")
                     dispatch("error", "Too many concurrent users. Come back later!");
                 });
         }
+
+        function handle_click_outside(event: MouseEvent): void {
+            event.preventDefault();
+            event.stopPropagation();
+            options_open = false;
+	    }
+
+        function click_outside(node: Node, cb: any): any {
+            const handle_click = (event: MouseEvent): void => {
+                if (
+                    node &&
+                    !node.contains(event.target as Node) &&
+                    !event.defaultPrevented
+                ) {
+                    cb(event);
+                }
+            };
+
+            document.addEventListener("click", handle_click, true);
+
+            return {
+                destroy() {
+                    document.removeEventListener("click", handle_click, true);
+                }
+            };
+	    }
+
+        const handle_device_change = async (event: InputEvent): Promise<void> => {
+		    const target = event.target as HTMLInputElement;
+		    const device_id = target.value;
+
+            stream = await navigator.mediaDevices.getUserMedia({ audio: {deviceId: { exact: device_id }, ...track_constraints }});
+            selected_device =
+                        available_audio_devices.find(
+                            (device) => device.deviceId === device_id
+                        ) || null;
+                    options_open = false;
+	};
     
 
     
@@ -133,37 +208,83 @@
         on:ended={() => dispatch("stop")}
         on:play={() => dispatch("play")}
     />
-    <AudioWave audio_source={audio_player} {stream_state}/>
-    <StreamingBar time_limit={_time_limit} />
-    <div class="button-wrap">
-        <button
-            on:click={start_stream}
-            aria-label={"start stream"}
+    {#if !mic_accessed}
+        <div
+            in:fade={{ delay: 100, duration: 200 }}
+            title="grant webcam access"
+            style="height: 100%"
         >
-            {#if stream_state === "waiting"}
-                <div class="icon-with-text" style="width:var(--size-24);">
-                    <div class="icon color-primary" title="spinner">
-                        <Spinner />
+            <WebcamPermissions icon={Microphone} on:click={async () => access_mic()} />
+        </div>
+    {:else}
+        <AudioWave {audio_source_callback} {stream_state}/>
+        <StreamingBar time_limit={_time_limit} />
+        <div class="button-wrap">
+            <button
+                on:click={start_stream}
+                aria-label={"start stream"}
+            >
+                {#if stream_state === "waiting"}
+                    <div class="icon-with-text" style="width:var(--size-24);">
+                        <div class="icon color-primary" title="spinner">
+                            <Spinner />
+                        </div>
+                        {i18n("audio.waiting")}
                     </div>
-                    {i18n("audio.waiting")}
-                </div>
-            {:else if stream_state === "open"}
-                <div class="icon-with-text">
-                    <div class="icon color-primary" title="stop recording">
-                        <Square />
+                {:else if stream_state === "open"}
+                    <div class="icon-with-text">
+                        <div class="icon color-primary" title="stop recording">
+                            <Square />
+                        </div>
+                        {i18n("audio.stop")}
                     </div>
-                    {i18n("audio.stop")}
-                </div>
-            {:else}
-                <div class="icon-with-text">
-                    <div class="icon color-primary" title="start recording">
-                        <Circle />
+                {:else}
+                    <div class="icon-with-text">
+                        <div class="icon color-primary" title="start recording">
+                            <Circle />
+                        </div>
+                        {i18n("audio.record")}
                     </div>
-                    {i18n("audio.record")}
-                </div>
+                {/if}
+            </button>
+            {#if stream_state === "closed"}
+                <button
+                    class="icon"
+                    on:click={() => (options_open = true)}
+                    aria-label="select input source"
+                >
+                    <DropdownArrow />
+                </button>
             {/if}
-        </button>
-    </div>
+            {#if options_open && selected_device}
+            <select
+                class="select-wrap"
+                aria-label="select source"
+                use:click_outside={handle_click_outside}
+                on:change={handle_device_change}
+            >
+                <button
+                    class="inset-icon"
+                    on:click|stopPropagation={() => (options_open = false)}
+                >
+                    <DropdownArrow />
+                </button>
+                {#if available_audio_devices.length === 0}
+                    <option value="">{i18n("common.no_devices")}</option>
+                {:else}
+                    {#each available_audio_devices as device}
+                        <option
+                            value={device.deviceId}
+                            selected={selected_device.deviceId === device.deviceId}
+                        >
+                            {device.label}
+                        </option>
+                    {/each}
+                {/if}
+            </select>
+        {/if}
+        </div>
+    {/if}
 </div>
 
 <style>
@@ -238,5 +359,45 @@
 		fill: var(--primary-600);
 		stroke: var(--primary-600);
 		color: var(--primary-600);
+	}
+
+    .select-wrap {
+		-webkit-appearance: none;
+		-moz-appearance: none;
+		appearance: none;
+		color: var(--button-secondary-text-color);
+		background-color: transparent;
+		width: 95%;
+		font-size: var(--text-md);
+		position: absolute;
+		bottom: var(--size-2);
+		background-color: var(--block-background-fill);
+		box-shadow: var(--shadow-drop-lg);
+		border-radius: var(--radius-xl);
+		z-index: var(--layer-top);
+		border: 1px solid var(--border-color-primary);
+		text-align: left;
+		line-height: var(--size-4);
+		white-space: nowrap;
+		text-overflow: ellipsis;
+		left: 50%;
+		transform: translate(-50%, 0);
+		max-width: var(--size-52);
+	}
+
+	.select-wrap > option {
+		padding: 0.25rem 0.5rem;
+		border-bottom: 1px solid var(--border-color-accent);
+		padding-right: var(--size-8);
+		text-overflow: ellipsis;
+		overflow: hidden;
+	}
+
+	.select-wrap > option:hover {
+		background-color: var(--color-accent);
+	}
+
+	.select-wrap > option:last-child {
+		border: none;
 	}
 </style>

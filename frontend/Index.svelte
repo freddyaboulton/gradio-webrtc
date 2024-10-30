@@ -31,11 +31,11 @@
 	export let rtc_configuration: Object;
 	export let time_limit: number | null = null;
 	export let modality: "video" | "audio" = "video";
-	export let mode: "send-receive" | "receive" = "send-receive";
+	export let mode: "send-receive" | "receive" | "send" = "send-receive";
 	export let track_constraints: MediaTrackConstraints = {};
 
-	const on_change_cb = () => {
-		gradio.dispatch("state_change");
+	const on_change_cb = (msg: "change" | "tick") => {
+		gradio.dispatch(msg === "change" ? "state_change" : "tick");
 	}
 
 	let dragging = false;
@@ -87,7 +87,7 @@
 			on:tick={() => gradio.dispatch("tick")}
 			on:error={({ detail }) => gradio.dispatch("error", detail)}
 		/>
-	{:else if mode === "send-receive" && modality === "video"}
+	{:else if (mode === "send-receive" || mode == "send") && modality === "video"}
 		<Video
 			bind:value={value}
 			{label}
@@ -97,6 +97,7 @@
 			{server}
 			{rtc_configuration}
 			{time_limit}
+			{mode}
 			{on_change_cb}
 			on:clear={() => gradio.dispatch("clear")}
 			on:play={() => gradio.dispatch("play")}
@@ -113,7 +114,7 @@
 		>
 			<UploadText i18n={gradio.i18n} type="video" />
 		</Video>
-	{:else if mode === "send-receive" && modality === "audio"}
+	{:else if (mode === "send-receive" || mode === "send") && modality === "audio"}
 		<InteractiveAudio
 			bind:value={value}
 			{on_change_cb}
@@ -123,6 +124,7 @@
 			{rtc_configuration}
 			{time_limit}
 			{track_constraints}
+			{mode}
 			i18n={gradio.i18n}
 			on:tick={() => gradio.dispatch("tick")}
 			on:error={({ detail }) => gradio.dispatch("error", detail)}
