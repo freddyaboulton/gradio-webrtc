@@ -629,6 +629,8 @@ class WebRTC(Component):
         js: str | None = None,
         concurrency_limit: int | None | Literal["default"] = "default",
         concurrency_id: str | None = None,
+        show_progress: Literal["full", "minimal", "hidden"] = "full",
+        queue: bool = True,
     ):
         inputs = inputs or []
         if inputs and not isinstance(inputs, Iterable):
@@ -651,6 +653,8 @@ class WebRTC(Component):
             js=js,
             concurrency_limit=concurrency_limit,
             concurrency_id=concurrency_id,
+            show_progress=show_progress,
+            queue=queue,
         )
 
     def stream(
