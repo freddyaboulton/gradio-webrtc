@@ -15,7 +15,7 @@ Stream video and audio in real time with Gradio using WebRTC.
 pip install gradio_webrtc
 ```
 
-to use built-in pause detection (see [conversational ai](#conversational-ai)), install the `vad` extra:
+to use built-in pause detection (see [Audio Streaming](https://freddyaboulton.github.io/gradio-webrtc/user-guide/#reply-on-pause)), install the `vad` extra:
 
 ```bash
 pip install gradio_webrtc[vad]
