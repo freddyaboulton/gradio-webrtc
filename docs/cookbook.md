@@ -20,16 +20,15 @@
     
     [:octicons-code-16: Code](https://huggingface.co/spaces/freddyaboulton/talk-to-claude/blob/main/app.py)
 
--   :speaking_head:{ .lg .middle } __Talk to Llama 3.2 3b__
+-   :robot:{ .lg .middle } __Llama Code Editor__
 
     ---
 
-    Use the Lepton API to make Llama 3.2 talk back to you!
+    Create and edit HTML pages with just your voice! Powered by SambaNova systems.
 
-    [:octicons-arrow-right-24: Demo](https://huggingface.co/spaces/freddyaboulton/llama-3.2-3b-voice-webrtc)
-
-    [:octicons-code-16: Code](https://huggingface.co/spaces/freddyaboulton/llama-3.2-3b-voice-webrtc/blob/main/app.py)
-
+    [:octicons-arrow-right-24: Demo](https://huggingface.co/spaces/freddyaboulton/llama-code-editor)
+    
+    [:octicons-code-16: Code](https://huggingface.co/spaces/freddyaboulton/llama-code-editor/blob/main/app.py)
 
 -   :speaking_head:{ .lg .middle } __Talk to Ultravox__
 
@@ -40,6 +39,17 @@
     [:octicons-arrow-right-24: Demo](https://huggingface.co/spaces/freddyaboulton/talk-to-ultravox)
 
     [:octicons-code-16: Code](https://huggingface.co/spaces/freddyaboulton/talk-to-ultravox/blob/main/app.py)
+
+
+-   :speaking_head:{ .lg .middle } __Talk to Llama 3.2 3b__
+
+    ---
+
+    Use the Lepton API to make Llama 3.2 talk back to you!
+
+    [:octicons-arrow-right-24: Demo](https://huggingface.co/spaces/freddyaboulton/llama-3.2-3b-voice-webrtc)
+
+    [:octicons-code-16: Code](https://huggingface.co/spaces/freddyaboulton/llama-3.2-3b-voice-webrtc/blob/main/app.py)
 
 
 -   :robot:{ .lg .middle } __Talk to Qwen2-Audio__
