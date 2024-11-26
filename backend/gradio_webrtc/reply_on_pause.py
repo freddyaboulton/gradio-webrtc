@@ -1,10 +1,10 @@
+import asyncio
+import inspect
 from dataclasses import dataclass
 from functools import lru_cache
 from logging import getLogger
 from threading import Event
-import inspect
 from typing import Any, Callable, Generator, Literal, Union, cast
-import asyncio
 
 import numpy as np
 

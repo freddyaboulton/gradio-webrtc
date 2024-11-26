@@ -1,5 +1,36 @@
 When deploying in a cloud environment (like Hugging Face Spaces, EC2, etc), you need to set up a TURN server to relay the WebRTC traffic.
 
+## Community Server
+
+Hugging Face graciously provides a TURN server for the community.
+In order to use it, you need to first create a Hugging Face account by going to the [huggingface.co](https://huggingface.co/).
+
+Then navigate to this [space](https://huggingface.co/spaces/freddyaboulton/turn-server-login) and follow the instructions on the page. You just have to click the "Log in" button and then the "Sign Up" button.
+
+![turn_login](https://github.com/user-attachments/assets/d077c3a3-7059-45d6-8e50-eb3d8a4aa43f)
+
+Then you can use the `get_hf_turn_credentials` helper to get your credentials:
+
+```python
+from gradio_webrtc import get_hf_turn_credentials, WebRTC
+
+# Pass a valid access token for your Hugging Face account
+# or set the HF_TOKEN environment variable 
+credentials = get_hf_turn_credentials(token=None)
+
+with gr.Blcocks() as demo:
+    webrtc = WebRTC(rtc_configuration=credentials)
+    ...
+
+demo.launch()
+```
+
+!!! warning
+
+    This is a shared resource so we make no latency/availability guarantees.
+    For more robust options, see the Twilio and self-hosting options below.
+
+
 ## Twilio API
 
 The easiest way to do this is to use a service like Twilio.
@@ -27,6 +58,18 @@ with gr.Blocks() as demo:
     rtc = WebRTC(rtc_configuration=rtc_configuration, ...)
     ...
 ```
+
+!!! tip "Automatic Login"
+
+    You can log in automatically with the `get_twilio_turn_credentials` helper
+
+    ```python
+    from gradio_webrtc import get_twilio_turn_credentials
+
+    # Will automatically read the TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN
+    # env variables but you can also pass in the tokens as parameters
+    rtc_configuration = get_twilio_turn_credentials()
+    ```
 
 ## Self Hosting
 
