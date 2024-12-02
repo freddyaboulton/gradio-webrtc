@@ -8,7 +8,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "gradio_webrtc"
-version = "0.0.14"
+version = "0.0.15"
 description = "Stream images in realtime with webrtc"
 readme = "README.md"
 license = "apache-2.0"

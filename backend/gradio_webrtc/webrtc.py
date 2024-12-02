@@ -167,10 +167,12 @@ class StreamHandler(ABC):
         expected_layout: Literal["mono", "stereo"] = "mono",
         output_sample_rate: int = 24000,
         output_frame_size: int = 960,
+        input_sample_rate: int = 48000,
     ) -> None:
         self.expected_layout = expected_layout
         self.output_sample_rate = output_sample_rate
         self.output_frame_size = output_frame_size
+        self.input_sample_rate = input_sample_rate
         self.latest_args: str | list[Any] = "not_set"
         self._resampler = None
         self._channel: DataChannel | None = None
@@ -191,6 +193,9 @@ class StreamHandler(ABC):
         logger.debug("setting args in audio callback %s", args)
         self.latest_args = ["__webrtc_value__"] + list(args)
 
+    def shutdown(self):
+        pass
+
     @abstractmethod
     def copy(self) -> "StreamHandler":
         pass
@@ -200,17 +205,23 @@ class StreamHandler(ABC):
             self._resampler = av.AudioResampler(  # type: ignore
                 format="s16",
                 layout=self.expected_layout,
-                rate=frame.sample_rate,
+                rate=self.input_sample_rate,
                 frame_size=frame.samples,
             )
         yield from self._resampler.resample(frame)
 
     @abstractmethod
-    def receive(self, frame: tuple[int, np.ndarray] | np.ndarray) -> None:
+    def receive(self, frame: tuple[int, np.ndarray]) -> None:
         pass
 
     @abstractmethod
-    def emit(self) -> None:
+    def emit(
+        self,
+    ) -> (
+        tuple[int, np.ndarray]
+        | AdditionalOutputs
+        | tuple[tuple[int, np.ndarray], AdditionalOutputs]
+    ):
         pass
 
 
@@ -312,6 +323,9 @@ class AudioCallback(AudioStreamTrack):
         logger.debug("audio callback stop")
         self.thread_quit.set()
         super().stop()
+
+    def shutdown(self):
+        self.event_handler.shutdown()
 
 
 class ServerToClientVideo(VideoStreamTrack):
@@ -489,7 +503,7 @@ class WebRTC(Component):
         str, VideoCallback | ServerToClientVideo | ServerToClientAudio | AudioCallback
     ] = {}
     data_channels: dict[str, DataChannel] = {}
-    additional_outputs: dict[str, AdditionalOutputs] = {}
+    additional_outputs: dict[str, list[AdditionalOutputs]] = {}
 
     EVENTS = ["tick", "state_change"]
 
@@ -595,7 +609,9 @@ class WebRTC(Component):
         self, webrtc_id: str
     ) -> Callable[[AdditionalOutputs], None]:
         def set_outputs(outputs: AdditionalOutputs):
-            self.additional_outputs[webrtc_id] = outputs
+            if webrtc_id not in self.additional_outputs:
+                self.additional_outputs[webrtc_id] = []
+            self.additional_outputs[webrtc_id].append(outputs)
 
         return set_outputs
 
@@ -638,8 +654,12 @@ class WebRTC(Component):
             inputs = list(inputs)
 
         def handler(webrtc_id: str, *args):
-            if webrtc_id in self.additional_outputs:
-                return fn(*args, *self.additional_outputs[webrtc_id].args)  # type: ignore
+            if (
+                webrtc_id in self.additional_outputs
+                and len(self.additional_outputs[webrtc_id]) > 0
+            ):
+                next_outputs = self.additional_outputs[webrtc_id].pop(0)
+                return fn(*args, *next_outputs.args)  # type: ignore
             return (
                 tuple([None for _ in range(len(outputs))])
                 if isinstance(outputs, Iterable)
@@ -748,6 +768,8 @@ class WebRTC(Component):
 
     def clean_up(self, webrtc_id: str):
         connection = self.connections.pop(webrtc_id, None)
+        if isinstance(connection, AudioCallback):
+            connection.event_handler.shutdown()
         self.additional_outputs.pop(webrtc_id, None)
         self.data_channels.pop(webrtc_id, None)
         return connection
