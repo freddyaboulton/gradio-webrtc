@@ -32,6 +32,7 @@
 	export let time_limit: number | null = null;
 	export let modality: "video" | "audio" = "video";
 	export let mode: "send-receive" | "receive" | "send" = "send-receive";
+	export let rtp_params: RTCRtpParameters = {} as RTCRtpParameters;
 	export let track_constraints: MediaTrackConstraints = {};
 
 	const on_change_cb = (msg: "change" | "tick") => {
@@ -98,6 +99,8 @@
 			{rtc_configuration}
 			{time_limit}
 			{mode}
+			{track_constraints}
+			{rtp_params}
 			{on_change_cb}
 			on:clear={() => gradio.dispatch("clear")}
 			on:play={() => gradio.dispatch("play")}
@@ -125,6 +128,7 @@
 			{time_limit}
 			{track_constraints}
 			{mode}
+			{rtp_params}
 			i18n={gradio.i18n}
 			on:tick={() => gradio.dispatch("tick")}
 			on:error={({ detail }) => gradio.dispatch("error", detail)}

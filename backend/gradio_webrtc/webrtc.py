@@ -531,6 +531,7 @@ class WebRTC(Component):
         time_limit: float | None = None,
         mode: Literal["send-receive", "receive", "send"] = "send-receive",
         modality: Literal["video", "audio"] = "video",
+        rtp_params: dict[str, Any] | None = None,
     ):
         """
         Parameters:
@@ -552,15 +553,12 @@ class WebRTC(Component):
             render: if False, component will not render be rendered in the Blocks context. Should be used if the intention is to assign event listeners now but render the component later.
             key: if assigned, will be used to assume identity across a re-render. Components that have the same key across a re-render will have their value preserved.
             mirror_webcam: if True webcam will be mirrored. Default is True.
-            include_audio: whether the component should record/retain the audio track for a video. By default, audio is excluded for webcam videos and included for uploaded videos.
-            autoplay: whether to automatically play the video when the component is used as an output. Note: browsers will not autoplay video files if the user has not interacted with the page yet.
-            show_share_button: if True, will show a share icon in the corner of the component that allows user to share outputs to Hugging Face Spaces Discussions. If False, icon does not appear. If set to None (default behavior), then the icon appears if this Gradio app is launched on Spaces, but not otherwise.
-            show_download_button: if True, will show a download icon in the corner of the component that allows user to download the output. If False, icon does not appear. By default, it will be True for output components and False for input components.
-            min_length: the minimum length of video (in seconds) that the user can pass into the prediction function. If None, there is no minimum length.
-            max_length: the maximum length of video (in seconds) that the user can pass into the prediction function. If None, there is no maximum length.
-            loop: if True, the video will loop when it reaches the end and continue playing from the beginning.
-            streaming: when used set as an output, takes video chunks yielded from the backend and combines them into one streaming video output. Each chunk should be a video file with a .ts extension using an h.264 encoding. Mp4 files are also accepted but they will be converted to h.264 encoding.
-            watermark: an image file to be included as a watermark on the video. The image is not scaled and is displayed on the bottom right of the video. Valid formats for the image are: jpeg, png.
+            rtc_configuration: WebRTC configuration options. See https://developer.mozilla.org/en-US/docs/Web/API/RTCPeerConnection/RTCPeerConnection . If running the demo on a remote server, you will need to specify a rtc_configuration. See https://freddyaboulton.github.io/gradio-webrtc/deployment/
+            track_constraints: Media track constraints for WebRTC. For example, to set video height, width use {"width": {"exact": 800}, "height": {"exact": 600}, "aspectRatio": {"exact": 1.33333}}
+            time_limit: Maximum duration in seconds for recording.
+            mode: WebRTC mode - "send-receive", "receive", or "send".
+            modality: Type of media - "video" or "audio".
+            rtp_params: See https://developer.mozilla.org/en-US/docs/Web/API/RTCRtpSender/setParameters. If you are changing the video resolution, you can set this to {"degradationPreference": "maintain-framerate"} to keep the frame rate consistent.
         """
         self.time_limit = time_limit
         self.height = height
@@ -570,6 +568,7 @@ class WebRTC(Component):
         self.rtc_configuration = rtc_configuration
         self.mode = mode
         self.modality = modality
+        self.rtp_params = rtp_params or {}
         if track_constraints is None and modality == "audio":
             track_constraints = {
                 "echoCancellation": True,
