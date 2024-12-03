@@ -52,6 +52,7 @@ export async function start(
   webrtc_id,
   modality: "video" | "audio" = "video",
   on_change_cb: (msg: "change" | "tick") => void = () => {},
+  rtp_params = {},
 ) {
   pc = createPeerConnection(pc, node);
   const data_channel = pc.createDataChannel("text");
@@ -70,9 +71,13 @@ export async function start(
   };
 
   if (stream) {
-    stream.getTracks().forEach((track) => {
+    stream.getTracks().forEach(async (track) => {
       console.debug("Track stream callback", track);
-      pc.addTrack(track, stream);
+      const sender = pc.addTrack(track, stream);
+      const params = sender.getParameters();
+      const updated_params = { ...params, ...rtp_params };
+      await sender.setParameters(updated_params)
+      console.debug("sender params", sender.getParameters());
     });
   } else {
     console.debug("Creating transceiver!");

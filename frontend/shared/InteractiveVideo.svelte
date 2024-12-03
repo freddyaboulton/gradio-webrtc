@@ -23,6 +23,7 @@
 	export let track_constraints: MediaTrackConstraints = {};
 	export let mode: "send" | "send-receive";
 	export let on_change_cb: (msg: "change" | "tick") => void;
+	export let rtp_params: RTCRtpParameters = {} as RTCRtpParameters;
 
 	const dispatch = createEventDispatcher<{
 		change: FileData | null;
@@ -53,6 +54,7 @@
 		{time_limit}
 		{track_constraints}
 		{mode}
+		{rtp_params}
 		{on_change_cb}
 		on:error
 		on:start_recording

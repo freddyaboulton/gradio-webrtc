@@ -6,14 +6,30 @@ For example, you can control the size of the frames captured from the webcam lik
 
 ```python
 track_constraints = {
-    "width": {"ideal": 500},
-    "height": {"ideal": 500},
+    "width": {"exact": 500},
+    "height": {"exact": 500},
     "frameRate": {"ideal": 30},
 }
 webrtc = WebRTC(track_constraints=track_constraints,
                 modality="video",
                 mode="send-receive")
 ```
+
+
+!!! warning
+
+    WebRTC may not enforce your constaints. For example, it may rescale your video
+    (while keeping the same resolution) in order to maintain the desired (or reach a better) frame rate. If you
+    really want to enforce height, width and resolution constraints, use the `rtp_params` parameter as set `"degradationPreference": "maintain-resolution"`. 
+
+    ```python
+    image = WebRTC(
+        label="Stream",
+        mode="send",
+        track_constraints=track_constraints,
+        rtp_params={"degradationPreference": "maintain-resolution"}
+    )
+    ```
 
 
 ## The RTC Configuration

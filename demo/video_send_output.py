@@ -49,16 +49,13 @@ else:
 
 
 def detection(frame, conf_threshold=0.3):
+    print("frame.shape", frame.shape)
     frame = cv2.flip(frame, 0)
-    global count
-    if random.random() > 0.98:
-        return AdditionalOutputs(count)
-    count += 1
+    return AdditionalOutputs(1)
 
 
 css = """.my-group {max-width: 600px !important; max-height: 600 !important;}
                       .my-column {display: flex !important; justify-content: center !important; align-items: center !important};"""
-
 
 with gr.Blocks(css=css) as demo:
     gr.HTML(
@@ -78,7 +75,13 @@ with gr.Blocks(css=css) as demo:
     with gr.Column(elem_classes=["my-column"]):
         with gr.Group(elem_classes=["my-group"]):
             image = WebRTC(
-                label="Stream", rtc_configuration=rtc_configuration, mode="send"
+                label="Stream", rtc_configuration=rtc_configuration,
+                mode="send",
+                track_constraints={"width": {"exact": 800},
+                                   "height": {"exact": 600},
+                                   "aspectRatio": {"exact": 1.33333}
+                                   },
+                rtp_params={"degradationPreference": "maintain-resolution"}
             )
             conf_threshold = gr.Slider(
                 label="Confidence Threshold",
@@ -92,6 +95,6 @@ with gr.Blocks(css=css) as demo:
         image.stream(
             fn=detection, inputs=[image, conf_threshold], outputs=[image], time_limit=10
         )
-        image.change(lambda n: n, outputs=[number])
+        image.on_additional_outputs(lambda n: n, outputs=number)
 
 demo.launch()

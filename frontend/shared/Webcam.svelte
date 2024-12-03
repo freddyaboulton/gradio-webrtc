@@ -27,8 +27,7 @@
 	export let on_change_cb: (msg: "tick" | "change") => void;
 	export let mode: "send-receive" | "send";
     const _webrtc_id = Math.random().toString(36).substring(2);
-
-	console.log("mode", mode);
+	export let rtp_params: RTCRtpParameters = {} as RTCRtpParameters;
 
 	export const modify_stream: (state: "open" | "closed" | "waiting") => void = (
 		state: "open" | "closed" | "waiting"
@@ -82,7 +81,7 @@
 
 	async function access_webcam(): Promise<void> {
 		try {
-			get_video_stream(include_audio, video_source)
+			get_video_stream(include_audio, video_source, null, track_constraints)
 				.then(async (local_stream) => {
 					webcam_accessed = true;
 					available_video_devices = await get_devices();
@@ -144,7 +143,7 @@
             )
             stream_state = "waiting"
 			webrtc_id = Math.random().toString(36).substring(2);
-            start(stream, pc, mode === "send" ? null: video_source, server.offer, webrtc_id, "video", on_change_cb).then((connection) => {
+            start(stream, pc, mode === "send" ? null: video_source, server.offer, webrtc_id, "video", on_change_cb, rtp_params).then((connection) => {
 				pc = connection;
 			}).catch(() => {
                 console.info("catching")

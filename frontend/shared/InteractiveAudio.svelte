@@ -31,6 +31,7 @@
     export let i18n: I18nFormatter;
     export let time_limit: number | null = null;
     export let track_constraints: MediaTrackConstraints = {};
+    export let rtp_params: RTCRtpParameters = {} as RTCRtpParameters;
     export let on_change_cb: (mg: "tick" | "change") => void;
 
     let options_open = false;
@@ -143,7 +144,7 @@
             }
             if (stream == null) return;
 
-            start(stream, pc, mode === "send" ? null: audio_player, server.offer, _webrtc_id, "audio", on_change_cb).then((connection) => {
+            start(stream, pc, mode === "send" ? null: audio_player, server.offer, _webrtc_id, "audio", on_change_cb, rtp_params).then((connection) => {
                     pc = connection;
                 }).catch(() => {
                     console.info("catching")
