@@ -674,6 +674,7 @@ class WebRTC(Component):
             concurrency_id=concurrency_id,
             show_progress=show_progress,
             queue=queue,
+            trigger_mode="multiple",
         )
 
     def stream(
