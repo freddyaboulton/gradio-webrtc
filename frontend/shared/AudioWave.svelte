@@ -41,8 +41,7 @@
   
     function updateBars() {
       analyser.getByteFrequencyData(dataArray);
-      
-      const bars = document.querySelectorAll('.box');
+      const bars = document.querySelectorAll('.waveContainer .box');
       for (let i = 0; i < bars.length; i++) {
         const barHeight = (dataArray[i] / 255) * 2; // Amplify the effect
         bars[i].style.transform = `scaleY(${Math.max(0.1, barHeight)})`;

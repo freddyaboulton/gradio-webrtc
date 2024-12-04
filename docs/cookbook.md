@@ -24,6 +24,18 @@
     
     [:octicons-code-16: Code](https://huggingface.co/spaces/freddyaboulton/talk-to-claude/blob/main/app.py)
 
+-   :speaking_head:{ .lg .middle } __Kyutai Moshi__
+
+    ---
+
+    Kyutai's moshi is a novel speech-to-speech model for modeling human conversations.
+
+    <video width=98% src="https://github.com/user-attachments/assets/becc7a13-9e89-4a19-9df2-5fb1467a0137" controls style="text-align: center"></video>
+
+    [:octicons-arrow-right-24: Demo](https://huggingface.co/spaces/freddyaboulton/talk-to-moshi)
+    
+    [:octicons-code-16: Code](https://huggingface.co/spaces/freddyaboulton/talk-to-moshi/blob/main/app.py)
+
 -   :robot:{ .lg .middle } __Llama Code Editor__
 
     ---
