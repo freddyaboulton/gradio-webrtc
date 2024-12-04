@@ -1,10 +1,12 @@
 import asyncio
 import fractions
+import io
 import logging
 from typing import Any, Callable, Protocol, cast
 
 import av
 import numpy as np
+from pydub import AudioSegment
 
 logger = logging.getLogger(__name__)
 
@@ -120,3 +122,15 @@ async def player_worker_decode(
             logger.debug("traceback %s", exec)
             logger.error("Error processing frame: %s", str(e))
             continue
+
+
+def audio_to_bytes(audio: tuple[int, np.ndarray]) -> bytes:
+    audio_buffer = io.BytesIO()
+    segment = AudioSegment(
+        audio[1].tobytes(),
+        frame_rate=audio[0],
+        sample_width=audio[1].dtype.itemsize,
+        channels=1,
+    )
+    segment.export(audio_buffer, format="mp3")
+    return audio_buffer.getvalue()
