@@ -70,6 +70,10 @@ ReplyFnGenerator = Union[
 ]
 
 
+async def iterate(generator: Generator) -> Any:
+    return next(generator)
+
+
 class ReplyOnPause(StreamHandler):
     def __init__(
         self,
@@ -86,6 +90,7 @@ class ReplyOnPause(StreamHandler):
         self.output_frame_size = output_frame_size
         self.model = get_vad_model()
         self.fn = fn
+        self.is_async = inspect.isasyncgenfunction(fn)
         self.event = Event()
         self.state = AppState()
         self.generator = None
@@ -172,6 +177,9 @@ class ReplyOnPause(StreamHandler):
             self.channel.send("tick")
             logger.debug("Sent tick")
 
+    async def async_iterate(self, generator) -> Any:
+        return await anext(generator)
+
     def emit(self):
         if not self.event.is_set():
             return None
@@ -190,6 +198,11 @@ class ReplyOnPause(StreamHandler):
                 logger.debug("Latest args: %s", self.latest_args)
             self.state.responding = True
             try:
-                return next(self.generator)
-            except StopIteration:
+                if self.is_async:
+                    return asyncio.run_coroutine_threadsafe(
+                        self.async_iterate(self.generator), self.loop
+                    ).result()
+                else:
+                    return next(self.generator)
+            except (StopIteration, StopAsyncIteration):
                 self.reset()

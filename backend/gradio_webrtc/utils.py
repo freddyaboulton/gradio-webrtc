@@ -1,10 +1,13 @@
 import asyncio
 import fractions
+import io
 import logging
+import tempfile
 from typing import Any, Callable, Protocol, cast
 
 import av
 import numpy as np
+from pydub import AudioSegment
 
 logger = logging.getLogger(__name__)
 
@@ -120,3 +123,67 @@ async def player_worker_decode(
             logger.debug("traceback %s", exec)
             logger.error("Error processing frame: %s", str(e))
             continue
+
+
+def audio_to_bytes(audio: tuple[int, np.ndarray]) -> bytes:
+    """
+    Convert an audio tuple containing sample rate and numpy array data into bytes.
+
+    Parameters
+    ----------
+    audio : tuple[int, np.ndarray]
+        A tuple containing:
+            - sample_rate (int): The audio sample rate in Hz
+            - data (np.ndarray): The audio data as a numpy array
+
+    Returns
+    -------
+    bytes
+        The audio data encoded as bytes, suitable for transmission or storage
+
+    Example
+    -------
+    >>> sample_rate = 44100
+    >>> audio_data = np.array([0.1, -0.2, 0.3])  # Example audio samples
+    >>> audio_tuple = (sample_rate, audio_data)
+    >>> audio_bytes = audio_to_bytes(audio_tuple)
+    """
+    audio_buffer = io.BytesIO()
+    segment = AudioSegment(
+        audio[1].tobytes(),
+        frame_rate=audio[0],
+        sample_width=audio[1].dtype.itemsize,
+        channels=1,
+    )
+    segment.export(audio_buffer, format="mp3")
+    return audio_buffer.getvalue()
+
+
+def audio_to_file(audio: tuple[int, np.ndarray]) -> str:
+    """
+    Save an audio tuple containing sample rate and numpy array data to a file.
+
+    Parameters
+    ----------
+    audio : tuple[int, np.ndarray]
+        A tuple containing:
+            - sample_rate (int): The audio sample rate in Hz
+            - data (np.ndarray): The audio data as a numpy array
+
+    Returns
+    -------
+    str
+        The path to the saved audio file
+
+    Example
+    -------
+    >>> sample_rate = 44100
+    >>> audio_data = np.array([0.1, -0.2, 0.3])  # Example audio samples
+    >>> audio_tuple = (sample_rate, audio_data)
+    >>> file_path = audio_to_file(audio_tuple)
+    >>> print(f"Audio saved to: {file_path}")
+    """
+    bytes_ = audio_to_bytes(audio)
+    with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as f:
+        f.write(bytes_)
+    return f.name
