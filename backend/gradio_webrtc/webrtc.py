@@ -220,6 +220,7 @@ class StreamHandler(ABC):
     ) -> (
         tuple[int, np.ndarray]
         | AdditionalOutputs
+        | None
         | tuple[tuple[int, np.ndarray], AdditionalOutputs]
     ):
         pass
