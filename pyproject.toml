@@ -8,7 +8,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "gradio_webrtc"
-version = "0.0.15"
+version = "0.0.16"
 description = "Stream images in realtime with webrtc"
 readme = "README.md"
 license = "apache-2.0"
@@ -50,3 +50,6 @@ artifacts = ["/backend/gradio_webrtc/templates", "*.pyi"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["/backend/gradio_webrtc"]
+
+[tool.ruff]
+target-version = "py310"

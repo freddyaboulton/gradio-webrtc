@@ -19,6 +19,7 @@ nav:
   - Cookbook: cookbook.md
   - Deployment: deployment.md
   - Advanced Configuration: advanced-configuration.md
+  - Utils: utils.md
   - Frequently Asked Questions: faq.md
 markdown_extensions:
   - pymdownx.highlight:
