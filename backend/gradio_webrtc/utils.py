@@ -187,3 +187,29 @@ def audio_to_file(audio: tuple[int, np.ndarray]) -> str:
     with tempfile.NamedTemporaryFile(suffix=".mp3", delete=False) as f:
         f.write(bytes_)
     return f.name
+
+
+def audio_to_float32(audio: tuple[int, np.ndarray]) -> np.ndarray:
+    """
+    Convert an audio tuple containing sample rate (int16) and numpy array data to float32.
+
+    Parameters
+    ----------
+    audio : tuple[int, np.ndarray]
+        A tuple containing:
+            - sample_rate (int): The audio sample rate in Hz
+            - data (np.ndarray): The audio data as a numpy array
+
+    Returns
+    -------
+    np.ndarray
+        The audio data as a numpy array with dtype float32
+
+    Example
+    -------
+    >>> sample_rate = 44100
+    >>> audio_data = np.array([0.1, -0.2, 0.3])  # Example audio samples
+    >>> audio_tuple = (sample_rate, audio_data)
+    >>> audio_float32 = audio_to_float32(audio_tuple)
+    """
+    return audio[1].astype(np.float32) / 32768.0
