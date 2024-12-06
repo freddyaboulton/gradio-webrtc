@@ -41,7 +41,7 @@
   
     function updateBars() {
       analyser.getByteFrequencyData(dataArray);
-      const bars = document.querySelectorAll('.waveContainer .box');
+      const bars = document.querySelectorAll('.gradio-webrtc-waveContainer .gradio-webrtc-box');
       for (let i = 0; i < bars.length; i++) {
         const barHeight = (dataArray[i] / 255) * 2; // Amplify the effect
         bars[i].style.transform = `scaleY(${Math.max(0.1, barHeight)})`;
@@ -51,23 +51,23 @@
     }
 </script>
   
-<div class="waveContainer">
-  <div class="boxContainer" style:width={containerWidth}>
+<div class="gradio-webrtc-waveContainer">
+  <div class="gradio-webrtc-boxContainer" style:width={containerWidth}>
     {#each Array(numBars) as _}
-      <div class="box"></div>
+      <div class="gradio-webrtc-box"></div>
     {/each}
   </div>
 </div>
   
 <style>
-  .waveContainer {
+  .gradio-webrtc-waveContainer {
     position: relative;
     display: flex;
     min-height: 100px;
     max-height: 128px;
   }
 
-  .boxContainer {
+  .gradio-webrtc-boxContainer {
     display: flex;
     justify-content: space-between;
     height: 64px;
@@ -75,7 +75,7 @@
     --gutter: 4px;
   }
 
-  .box {
+  .gradio-webrtc-box {
     height: 100%;
     width: var(--boxSize);
     background: var(--color-accent);

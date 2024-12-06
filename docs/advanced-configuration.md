@@ -70,6 +70,23 @@ demo.launch()
 2. If the chunk has more than 0.2 seconds of speech, the user started talking.
 3. If, after the user started speaking, there is a chunk with less than 0.1 seconds of speech, the user stopped speaking.
 
+
+## Stream Handler Input Audio
+
+You can configure the sampling rate of the audio passed to the `ReplyOnPause` or `StreamHandler` instance with the `input_sampling_rate` parameter. The current default is `48000`
+
+```python
+from gradio_webrtc import ReplyOnPause, WebRTC
+
+with gr.Blocks as demo:
+    audio = WebRTC(...)
+    audio.stream(ReplyOnPause(..., input_sampling_rate=24000)
+    )
+
+demo.launch()
+```
+
+
 ## Stream Handler Output Audio
 
 You can configure the output audio chunk size of `ReplyOnPause` (and any `StreamHandler`) 
@@ -87,3 +104,8 @@ with gr.Blocks as demo:
 
 demo.launch()
 ```
+
+!!! tip
+
+    In general it is best to leave these settings untouched. In some cases,
+    lowering the output_frame_size can yield smoother audio playback.
