@@ -572,7 +572,7 @@ class WebRTC(Component):
         self.rtp_params = rtp_params or {}
         if track_constraints is None and modality == "audio":
             track_constraints = {
-                "echoCancellation": False,
+                "echoCancellation": True,
                 "noiseSuppression": {"exact": True},
                 "autoGainControl": {"exact": True},
                 "sampleRate": {"ideal": 24000},
