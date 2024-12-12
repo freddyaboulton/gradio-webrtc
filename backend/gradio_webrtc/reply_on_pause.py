@@ -117,6 +117,7 @@ class ReplyOnPause(StreamHandler):
             self.expected_layout,
             self.output_sample_rate,
             self.output_frame_size,
+            self.input_sample_rate,
         )
 
     def determine_pause(

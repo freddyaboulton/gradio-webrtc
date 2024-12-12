@@ -21,8 +21,6 @@
     import AudioWave from "./AudioWave.svelte";
     import WebcamPermissions from "./WebcamPermissions.svelte";
 
-
-
     export let mode: "send-receive" | "send";
     export let value: string | null = null;
     export let label: string | undefined = undefined;
@@ -33,6 +31,28 @@
     export let track_constraints: MediaTrackConstraints = {};
     export let rtp_params: RTCRtpParameters = {} as RTCRtpParameters;
     export let on_change_cb: (mg: "tick" | "change") => void;
+
+    let stopword_recognized = false;
+
+    let notification_sound;
+
+    onMount(() => {
+        if (value === "__webrtc_value__") {
+            notification_sound = new Audio("https://huggingface.co/datasets/freddyaboulton/bucket/resolve/main/pop-sounds.mp3");
+        }
+    });
+
+    let _on_change_cb = (msg: "change" | "tick" | "stopword") => {
+        if (msg === "stopword") {
+            console.log("stopword recognized");
+            stopword_recognized = true;
+            setTimeout(() => {
+                stopword_recognized = false;
+            }, 3000);
+        } else {
+            on_change_cb(msg);
+        }
+    };
 
     let options_open = false;
 
@@ -144,7 +164,7 @@
             }
             if (stream == null) return;
 
-            start(stream, pc, mode === "send" ? null: audio_player, server.offer, _webrtc_id, "audio", on_change_cb, rtp_params).then((connection) => {
+            start(stream, pc, mode === "send" ? null: audio_player, server.offer, _webrtc_id, "audio", _on_change_cb, rtp_params).then((connection) => {
                     pc = connection;
                 }).catch(() => {
                     console.info("catching")
@@ -190,8 +210,10 @@
                     options_open = false;
 	};
     
+    $: if(stopword_recognized){
+        notification_sound.play();
+    }
 
-    
 </script>
 
 <BlockLabel
@@ -220,7 +242,7 @@
     {:else}
         <AudioWave {audio_source_callback} {stream_state}/>
         <StreamingBar time_limit={_time_limit} />
-        <div class="button-wrap">
+        <div class="button-wrap" class:pulse={stopword_recognized}>
             <button
                 on:click={start_stream}
                 aria-label={"start stream"}
@@ -327,6 +349,27 @@
 		line-height: var(--size-3);
 		color: var(--button-secondary-text-color);
 	}
+
+    @keyframes pulse {
+        0% {
+            transform: scale(1);
+            box-shadow: 0 0 0 0 rgba(var(--primary-500-rgb), 0.7);
+        }
+        
+        70% {
+            transform: scale(1.25);
+            box-shadow: 0 0 0 10px rgba(var(--primary-500-rgb), 0);
+        }
+        
+        100% {
+            transform: scale(1);
+            box-shadow: 0 0 0 0 rgba(var(--primary-500-rgb), 0);
+        }
+    }
+
+    .pulse {
+        animation: pulse 1s infinite;
+    }
 
 	.icon-with-text {
 		width: var(--size-20);

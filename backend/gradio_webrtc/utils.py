@@ -3,7 +3,7 @@ import fractions
 import io
 import logging
 import tempfile
-from typing import Any, Callable, Protocol, cast
+from typing import Any, Callable, Protocol, TypedDict, cast
 
 import av
 import numpy as np
@@ -13,6 +13,11 @@ logger = logging.getLogger(__name__)
 
 
 AUDIO_PTIME = 0.020
+
+
+class AudioChunk(TypedDict):
+    start: int
+    end: int
 
 
 class AdditionalOutputs:
