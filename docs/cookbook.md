@@ -36,6 +36,19 @@
     
     [:octicons-code-16: Code](https://huggingface.co/spaces/freddyaboulton/talk-to-moshi/blob/main/app.py)
 
+-   :speaking_head:{ .lg .middle } __Hello Llama: Stop Word Detection__
+
+    ---
+
+    A code editor built with Llama 3.3 70b that is triggered by the phrase "Hello Llama".
+    Build a Siri-like coding assistant in 100 lines of code!
+
+    <video width=98% src="https://github.com/user-attachments/assets/3e10cb15-ff1b-4b17-b141-ff0ad852e613" controls style="text-align: center"></video>
+
+    [:octicons-arrow-right-24: Demo](hhttps://huggingface.co/spaces/freddyaboulton/hey-llama-code-editor)
+    
+    [:octicons-code-16: Code](https://huggingface.co/spaces/freddyaboulton/hey-llama-code-editor/blob/main/app.py)
+
 -   :robot:{ .lg .middle } __Llama Code Editor__
 
     ---

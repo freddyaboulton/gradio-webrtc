@@ -13,7 +13,7 @@ from .reply_on_pause import (
     ReplyOnPause,
     SileroVadOptions,
 )
-from .speech_to_text import stt_for_chunks
+from .speech_to_text import get_stt_model, stt_for_chunks
 from .utils import audio_to_float32
 
 logger = logging.getLogger(__name__)
@@ -48,6 +48,8 @@ class ReplyOnStopWords(ReplyOnPause):
         )
         self.stop_words = stop_words
         self.state = ReplyOnStopWordsState()
+        # Download Model
+        get_stt_model()
 
     def stop_word_detected(self, text: str) -> bool:
         for stop_word in self.stop_words:

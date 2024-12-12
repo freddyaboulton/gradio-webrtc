@@ -65,6 +65,54 @@ and passing it to the `stream` event of the `WebRTC` component.
 
     5. Set a `time_limit` to control how long a conversation will last. If the `concurrency_count` is 1 (default), only one conversation will be handled at a time.
 
+
+### Reply On Stopwords
+
+You can configure your AI model to run whenever a set of "stop words" are detected, like "Hey Siri" or "computer", with the `ReplyOnStopWords` class. 
+
+The API is similar to `ReplyOnPause` with the addition of a `stop_words` parameter.
+
+=== "Code"
+    ``` py title="ReplyonPause"
+    import gradio as gr
+    from gradio_webrtc import WebRTC, ReplyOnPause
+
+    def response(audio: tuple[int, np.ndarray]):
+        """This function must yield audio frames"""
+        ...
+        for numpy_array in generated_audio:
+            yield (sampling_rate, numpy_array, "mono")
+
+
+    with gr.Blocks() as demo:
+        gr.HTML(
+        """
+        <h1 style='text-align: center'>
+        Chat (Powered by WebRTC ⚡️)
+        </h1>
+        """
+        )
+        with gr.Column():
+            with gr.Group():
+                audio = WebRTC(
+                    mode="send",
+                    modality="audio",
+                )
+        webrtc.stream(ReplyOnStopWords(generate,
+                                input_sample_rate=16000,
+                                stop_words=["computer"]), # (1)
+                      inputs=[webrtc, history, code],
+                      outputs=[webrtc], time_limit=90,
+                      concurrency_limit=10)
+
+    demo.launch()
+    ```
+
+    1. The `stop_words` can be single words or pairs of words. Be sure to include common misspellings of your word for more robust detection, e.g. "llama", "lamma". In my experience, it's best to use two very distinct words like "ok computer" or "hello iris". 
+    
+=== "Notes"
+    1. The `stop_words` can be single words or pairs of words. Be sure to include common misspellings of your word for more robust detection, e.g. "llama", "lamma". In my experience, it's best to use two very distinct words like "ok computer" or "hello iris". 
+
 ### Stream Handler
 
 `ReplyOnPause` is an implementation of a `StreamHandler`. The `StreamHandler` is a low-level
