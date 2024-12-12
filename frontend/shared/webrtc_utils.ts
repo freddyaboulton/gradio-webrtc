@@ -64,7 +64,7 @@ export async function start(
 
   data_channel.onmessage = (event) => {
     console.debug("Received message:", event.data);
-    if (event.data === "change" || event.data === "tick") {
+    if (event.data === "change" || event.data === "tick" || event.data === "stopword") {
       console.debug(`${event.data} event received`);
       on_change_cb(event.data);
     }

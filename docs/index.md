@@ -21,5 +21,12 @@ to use built-in pause detection (see [Audio Streaming](https://freddyaboulton.gi
 pip install gradio_webrtc[vad]
 ```
 
+For stop word detection (see [Hello Llama]()), install the `stopword` extra:
+```bash
+pip install gradio_webrtc[stopword]
+```
+
+Both extras can be installed simultaneously with `pip install gradio_webrtc[complete]`
+
 ## Examples
 See the [cookbook](/cookbook)
