@@ -26,7 +26,5 @@ For stop word detection (see [Hello Llama]()), install the `stopword` extra:
 pip install gradio_webrtc[stopword]
 ```
 
-Both extras can be installed simultaneously with `pip install gradio_webrtc[complete]`
-
 ## Examples
 See the [cookbook](/cookbook)
