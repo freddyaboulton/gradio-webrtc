@@ -295,11 +295,10 @@ This is common for displaying a multimodal text/audio conversation in a Chatbot 
     def transcribe(audio: tuple[int, np.ndarray],
                    transformers_convo: list[dict],
                    gradio_convo: list[dict]):
-    ... generate text response ...
-    response = model.generate(**inputs, max_length=256)
-    transformers_convo.append({"role": "assistant", "content": response})
-    gradio_convo.append({"role": "assistant", "content": response})
-    yield AdditionalOutputs(transformers_convo, gradio_convo) # (1)
+        response = model.generate(**inputs, max_length=256)
+        transformers_convo.append({"role": "assistant", "content": response})
+        gradio_convo.append({"role": "assistant", "content": response})
+        yield AdditionalOutputs(transformers_convo, gradio_convo) # (1)
 
 
     with gr.Blocks() as demo:
