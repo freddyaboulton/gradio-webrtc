@@ -31,7 +31,6 @@ webrtc = WebRTC(track_constraints=track_constraints,
     )
     ```
 
-
 ## The RTC Configuration
 
 You can configure how the connection is created on the client by passing an `rtc_configuration` parameter to the `WebRTC` component constructor.
@@ -109,3 +108,34 @@ demo.launch()
 
     In general it is best to leave these settings untouched. In some cases,
     lowering the output_frame_size can yield smoother audio playback.
+
+
+## Audio Icon
+
+You can display an icon of your choice instead of the default wave animation for audio streaming.
+Pass any local path or url to an image (svg, png, jpeg) to the components `icon` parameter. This will display the icon as a circular button. When audio is sent or recevied (depending on the `mode` parameter) a pulse animation will emanate from the button.
+
+=== "Code"
+    ``` python
+    audio = WebRTC(
+        label="Stream",
+        rtc_configuration=rtc_configuration,
+        mode="receive",
+        modality="audio",
+        icon="phone-solid.svg",
+    )
+    ```
+    <img src="https://github.com/user-attachments/assets/fd2e70a3-1698-4805-a8cb-9b7b3bcf2198">
+=== "Code Custom colors"
+    ``` python
+    audio = WebRTC(
+        label="Stream",
+        rtc_configuration=rtc_configuration,
+        mode="receive",
+        modality="audio",
+        icon="phone-solid.svg",
+        icon_button_color="black",
+        pulse_color="black",
+    )
+    ```
+    <img src="https://github.com/user-attachments/assets/39e9bb0b-53fb-448e-be44-d37f6785b4b6">
