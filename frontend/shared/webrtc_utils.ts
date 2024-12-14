@@ -64,7 +64,11 @@ export async function start(
 
   data_channel.onmessage = (event) => {
     console.debug("Received message:", event.data);
-    if (event.data === "change" || event.data === "tick" || event.data === "stopword") {
+    if (
+      event.data === "change" ||
+      event.data === "tick" ||
+      event.data === "stopword"
+    ) {
       console.debug(`${event.data} event received`);
       on_change_cb(event.data);
     }
@@ -76,7 +80,7 @@ export async function start(
       const sender = pc.addTrack(track, stream);
       const params = sender.getParameters();
       const updated_params = { ...params, ...rtp_params };
-      await sender.setParameters(updated_params)
+      await sender.setParameters(updated_params);
       console.debug("sender params", sender.getParameters());
     });
   } else {

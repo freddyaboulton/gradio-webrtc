@@ -34,6 +34,9 @@
 	export let mode: "send-receive" | "receive" | "send" = "send-receive";
 	export let rtp_params: RTCRtpParameters = {} as RTCRtpParameters;
 	export let track_constraints: MediaTrackConstraints = {};
+	export let icon: string | undefined = undefined;
+	export let icon_button_color: string = "var(--color-accent)";
+	export let pulse_color: string = "var(--color-accent)";
 
 	const on_change_cb = (msg: "change" | "tick") => {
 		gradio.dispatch(msg === "change" ? "state_change" : "tick");
@@ -84,6 +87,9 @@
 			{show_label}
 			{server}
 			{rtc_configuration}
+			{icon}
+			{icon_button_color}
+			{pulse_color}
 			i18n={gradio.i18n}
 			on:tick={() => gradio.dispatch("tick")}
 			on:error={({ detail }) => gradio.dispatch("error", detail)}
@@ -130,6 +136,9 @@
 			{mode}
 			{rtp_params}
 			i18n={gradio.i18n}
+			{icon}
+			{icon_button_color}
+			{pulse_color}
 			on:tick={() => gradio.dispatch("tick")}
 			on:error={({ detail }) => gradio.dispatch("error", detail)}
 		/>

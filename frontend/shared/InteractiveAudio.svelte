@@ -31,6 +31,9 @@
     export let track_constraints: MediaTrackConstraints = {};
     export let rtp_params: RTCRtpParameters = {} as RTCRtpParameters;
     export let on_change_cb: (mg: "tick" | "change") => void;
+    export let icon: string | undefined = undefined;
+    export let icon_button_color: string = "var(--color-accent)";
+    export let pulse_color: string = "var(--color-accent)";
 
     let stopword_recognized = false;
 
@@ -240,7 +243,7 @@
             <WebcamPermissions icon={Microphone} on:click={async () => access_mic()} />
         </div>
     {:else}
-        <AudioWave {audio_source_callback} {stream_state}/>
+        <AudioWave {audio_source_callback} {stream_state} {icon} {icon_button_color} {pulse_color}/>
         <StreamingBar time_limit={_time_limit} />
         <div class="button-wrap" class:pulse={stopword_recognized}>
             <button

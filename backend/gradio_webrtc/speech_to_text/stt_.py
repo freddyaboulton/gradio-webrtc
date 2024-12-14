@@ -4,7 +4,6 @@ from typing import Callable
 
 import numpy as np
 from numpy.typing import NDArray
-from silero import silero_stt
 
 from ..utils import AudioChunk
 
@@ -17,6 +16,8 @@ class STTModel:
 
 @lru_cache
 def get_stt_model() -> STTModel:
+    from silero import silero_stt
+
     model, decoder, _ = silero_stt(language="en", version="v6", jit_model="jit_xlarge")
     return STTModel(model, decoder)
 
