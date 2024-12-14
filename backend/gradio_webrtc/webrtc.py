@@ -533,6 +533,9 @@ class WebRTC(Component):
         mode: Literal["send-receive", "receive", "send"] = "send-receive",
         modality: Literal["video", "audio"] = "video",
         rtp_params: dict[str, Any] | None = None,
+        icon: str | None = None,
+        icon_button_color: str | None = None,
+        pulse_color: str | None = None,
     ):
         """
         Parameters:
@@ -560,6 +563,9 @@ class WebRTC(Component):
             mode: WebRTC mode - "send-receive", "receive", or "send".
             modality: Type of media - "video" or "audio".
             rtp_params: See https://developer.mozilla.org/en-US/docs/Web/API/RTCRtpSender/setParameters. If you are changing the video resolution, you can set this to {"degradationPreference": "maintain-framerate"} to keep the frame rate consistent.
+            icon: Icon to display on the button instead of the wave animation. The icon should be a path/url to a .svg/.png/.jpeg file.
+            icon_button_color: Color of the icon button. Default is var(--color-accent) of the demo theme.
+            pulse_color: Color of the pulse animation. Default is var(--color-accent) of the demo theme.
         """
         self.time_limit = time_limit
         self.height = height
@@ -569,6 +575,8 @@ class WebRTC(Component):
         self.rtc_configuration = rtc_configuration
         self.mode = mode
         self.modality = modality
+        self.icon_button_color = icon_button_color
+        self.pulse_color = pulse_color
         self.rtp_params = rtp_params or {}
         if track_constraints is None and modality == "audio":
             track_constraints = {
@@ -603,6 +611,10 @@ class WebRTC(Component):
             render=render,
             key=key,
             value=value,
+        )
+        # need to do this here otherwise the proxy_url is not set
+        self.icon = (
+            icon if not icon else cast(dict, self.serve_static_file(icon)).get("url")
         )
 
     def set_additional_outputs(
