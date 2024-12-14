@@ -115,6 +115,8 @@ demo.launch()
 You can display an icon of your choice instead of the default wave animation for audio streaming.
 Pass any local path or url to an image (svg, png, jpeg) to the components `icon` parameter. This will display the icon as a circular button. When audio is sent or recevied (depending on the `mode` parameter) a pulse animation will emanate from the button.
 
+You can control the button color and pulse color with `icon_button_color` and `pulse_color` parameters. They can take any valid css color.
+
 === "Code"
     ``` python
     audio = WebRTC(
