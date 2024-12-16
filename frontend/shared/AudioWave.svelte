@@ -64,6 +64,9 @@
 
     animationId = requestAnimationFrame(updateVisualization);
   }
+
+  $: maxPulseScale = 1 + (pulseIntensity * 10); // Scale from 1x to 3x based on intensity
+
 </script>
 
 <div class="gradio-webrtc-waveContainer">
@@ -75,6 +78,8 @@
           class="pulse-ring"
           style:background={pulse_color}
           style:animation-delay={`${i * 0.4}s`}
+          style:--max-scale={maxPulseScale}
+          style:opacity={0.5 * pulseIntensity}
         />
       {/each}
     {/if}
@@ -167,13 +172,13 @@
 }
 
 @keyframes pulse {
-  0% {
-    transform: translate(-50%, -50%) scale(1);
-    opacity: 0.5;
+    0% {
+      transform: translate(-50%, -50%) scale(1);
+      opacity: 0.5;
+    }
+    100% {
+      transform: translate(-50%, -50%) scale(var(--max-scale, 3));
+      opacity: 0;
+    }
   }
-  100% {
-    transform: translate(-50%, -50%) scale(3);
-    opacity: 0;
-  }
-}
 </style>
