@@ -20,6 +20,7 @@ from typing import (
     ParamSpec,
     Sequence,
     TypeVar,
+    Union,
     cast,
 )
 
@@ -161,7 +162,7 @@ class VideoCallback(VideoStreamTrack):
             logger.debug("traceback %s", exec)
 
 
-class StreamHandler(ABC):
+class StreamHandlerBase(ABC):
     def __init__(
         self,
         expected_layout: Literal["mono", "stereo"] = "mono",
@@ -197,7 +198,7 @@ class StreamHandler(ABC):
         pass
 
     @abstractmethod
-    def copy(self) -> "StreamHandler":
+    def copy(self) -> "StreamHandlerBase":
         pass
 
     def resample(self, frame: AudioFrame) -> Generator[AudioFrame, None, None]:
@@ -209,6 +210,8 @@ class StreamHandler(ABC):
                 frame_size=frame.samples,
             )
         yield from self._resampler.resample(frame)
+
+class StreamHandler(StreamHandlerBase):
 
     @abstractmethod
     def receive(self, frame: tuple[int, np.ndarray]) -> None:
@@ -226,13 +229,34 @@ class StreamHandler(ABC):
         pass
 
 
+class AsyncStreamHandler(StreamHandlerBase):
+
+    @abstractmethod
+    async def receive(self, frame: tuple[int, np.ndarray]) -> None:
+        pass
+
+    @abstractmethod
+    async def emit(
+        self,
+    ) -> (
+        tuple[int, np.ndarray]
+        | AdditionalOutputs
+        | None
+        | tuple[tuple[int, np.ndarray], AdditionalOutputs]
+    ):
+        pass
+
+
+StreamHandlerImpl = Union[StreamHandler, AsyncStreamHandler]
+
+
 class AudioCallback(AudioStreamTrack):
     kind = "audio"
 
     def __init__(
         self,
         track: MediaStreamTrack,
-        event_handler: StreamHandler,
+        event_handler: StreamHandlerImpl,
         channel: DataChannel | None = None,
         set_additional_outputs: Callable | None = None,
     ) -> None:
@@ -262,9 +286,13 @@ class AudioCallback(AudioStreamTrack):
                 frame = cast(AudioFrame, await self.track.recv())
                 for frame in self.event_handler.resample(frame):
                     numpy_array = frame.to_ndarray()
-                    await anyio.to_thread.run_sync(
-                        self.event_handler.receive, (frame.sample_rate, numpy_array)
-                    )
+
+                    if isinstance(self.event_handler, AsyncStreamHandler):
+                        await self.event_handler.receive((frame.sample_rate, numpy_array))
+                    else:
+                        await anyio.to_thread.run_sync(
+                            self.event_handler.receive, (frame.sample_rate, numpy_array)
+                        )
             except MediaStreamError:
                 logger.debug("MediaStreamError in process_input_frames")
                 break
@@ -272,9 +300,12 @@ class AudioCallback(AudioStreamTrack):
     def start(self):
         if not self.has_started:
             loop = asyncio.get_running_loop()
-            callable = functools.partial(
-                loop.run_in_executor, None, self.event_handler.emit
-            )
+            if isinstance(self.event_handler, AsyncStreamHandler):
+                callable = self.event_handler.emit
+            else:
+                callable = functools.partial(
+                    loop.run_in_executor, None, self.event_handler.emit
+                )
             asyncio.create_task(self.process_input_frames())
             asyncio.create_task(
                 player_worker_decode(
