@@ -71,7 +71,7 @@ class ReplyOnStopWords(ReplyOnPause):
     def send_stopword(self):
         asyncio.run_coroutine_threadsafe(self._send_stopword(), self.loop)
 
-    def determine_pause(
+    def determine_pause(  # type: ignore
         self, audio: np.ndarray, sampling_rate: int, state: ReplyOnStopWordsState
     ) -> bool:
         """Take in the stream, determine if a pause happened"""
@@ -128,7 +128,7 @@ class ReplyOnStopWords(ReplyOnPause):
         return False
 
     def reset(self):
-        self.args_set.clear()
+        super().reset()
         self.generator = None
         self.event.clear()
         self.state = ReplyOnStopWordsState()

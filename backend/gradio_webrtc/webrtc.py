@@ -19,6 +19,7 @@ from typing import (
     Literal,
     ParamSpec,
     Sequence,
+    TypeAlias,
     TypeVar,
     Union,
     cast,
@@ -174,10 +175,11 @@ class StreamHandlerBase(ABC):
         self.output_sample_rate = output_sample_rate
         self.output_frame_size = output_frame_size
         self.input_sample_rate = input_sample_rate
-        self.latest_args: str | list[Any] = "not_set"
+        self.latest_args: list[Any] = []
         self._resampler = None
         self._channel: DataChannel | None = None
         self._loop: asyncio.AbstractEventLoop
+        self.args_set = asyncio.Event()
 
     @property
     def loop(self) -> asyncio.AbstractEventLoop:
@@ -190,9 +192,24 @@ class StreamHandlerBase(ABC):
     def set_channel(self, channel: DataChannel):
         self._channel = channel
 
+    async def fetch_args(
+        self,
+    ):
+        if self.channel:
+            self.channel.send("tick")
+            logger.debug("Sent tick")
+
+    async def wait_for_args(self):
+        await self.fetch_args()
+        await self.args_set.wait()
+
     def set_args(self, args: list[Any]):
         logger.debug("setting args in audio callback %s", args)
         self.latest_args = ["__webrtc_value__"] + list(args)
+        self.args_set.set()
+
+    def reset(self):
+        self.args_set.clear()
 
     def shutdown(self):
         pass
@@ -211,8 +228,17 @@ class StreamHandlerBase(ABC):
             )
         yield from self._resampler.resample(frame)
 
-class StreamHandler(StreamHandlerBase):
 
+EmitType: TypeAlias = Union[
+    tuple[int, np.ndarray],
+    tuple[int, np.ndarray, Literal["mono", "stereo"]],
+    AdditionalOutputs,
+    tuple[tuple[int, np.ndarray], AdditionalOutputs],
+    None,
+]
+
+
+class StreamHandler(StreamHandlerBase):
     @abstractmethod
     def receive(self, frame: tuple[int, np.ndarray]) -> None:
         pass
@@ -220,17 +246,11 @@ class StreamHandler(StreamHandlerBase):
     @abstractmethod
     def emit(
         self,
-    ) -> (
-        tuple[int, np.ndarray]
-        | AdditionalOutputs
-        | None
-        | tuple[tuple[int, np.ndarray], AdditionalOutputs]
-    ):
+    ) -> EmitType:
         pass
 
 
 class AsyncStreamHandler(StreamHandlerBase):
-
     @abstractmethod
     async def receive(self, frame: tuple[int, np.ndarray]) -> None:
         pass
@@ -238,12 +258,7 @@ class AsyncStreamHandler(StreamHandlerBase):
     @abstractmethod
     async def emit(
         self,
-    ) -> (
-        tuple[int, np.ndarray]
-        | AdditionalOutputs
-        | None
-        | tuple[tuple[int, np.ndarray], AdditionalOutputs]
-    ):
+    ) -> EmitType:
         pass
 
 
@@ -286,9 +301,10 @@ class AudioCallback(AudioStreamTrack):
                 frame = cast(AudioFrame, await self.track.recv())
                 for frame in self.event_handler.resample(frame):
                     numpy_array = frame.to_ndarray()
-
                     if isinstance(self.event_handler, AsyncStreamHandler):
-                        await self.event_handler.receive((frame.sample_rate, numpy_array))
+                        await self.event_handler.receive(
+                            (frame.sample_rate, numpy_array)
+                        )
                     else:
                         await anyio.to_thread.run_sync(
                             self.event_handler.receive, (frame.sample_rate, numpy_array)
@@ -723,7 +739,7 @@ class WebRTC(Component):
 
     def stream(
         self,
-        fn: Callable[..., Any] | StreamHandler | None = None,
+        fn: Callable[..., Any] | StreamHandler | AsyncStreamHandler | None = None,
         inputs: Block | Sequence[Block] | set[Block] | None = None,
         outputs: Block | Sequence[Block] | set[Block] | None = None,
         js: str | None = None,
@@ -752,7 +768,7 @@ class WebRTC(Component):
         if (
             self.mode == "send-receive"
             and self.modality == "audio"
-            and not isinstance(self.event_handler, StreamHandler)
+            and not isinstance(self.event_handler, (AsyncStreamHandler, StreamHandler))
         ):
             raise ValueError(
                 "In the send-receive mode for audio, the event handler must be an instance of StreamHandler."
@@ -871,6 +887,8 @@ class WebRTC(Component):
                     event_handler=handler,
                     set_additional_outputs=set_outputs,
                 )
+            else:
+                raise ValueError("Modality must be either video or audio")
             self.connections[body["webrtc_id"]] = cb
             if body["webrtc_id"] in self.data_channels:
                 self.connections[body["webrtc_id"]].set_channel(
@@ -893,6 +911,8 @@ class WebRTC(Component):
                     cast(Callable, self.event_handler),
                     set_additional_outputs=set_outputs,
                 )
+            else:
+                raise ValueError("Modality must be either video or audio")
 
             logger.debug("Adding track to peer connection %s", cb)
             pc.addTrack(cb)
