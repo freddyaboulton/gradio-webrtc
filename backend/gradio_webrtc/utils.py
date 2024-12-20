@@ -218,3 +218,43 @@ def audio_to_float32(audio: tuple[int, np.ndarray]) -> np.ndarray:
     >>> audio_float32 = audio_to_float32(audio_tuple)
     """
     return audio[1].astype(np.float32) / 32768.0
+
+
+def aggregate_bytes_to_16bit(chunks_iterator):
+    leftover = b""  # Store incomplete bytes between chunks
+
+    for chunk in chunks_iterator:
+        # Combine with any leftover bytes from previous chunk
+        current_bytes = leftover + chunk
+
+        # Calculate complete samples
+        n_complete_samples = len(current_bytes) // 2  # int16 = 2 bytes
+        bytes_to_process = n_complete_samples * 2
+
+        # Split into complete samples and leftover
+        to_process = current_bytes[:bytes_to_process]
+        leftover = current_bytes[bytes_to_process:]
+
+        if to_process:  # Only yield if we have complete samples
+            audio_array = np.frombuffer(to_process, dtype=np.int16).reshape(1, -1)
+            yield audio_array
+
+
+async def async_aggregate_bytes_to_16bit(chunks_iterator):
+    leftover = b""  # Store incomplete bytes between chunks
+
+    async for chunk in chunks_iterator:
+        # Combine with any leftover bytes from previous chunk
+        current_bytes = leftover + chunk
+
+        # Calculate complete samples
+        n_complete_samples = len(current_bytes) // 2  # int16 = 2 bytes
+        bytes_to_process = n_complete_samples * 2
+
+        # Split into complete samples and leftover
+        to_process = current_bytes[:bytes_to_process]
+        leftover = current_bytes[bytes_to_process:]
+
+        if to_process:  # Only yield if we have complete samples
+            audio_array = np.frombuffer(to_process, dtype=np.int16).reshape(1, -1)
+            yield audio_array
