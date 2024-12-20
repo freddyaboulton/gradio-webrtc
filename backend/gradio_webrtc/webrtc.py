@@ -44,6 +44,7 @@ from gradio_client import handle_file
 from gradio_webrtc.utils import (
     AdditionalOutputs,
     DataChannel,
+    current_channel,
     player_worker_decode,
     split_output,
 )
@@ -84,9 +85,12 @@ class VideoCallback(VideoStreamTrack):
         self.set_additional_outputs = set_additional_outputs
         self.thread_quit = asyncio.Event()
         self.mode = mode
+        self.channel_set = asyncio.Event()
 
     def set_channel(self, channel: DataChannel):
         self.channel = channel
+        current_channel.set(channel)
+        self.channel_set.set()
 
     def set_args(self, args: list[Any]):
         self.latest_args = ["__webrtc_value__"] + list(args)
@@ -121,6 +125,12 @@ class VideoCallback(VideoStreamTrack):
         super().stop()
         logger.debug("video callback stop")
         self.thread_quit.set()
+    
+    async def wait_for_channel(self):
+        if not self.channel_set.is_set():
+
+           await self.channel_set.wait()
+           current_channel.set(self.channel)
 
     async def recv(self):
         try:
@@ -129,6 +139,8 @@ class VideoCallback(VideoStreamTrack):
             except MediaStreamError:
                 self.stop()
                 return
+            
+            await self.wait_for_channel()
             frame_array = frame.to_ndarray(format="bgr24")
 
             if self.latest_args == "not_set":
@@ -180,6 +192,7 @@ class StreamHandlerBase(ABC):
         self._channel: DataChannel | None = None
         self._loop: asyncio.AbstractEventLoop
         self.args_set = asyncio.Event()
+        self.channel_set = asyncio.Event()
 
     @property
     def loop(self) -> asyncio.AbstractEventLoop:
@@ -191,6 +204,7 @@ class StreamHandlerBase(ABC):
 
     def set_channel(self, channel: DataChannel):
         self._channel = channel
+        self.channel_set.set()
 
     async def fetch_args(
         self,
@@ -342,6 +356,9 @@ class AudioCallback(AudioStreamTrack):
             if self.readyState != "live":
                 raise MediaStreamError
 
+            if not self.event_handler.channel_set.is_set():
+                await self.event_handler.channel_set.wait()
+                current_channel.set(self.channel)
             self.start()
             frame = await self.queue.get()
             logger.debug("frame %s", frame)
@@ -415,7 +432,7 @@ class ServerToClientVideo(VideoStreamTrack):
                 self.generator = cast(
                     Generator[Any, None, Any], self.event_handler(*self.latest_args)
                 )
-
+                current_channel.set(self.channel)
             try:
                 next_array, outputs = split_output(next(self.generator))
                 if (
@@ -470,6 +487,7 @@ class ServerToClientAudio(AudioStreamTrack):
 
     def next(self) -> tuple[int, np.ndarray] | None:
         self.args_set.wait()
+        current_channel.set(self.channel)
         if self.generator is None:
             self.generator = self.event_handler(*self.latest_args)
         if self.generator is not None:

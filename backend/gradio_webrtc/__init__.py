@@ -8,6 +8,8 @@ from .reply_on_stopwords import ReplyOnStopWords
 from .speech_to_text import stt, stt_for_chunks
 from .utils import (
     AdditionalOutputs,
+    Warning,
+    WebRTCError,
     aggregate_bytes_to_16bit,
     async_aggregate_bytes_to_16bit,
     audio_to_bytes,
@@ -35,4 +37,6 @@ __all__ = [
     "stt_for_chunks",
     "StreamHandler",
     "WebRTC",
+    "WebRTCError",
+    "Warning",
 ]
