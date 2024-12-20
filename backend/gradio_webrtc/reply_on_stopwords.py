@@ -3,7 +3,6 @@ import logging
 import re
 from typing import Literal
 
-import librosa
 import numpy as np
 
 from .reply_on_pause import (
@@ -75,6 +74,7 @@ class ReplyOnStopWords(ReplyOnPause):
         self, audio: np.ndarray, sampling_rate: int, state: ReplyOnStopWordsState
     ) -> bool:
         """Take in the stream, determine if a pause happened"""
+        import librosa
         duration = len(audio) / sampling_rate
 
         if duration >= self.algo_options.audio_chunk_duration:
