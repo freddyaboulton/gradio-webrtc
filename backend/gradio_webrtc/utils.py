@@ -37,7 +37,6 @@ current_channel: ContextVar[DataChannel | None] = ContextVar(
 
 
 def _send_log(message: str, type: str) -> None:
-
     async def _send(channel: DataChannel) -> None:
         channel.send(
             json.dumps(
@@ -58,7 +57,7 @@ def _send_log(message: str, type: str) -> None:
 
 
 def Warning(  # noqa: N802
-    message: str = "Warning issued."
+    message: str = "Warning issued.",
 ):
     """
     Send a warning message that is deplayed in the UI of the application.
@@ -76,11 +75,10 @@ def Warning(  # noqa: N802
 
 
 class WebRTCError(Exception):
-
     def __init__(self, message: str) -> None:
         super().__init__(message)
         _send_log(message, "error")
-            
+
 
 def split_output(data: tuple | Any) -> tuple[Any, AdditionalOutputs | None]:
     if isinstance(data, AdditionalOutputs):

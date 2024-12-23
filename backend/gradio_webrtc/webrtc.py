@@ -125,10 +125,10 @@ class VideoCallback(VideoStreamTrack):
         super().stop()
         logger.debug("video callback stop")
         self.thread_quit.set()
-    
+
     async def wait_for_channel(self):
         if not self.channel_set.is_set():
-           await self.channel_set.wait()
+            await self.channel_set.wait()
         if current_channel.get() != self.channel:
             current_channel.set(self.channel)
 
@@ -139,7 +139,7 @@ class VideoCallback(VideoStreamTrack):
             except MediaStreamError:
                 self.stop()
                 return
-            
+
             await self.wait_for_channel()
             frame_array = frame.to_ndarray(format="bgr24")
 
@@ -216,7 +216,7 @@ class StreamHandlerBase(ABC):
     async def wait_for_args(self):
         await self.fetch_args()
         await self.args_set.wait()
-    
+
     def wait_for_args_sync(self):
         asyncio.run_coroutine_threadsafe(self.wait_for_args(), self.loop).result()
 
@@ -312,26 +312,24 @@ class AudioCallback(AudioStreamTrack):
     def set_args(self, args: list[Any]):
         self.event_handler.set_args(args)
 
+    def event_handler_receive(self, frame: tuple[int, np.ndarray]) -> None:
+        current_channel.set(self.event_handler.channel)
+        return cast(Callable, self.event_handler.receive)(frame)
+
     async def process_input_frames(self) -> None:
-        print("running task")
         while not self.thread_quit.is_set():
-            print("running")
             try:
                 frame = cast(AudioFrame, await self.track.recv())
-                print("received")
                 for frame in self.event_handler.resample(frame):
-                    print("resampled")
                     numpy_array = frame.to_ndarray()
                     if isinstance(self.event_handler, AsyncStreamHandler):
                         await self.event_handler.receive(
                             (frame.sample_rate, numpy_array)
                         )
                     else:
-                        print("here")
                         await anyio.to_thread.run_sync(
-                            self.event_handler.receive, (frame.sample_rate, numpy_array)
+                            self.event_handler_receive, (frame.sample_rate, numpy_array)
                         )
-                        print("receive called")
             except MediaStreamError:
                 logger.debug("MediaStreamError in process_input_frames")
                 break
@@ -365,11 +363,13 @@ class AudioCallback(AudioStreamTrack):
             if self.readyState != "live":
                 raise MediaStreamError
 
+            if not self.event_handler.channel_set.is_set():
+                await self.event_handler.channel_set.wait()
+            if current_channel.get() != self.event_handler.channel:
+                current_channel.set(self.event_handler.channel)
+
             self.start()
 
-            # if not self.event_handler.channel_set.is_set():
-            #     await self.event_handler.channel_set.wait()
-            #     current_channel.set(self.channel)
             frame = await self.queue.get()
             logger.debug("frame %s", frame)
 
