@@ -75,6 +75,7 @@ class ReplyOnStopWords(ReplyOnPause):
     ) -> bool:
         """Take in the stream, determine if a pause happened"""
         import librosa
+
         duration = len(audio) / sampling_rate
 
         if duration >= self.algo_options.audio_chunk_duration:

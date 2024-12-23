@@ -38,7 +38,11 @@
 	export let icon_button_color: string = "var(--color-accent)";
 	export let pulse_color: string = "var(--color-accent)";
 
-	const on_change_cb = (msg: "change" | "tick") => {
+	const on_change_cb = (msg: "change" | "tick" | any) => {
+		if (msg?.type === "info" || msg?.type === "warning" || msg?.type === "error") {
+			console.log("dispatching info", msg.message);
+			gradio.dispatch(msg?.type === "error"? "error": "warning", msg.message);
+		}
 		gradio.dispatch(msg === "change" ? "state_change" : "tick");
 	}
 
@@ -93,6 +97,7 @@
 			i18n={gradio.i18n}
 			on:tick={() => gradio.dispatch("tick")}
 			on:error={({ detail }) => gradio.dispatch("error", detail)}
+
 		/>
 	{:else if (mode === "send-receive" || mode == "send") && modality === "video"}
 		<Video
@@ -141,6 +146,7 @@
 			{pulse_color}
 			on:tick={() => gradio.dispatch("tick")}
 			on:error={({ detail }) => gradio.dispatch("error", detail)}
+			on:warning={({ detail }) => gradio.dispatch("warning", detail)}
 		/>
 	{/if}
 </Block>

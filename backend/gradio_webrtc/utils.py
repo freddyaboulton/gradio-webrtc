@@ -1,8 +1,10 @@
 import asyncio
 import fractions
 import io
+import json
 import logging
 import tempfile
+from contextvars import ContextVar
 from typing import Any, Callable, Protocol, TypedDict, cast
 
 import av
@@ -27,6 +29,55 @@ class AdditionalOutputs:
 
 class DataChannel(Protocol):
     def send(self, message: str) -> None: ...
+
+
+current_channel: ContextVar[DataChannel | None] = ContextVar(
+    "current_channel", default=None
+)
+
+
+def _send_log(message: str, type: str) -> None:
+    async def _send(channel: DataChannel) -> None:
+        channel.send(
+            json.dumps(
+                {
+                    "type": type,
+                    "message": message,
+                }
+            )
+        )
+
+    if channel := current_channel.get():
+        print("channel", channel)
+        try:
+            loop = asyncio.get_running_loop()
+            asyncio.run_coroutine_threadsafe(_send(channel), loop)
+        except RuntimeError:
+            asyncio.run(_send(channel))
+
+
+def Warning(  # noqa: N802
+    message: str = "Warning issued.",
+):
+    """
+    Send a warning message that is deplayed in the UI of the application.
+
+    Parameters
+    ----------
+    audio : str
+        The warning message to send
+
+    Returns
+    -------
+    None
+    """
+    _send_log(message, "warning")
+
+
+class WebRTCError(Exception):
+    def __init__(self, message: str) -> None:
+        super().__init__(message)
+        _send_log(message, "error")
 
 
 def split_output(data: tuple | Any) -> tuple[Any, AdditionalOutputs | None]:

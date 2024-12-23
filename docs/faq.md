@@ -24,3 +24,44 @@ You can disable this via the `track_constraints` (see [advanced configuration](.
 		modality="audio",
 	)
 ```
+
+## How to raise errors in the UI
+
+You can raise `WebRTCError` in order for an error message to show up in the user's screen. This is similar to how `gr.Error` works.
+
+Here is a simple example:
+
+```python
+def generation(num_steps):
+    for _ in range(num_steps):
+        segment = AudioSegment.from_file(
+            "/Users/freddy/sources/gradio/demo/audio_debugger/cantina.wav"
+        )
+        yield (
+            segment.frame_rate,
+            np.array(segment.get_array_of_samples()).reshape(1, -1),
+        )
+        time.sleep(3.5)
+    raise WebRTCError("This is a test error")
+
+with gr.Blocks() as demo:
+    audio = WebRTC(
+    label="Stream",
+    mode="receive",
+    modality="audio",
+    )
+    num_steps = gr.Slider(
+        label="Number of Steps",
+        minimum=1,
+        maximum=10,
+        step=1,
+        value=5,
+    )
+    button = gr.Button("Generate")
+
+    audio.stream(
+        fn=generation, inputs=[num_steps], outputs=[audio], trigger=button.click
+    )
+
+demo.launch()
+```
