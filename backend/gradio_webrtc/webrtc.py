@@ -128,9 +128,9 @@ class VideoCallback(VideoStreamTrack):
     
     async def wait_for_channel(self):
         if not self.channel_set.is_set():
-
            await self.channel_set.wait()
-           current_channel.set(self.channel)
+        if current_channel.get() != self.channel:
+            current_channel.set(self.channel)
 
     async def recv(self):
         try:
@@ -170,6 +170,9 @@ class VideoCallback(VideoStreamTrack):
 
             return new_frame
         except Exception as e:
+            print("exception", e)
+            print("channel", self.channel)
+            print("current_channel", current_channel.get())
             logger.debug("exception %s", e)
             exec = traceback.format_exc()
             logger.debug("traceback %s", exec)
@@ -216,6 +219,10 @@ class StreamHandlerBase(ABC):
     async def wait_for_args(self):
         await self.fetch_args()
         await self.args_set.wait()
+    
+    def wait_for_args_sync(self):
+        loop = asyncio.get_running_loop()
+        asyncio.run_coroutine_threadsafe(self.wait_for_args(), loop)
 
     def set_args(self, args: list[Any]):
         logger.debug("setting args in audio callback %s", args)
@@ -313,16 +320,20 @@ class AudioCallback(AudioStreamTrack):
         while not self.thread_quit.is_set():
             try:
                 frame = cast(AudioFrame, await self.track.recv())
+                print("received")
                 for frame in self.event_handler.resample(frame):
+                    print("resampled")
                     numpy_array = frame.to_ndarray()
                     if isinstance(self.event_handler, AsyncStreamHandler):
                         await self.event_handler.receive(
                             (frame.sample_rate, numpy_array)
                         )
                     else:
+                        print("here")
                         await anyio.to_thread.run_sync(
                             self.event_handler.receive, (frame.sample_rate, numpy_array)
                         )
+                        print("receive called")
             except MediaStreamError:
                 logger.debug("MediaStreamError in process_input_frames")
                 break
@@ -356,10 +367,11 @@ class AudioCallback(AudioStreamTrack):
             if self.readyState != "live":
                 raise MediaStreamError
 
+            self.start()
+
             if not self.event_handler.channel_set.is_set():
                 await self.event_handler.channel_set.wait()
                 current_channel.set(self.channel)
-            self.start()
             frame = await self.queue.get()
             logger.debug("frame %s", frame)
 

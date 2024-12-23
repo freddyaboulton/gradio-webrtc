@@ -36,6 +36,27 @@ current_channel: ContextVar[DataChannel | None] = ContextVar(
 )
 
 
+def _send_log(message: str, type: str) -> None:
+
+    async def _send(channel: DataChannel) -> None:
+        channel.send(
+            json.dumps(
+                {
+                    "type": type,
+                    "message": message,
+                }
+            )
+        )
+
+    if channel := current_channel.get():
+        print("channel", channel)
+        try:
+            loop = asyncio.get_running_loop()
+            asyncio.run_coroutine_threadsafe(_send(channel), loop)
+        except RuntimeError:
+            asyncio.run(_send(channel))
+
+
 def Warning(  # noqa: N802
     message: str = "Warning issued."
 ):
@@ -51,40 +72,15 @@ def Warning(  # noqa: N802
     -------
     None
     """
-    if channel := current_channel.get():
-        channel.send(
-            json.dumps(
-                {
-                    "type": "warning",
-                    "message": message,
-                }
-            )
-        )
+    _send_log(message, "warning")
 
 
 class WebRTCError(Exception):
 
-    async def send(self, channel, message) -> None:
-        if channel := current_channel.get():
-            channel.send(
-                json.dumps(
-                    {
-                        "type": "error",
-                        "message": message,
-                    }
-                )
-            )
-
     def __init__(self, message: str) -> None:
         super().__init__(message)
-        if channel := current_channel.get():
-            try:
-                asyncio.get_running_loop()
-                _ = self.send(channel, message)
-            except RuntimeError:
-                asyncio.run(self.send(channel, message))
+        _send_log(message, "error")
             
-
 
 def split_output(data: tuple | Any) -> tuple[Any, AdditionalOutputs | None]:
     if isinstance(data, AdditionalOutputs):
@@ -128,7 +124,7 @@ async def player_worker_decode(
         try:
             # Get next frame
             frame, outputs = split_output(
-                await asyncio.wait_for(next_frame(), timeout=10)
+                await asyncio.wait_for(next_frame(), timeout=60)
             )
             if (
                 isinstance(outputs, AdditionalOutputs)

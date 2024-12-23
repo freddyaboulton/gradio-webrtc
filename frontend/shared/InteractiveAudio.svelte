@@ -46,6 +46,7 @@
     });
 
     let _on_change_cb = (msg: "change" | "tick" | "stopword") => {
+        console.log("msg", msg);
         if (msg === "stopword") {
             console.log("stopword recognized");
             stopword_recognized = true;
@@ -53,6 +54,7 @@
                 stopword_recognized = false;
             }, 3000);
         } else {
+            console.log("calling on_change_cb with msg", msg);
             on_change_cb(msg);
         }
     };
