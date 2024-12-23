@@ -170,9 +170,6 @@ class VideoCallback(VideoStreamTrack):
 
             return new_frame
         except Exception as e:
-            print("exception", e)
-            print("channel", self.channel)
-            print("current_channel", current_channel.get())
             logger.debug("exception %s", e)
             exec = traceback.format_exc()
             logger.debug("traceback %s", exec)
@@ -221,8 +218,7 @@ class StreamHandlerBase(ABC):
         await self.args_set.wait()
     
     def wait_for_args_sync(self):
-        loop = asyncio.get_running_loop()
-        asyncio.run_coroutine_threadsafe(self.wait_for_args(), loop)
+        asyncio.run_coroutine_threadsafe(self.wait_for_args(), self.loop).result()
 
     def set_args(self, args: list[Any]):
         logger.debug("setting args in audio callback %s", args)
@@ -296,6 +292,7 @@ class AudioCallback(AudioStreamTrack):
         channel: DataChannel | None = None,
         set_additional_outputs: Callable | None = None,
     ) -> None:
+        super().__init__()
         self.track = track
         self.event_handler = event_handler
         self.current_timestamp = 0
@@ -307,7 +304,6 @@ class AudioCallback(AudioStreamTrack):
         self.last_timestamp = 0
         self.channel = channel
         self.set_additional_outputs = set_additional_outputs
-        super().__init__()
 
     def set_channel(self, channel: DataChannel):
         self.channel = channel
@@ -317,7 +313,9 @@ class AudioCallback(AudioStreamTrack):
         self.event_handler.set_args(args)
 
     async def process_input_frames(self) -> None:
+        print("running task")
         while not self.thread_quit.is_set():
+            print("running")
             try:
                 frame = cast(AudioFrame, await self.track.recv())
                 print("received")
@@ -369,9 +367,9 @@ class AudioCallback(AudioStreamTrack):
 
             self.start()
 
-            if not self.event_handler.channel_set.is_set():
-                await self.event_handler.channel_set.wait()
-                current_channel.set(self.channel)
+            # if not self.event_handler.channel_set.is_set():
+            #     await self.event_handler.channel_set.wait()
+            #     current_channel.set(self.channel)
             frame = await self.queue.get()
             logger.debug("frame %s", frame)
 
@@ -976,6 +974,7 @@ class WebRTC(Component):
         answer = await pc.createAnswer()
         await pc.setLocalDescription(answer)  # type: ignore
         logger.debug("done handling offer about to return")
+        await asyncio.sleep(0.1)
 
         return {
             "sdp": pc.localDescription.sdp,
