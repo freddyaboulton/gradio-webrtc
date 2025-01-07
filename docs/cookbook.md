@@ -1,5 +1,54 @@
 <div class="grid cards" markdown>
 
+-   :speaking_head:{ .lg .middle } __OpenAI Real Time Voice API__
+
+    ---
+
+    Talk to ChatGPT in real time using OpenAI's voice API.
+
+    <video width=98% src="https://github.com/user-attachments/assets/41a63376-43ec-496a-9b31-4f067d3903d6" controls style="text-align: center"></video>
+
+    [:octicons-arrow-right-24: Demo](https://huggingface.co/spaces/freddyaboulton/openai-realtime-voice)
+    
+    [:octicons-code-16: Code](https://huggingface.co/spaces/freddyaboulton/openai-realtime-voice/blob/main/app.py)
+
+-   :speaking_head:{ .lg .middle } __Google Gemini Real Time Voice API__
+
+    ---
+
+    Talk to Gemini in real time using Google's voice API.
+
+    <video width=98% src="https://github.com/user-attachments/assets/da8c8a2a-5d99-4ac7-8927-0f7812e4146f" controls style="text-align: center"></video>
+
+    [:octicons-arrow-right-24: Demo](https://huggingface.co/spaces/freddyaboulton/gemini-voice)
+    
+    [:octicons-code-16: Code](https://huggingface.co/spaces/freddyaboulton/gemini-voice/blob/main/app.py)
+
+-   :speaking_head:{ .lg .middle } __Hello Llama: Stop Word Detection__
+
+    ---
+
+    A code editor built with Llama 3.3 70b that is triggered by the phrase "Hello Llama".
+    Build a Siri-like coding assistant in 100 lines of code!
+
+    <video width=98% src="https://github.com/user-attachments/assets/3e10cb15-ff1b-4b17-b141-ff0ad852e613" controls style="text-align: center"></video>
+
+    [:octicons-arrow-right-24: Demo](hhttps://huggingface.co/spaces/freddyaboulton/hey-llama-code-editor)
+    
+    [:octicons-code-16: Code](https://huggingface.co/spaces/freddyaboulton/hey-llama-code-editor/blob/main/app.py)
+
+-   :robot:{ .lg .middle } __Llama Code Editor__
+
+    ---
+
+    Create and edit HTML pages with just your voice! Powered by SambaNova systems.
+
+    <video width=98% src="https://github.com/user-attachments/assets/a09647f1-33e1-4154-a5a3-ffefda8a736a" controls style="text-align: center"></video>
+
+    [:octicons-arrow-right-24: Demo](https://huggingface.co/spaces/freddyaboulton/llama-code-editor)
+    
+    [:octicons-code-16: Code](https://huggingface.co/spaces/freddyaboulton/llama-code-editor/blob/main/app.py)
+
 -   :speaking_head:{ .lg .middle } __Audio Input/Output with mini-omni2__
 
     ---
@@ -35,31 +84,6 @@
     [:octicons-arrow-right-24: Demo](https://huggingface.co/spaces/freddyaboulton/talk-to-moshi)
     
     [:octicons-code-16: Code](https://huggingface.co/spaces/freddyaboulton/talk-to-moshi/blob/main/app.py)
-
--   :speaking_head:{ .lg .middle } __Hello Llama: Stop Word Detection__
-
-    ---
-
-    A code editor built with Llama 3.3 70b that is triggered by the phrase "Hello Llama".
-    Build a Siri-like coding assistant in 100 lines of code!
-
-    <video width=98% src="https://github.com/user-attachments/assets/3e10cb15-ff1b-4b17-b141-ff0ad852e613" controls style="text-align: center"></video>
-
-    [:octicons-arrow-right-24: Demo](hhttps://huggingface.co/spaces/freddyaboulton/hey-llama-code-editor)
-    
-    [:octicons-code-16: Code](https://huggingface.co/spaces/freddyaboulton/hey-llama-code-editor/blob/main/app.py)
-
--   :robot:{ .lg .middle } __Llama Code Editor__
-
-    ---
-
-    Create and edit HTML pages with just your voice! Powered by SambaNova systems.
-
-    <video width=98% src="https://github.com/user-attachments/assets/a09647f1-33e1-4154-a5a3-ffefda8a736a" controls style="text-align: center"></video>
-
-    [:octicons-arrow-right-24: Demo](https://huggingface.co/spaces/freddyaboulton/llama-code-editor)
-    
-    [:octicons-code-16: Code](https://huggingface.co/spaces/freddyaboulton/llama-code-editor/blob/main/app.py)
 
 -   :speaking_head:{ .lg .middle } __Talk to Ultravox__
 
