@@ -1,10 +1,12 @@
 <script lang="ts">
 	import { createEventDispatcher, onMount } from "svelte";
+	import type { ComponentType } from "svelte";
 	import {
 		Circle,
 		Square,
 		DropdownArrow,
-		Spinner
+		Spinner,
+        Microphone as Mic
 	} from "@gradio/icons";
 	import type { I18nFormatter } from "@gradio/utils";
 	import { StreamingBar } from "@gradio/statustracker";
@@ -15,8 +17,8 @@
 		get_video_stream,
 		set_available_devices
 	} from "./stream_utils";
-
     import { start, stop } from "./webrtc_utils";
+    import PulsingIcon from "./PulsingIcon.svelte";
 
 	let video_source: HTMLVideoElement;
 	let available_video_devices: MediaDeviceInfo[] = [];
@@ -28,6 +30,9 @@
 	export let mode: "send-receive" | "send";
     const _webrtc_id = Math.random().toString(36).substring(2);
 	export let rtp_params: RTCRtpParameters = {} as RTCRtpParameters;
+	export let icon: string | undefined | ComponentType = undefined;
+    export let icon_button_color: string = "var(--color-accent)";
+    export let pulse_color: string = "var(--color-accent)";
 
 	export const modify_stream: (state: "open" | "closed" | "waiting") => void = (
 		state: "open" | "closed" | "waiting"
@@ -156,14 +161,13 @@
 			_time_limit = null;
             await access_webcam();
         }
-
 	}
 	
-    window.setInterval(() => {
-        if (stream_state == "open") {
-            dispatch("tick");
-        }
-    }, stream_every * 1000);
+    // window.setInterval(() => {
+    //     if (stream_state == "open") {
+    //         dispatch("tick");
+    //     }
+    // }, stream_every * 1000);
 
 	let options_open = false;
 
@@ -192,16 +196,29 @@
 		event.stopPropagation();
 		options_open = false;
 	}
+
+	const audio_source_callback = () => video_source.srcObject as MediaStream;
 </script>
 
 <div class="wrap">
 	<StreamingBar time_limit={_time_limit} />
+	{#if stream_state === "open" && include_audio}
+		<div class="audio-indicator">
+			<PulsingIcon
+				stream_state={stream_state}
+				audio_source_callback={audio_source_callback}
+				icon={icon || Mic}
+				icon_button_color={icon_button_color}
+				pulse_color={pulse_color}
+			/>
+		</div>
+	{/if}
 	<!-- svelte-ignore a11y-media-has-caption -->
 	<!-- need to suppress for video streaming https://github.com/sveltejs/svelte/issues/5967 -->
 	<video
 		bind:this={video_source}
 		class:hide={!webcam_accessed}
-        class:flip={(stream_state != "open")}
+        class:flip={(stream_state != "open") || (stream_state === "open" && include_audio)}
         autoplay={true}
 		playsinline={true}
 	/>
@@ -323,6 +340,15 @@
 		display: flex;
 		justify-content: space-evenly;
 	}
+
+    .audio-indicator {
+        position: absolute;
+        top: var(--size-2);
+        right: var(--size-2);
+		z-index: var(--layer-2);
+		height: var(--size-5);
+		width: var(--size-5);
+    }
 
 	@media (--screen-md) {
 		button {

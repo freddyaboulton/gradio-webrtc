@@ -16,10 +16,21 @@ from .utils import (
     audio_to_file,
     audio_to_float32,
 )
-from .webrtc import AsyncStreamHandler, StreamHandler, WebRTC
+from .webrtc import (
+    AsyncAudioVideoStreamHandler,
+    AsyncStreamHandler,
+    AudioVideoStreamHandler,
+    StreamHandler,
+    WebRTC,
+    VideoEmitType,
+    AudioEmitType,
+)
 
 __all__ = [
     "AsyncStreamHandler",
+    "AudioVideoStreamHandler",
+    "AudioEmitType",
+    "AsyncAudioVideoStreamHandler",
     "AlgoOptions",
     "AdditionalOutputs",
     "aggregate_bytes_to_16bit",
@@ -36,6 +47,7 @@ __all__ = [
     "stt",
     "stt_for_chunks",
     "StreamHandler",
+    "VideoEmitType",
     "WebRTC",
     "WebRTCError",
     "Warning",

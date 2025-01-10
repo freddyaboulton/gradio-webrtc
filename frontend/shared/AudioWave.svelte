@@ -1,10 +1,13 @@
 <script lang="ts">
   import { onDestroy } from 'svelte';
+  import type {ComponentType} from 'svelte';
+
+  import PulsingIcon from './PulsingIcon.svelte';
 
   export let numBars = 16;
   export let stream_state: "open" | "closed" | "waiting" = "closed";
   export let audio_source_callback: () => MediaStream;
-  export let icon: string | undefined = undefined;
+  export let icon: string | undefined | ComponentType = undefined;
   export let icon_button_color: string = "var(--color-accent)";
   export let pulse_color: string = "var(--color-accent)";
 
@@ -13,7 +16,6 @@
   let dataArray: Uint8Array;
   let animationId: number;
   let pulseScale = 1;
-  let pulseIntensity = 0;
 
   $: containerWidth = icon 
     ? "128px"
@@ -47,53 +49,31 @@
   function updateVisualization() {
     analyser.getByteFrequencyData(dataArray);
     
-    if (icon) {
-      // Calculate average amplitude for pulse effect
-      const average = Array.from(dataArray).reduce((a, b) => a + b, 0) / dataArray.length;
-      const normalizedAverage = average / 255;
-      pulseScale = 1 + (normalizedAverage * 0.15);
-      pulseIntensity = normalizedAverage;
-    } else {
       // Update bars
       const bars = document.querySelectorAll('.gradio-webrtc-waveContainer .gradio-webrtc-box');
       for (let i = 0; i < bars.length; i++) {
         const barHeight = (dataArray[i] / 255) * 2;
         bars[i].style.transform = `scaleY(${Math.max(0.1, barHeight)})`;
       }
-    }
 
     animationId = requestAnimationFrame(updateVisualization);
   }
-
-  $: maxPulseScale = 1 + (pulseIntensity * 10); // Scale from 1x to 3x based on intensity
-
 </script>
 
 <div class="gradio-webrtc-waveContainer">
 {#if icon}
   <div class="gradio-webrtc-icon-container">
-    {#if pulseIntensity > 0}
-      {#each Array(3) as _, i}
-        <div 
-          class="pulse-ring"
-          style:background={pulse_color}
-          style:animation-delay={`${i * 0.4}s`}
-          style:--max-scale={maxPulseScale}
-          style:opacity={0.5 * pulseIntensity}
-        />
-      {/each}
-    {/if}
-    
     <div 
       class="gradio-webrtc-icon" 
       style:transform={`scale(${pulseScale})`}
       style:background={icon_button_color}
     >
-      <img 
-        src={icon} 
-        alt="Audio visualization icon"
-        class="icon-image"
-      />
+      <PulsingIcon
+        {stream_state}
+        {pulse_color}
+        {icon}
+        {icon_button_color}
+        {audio_source_callback}/>
     </div>
   </div>
 {:else}

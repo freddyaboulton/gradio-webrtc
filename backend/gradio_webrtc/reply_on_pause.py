@@ -9,7 +9,6 @@ from typing import Any, Callable, Generator, Literal, Union, cast
 import numpy as np
 
 from gradio_webrtc.pause_detection import SileroVADModel, SileroVadOptions
-from gradio_webrtc.utils import AdditionalOutputs
 from gradio_webrtc.webrtc import EmitType, StreamHandler
 
 logger = getLogger(__name__)
