@@ -68,14 +68,14 @@ export async function start(
     try {
       event_json = JSON.parse(event.data);
     } catch (e) {
-      console.debug("Error parsing JSON")
+      console.debug("Error parsing JSON");
     }
     console.log("event_json", event_json);
     if (
       event.data === "change" ||
       event.data === "tick" ||
       event.data === "stopword" ||
-      event_json?.type === "warning" || 
+      event_json?.type === "warning" ||
       event_json?.type === "error"
     ) {
       console.debug(`${event.data} event received`);

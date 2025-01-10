@@ -147,16 +147,18 @@ async def player_worker_decode(
 
             logger.debug(
                 "received array with shape %s sample rate %s layout %s",
-                audio_array.shape,
+                audio_array.shape,  # type: ignore
                 sample_rate,
-                layout,
+                layout,  # type: ignore
             )
-            format = "s16" if audio_array.dtype == "int16" else "fltp"
+            format = "s16" if audio_array.dtype == "int16" else "fltp"  # type: ignore
 
             # Convert to audio frame and resample
             # This runs in the same timeout context
             frame = av.AudioFrame.from_ndarray(  # type: ignore
-                audio_array, format=format, layout=layout
+                audio_array,  # type: ignore
+                format=format,
+                layout=layout,  # type: ignore
             )
             frame.sample_rate = sample_rate
 

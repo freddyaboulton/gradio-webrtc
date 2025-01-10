@@ -30,7 +30,7 @@
 	export let gradio;
 	export let rtc_configuration: Object;
 	export let time_limit: number | null = null;
-	export let modality: "video" | "audio" = "video";
+	export let modality: "video" | "audio" | "audio-video" = "video";
 	export let mode: "send-receive" | "receive" | "send" = "send-receive";
 	export let rtp_params: RTCRtpParameters = {} as RTCRtpParameters;
 	export let track_constraints: MediaTrackConstraints = {};
@@ -52,18 +52,18 @@
 </script>
 
 <Block
-		{visible}
-		variant={"solid"}
-		border_mode={dragging ? "focus" : "base"}
-		padding={false}
-		{elem_id}
-		{elem_classes}
-		{height}
-		{width}
-		{container}
-		{scale}
-		{min_width}
-		allow_overflow={false}
+	{visible}
+	variant={"solid"}
+	border_mode={dragging ? "focus" : "base"}
+	padding={false}
+	{elem_id}
+	{elem_classes}
+	{height}
+	{width}
+	{container}
+	{scale}
+	{min_width}
+	allow_overflow={false}
 	>
 		<StatusTracker
 			autoscroll={gradio.autoscroll}
@@ -99,13 +99,13 @@
 			on:error={({ detail }) => gradio.dispatch("error", detail)}
 
 		/>
-	{:else if (mode === "send-receive" || mode == "send") && modality === "video"}
+	{:else if (mode === "send-receive" || mode == "send") && (modality === "video" || modality == "audio-video")}
 		<Video
 			bind:value={value}
 			{label}
 			{show_label}
 			active_source={"webcam"}
-			include_audio={false}
+			include_audio={modality === "audio-video"}
 			{server}
 			{rtc_configuration}
 			{time_limit}
@@ -113,6 +113,9 @@
 			{track_constraints}
 			{rtp_params}
 			{on_change_cb}
+			{icon}
+			{icon_button_color}
+			{pulse_color}
 			on:clear={() => gradio.dispatch("clear")}
 			on:play={() => gradio.dispatch("play")}
 			on:pause={() => gradio.dispatch("pause")}

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { createEventDispatcher } from "svelte";
+	import type { ComponentType } from "svelte";
 	import type { FileData, Client } from "@gradio/client";
 	import { BlockLabel } from "@gradio/atoms";
 	import  Webcam  from "./Webcam.svelte";
@@ -24,6 +25,9 @@
 	export let mode: "send" | "send-receive";
 	export let on_change_cb: (msg: "change" | "tick") => void;
 	export let rtp_params: RTCRtpParameters = {} as RTCRtpParameters;
+	export let icon: string | undefined | ComponentType = undefined;
+    export let icon_button_color: string = "var(--color-accent)";
+    export let pulse_color: string = "var(--color-accent)";
 
 	const dispatch = createEventDispatcher<{
 		change: FileData | null;
@@ -56,6 +60,9 @@
 		{mode}
 		{rtp_params}
 		{on_change_cb}
+		{icon}
+		{icon_button_color}
+		{pulse_color}
 		on:error
 		on:start_recording
 		on:stop_recording

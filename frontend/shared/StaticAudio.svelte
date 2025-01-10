@@ -98,7 +98,7 @@
 />
 <audio
     class="standard-player"
-    class:hidden={value === "__webrtc_value__"}
+    class:hidden={true}
     on:load
     bind:this={audio_player}
     on:ended={() => dispatch("stop")}
