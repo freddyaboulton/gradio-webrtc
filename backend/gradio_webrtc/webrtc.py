@@ -707,6 +707,7 @@ class WebRTC(Component):
         icon: str | None = None,
         icon_button_color: str | None = None,
         pulse_color: str | None = None,
+        button_labels: dict | None = None,
     ):
         """
         Parameters:
@@ -737,6 +738,7 @@ class WebRTC(Component):
             icon: Icon to display on the button instead of the wave animation. The icon should be a path/url to a .svg/.png/.jpeg file.
             icon_button_color: Color of the icon button. Default is var(--color-accent) of the demo theme.
             pulse_color: Color of the pulse animation. Default is var(--color-accent) of the demo theme.
+            button_labels: Text to display on the audio or video start, stop, waiting buttons. Dict with keys "start", "stop", "waiting" mapping to the text to display on the buttons.
         """
         self.time_limit = time_limit
         self.height = height
@@ -749,6 +751,12 @@ class WebRTC(Component):
         self.icon_button_color = icon_button_color
         self.pulse_color = pulse_color
         self.rtp_params = rtp_params or {}
+        self.button_labels = {
+            "start": "",
+            "stop": "",
+            "waiting": "",
+            **(button_labels or {}),
+        }
         if track_constraints is None and modality == "audio":
             track_constraints = {
                 "echoCancellation": True,

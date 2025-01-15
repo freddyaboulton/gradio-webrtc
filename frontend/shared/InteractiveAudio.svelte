@@ -34,6 +34,7 @@
     export let icon: string | undefined = undefined;
     export let icon_button_color: string = "var(--color-accent)";
     export let pulse_color: string = "var(--color-accent)";
+    export let button_labels: {start: string, stop: string, waiting: string};
 
     let stopword_recognized = false;
 
@@ -253,25 +254,25 @@
                 aria-label={"start stream"}
             >
                 {#if stream_state === "waiting"}
-                    <div class="icon-with-text" style="width:var(--size-24);">
+                    <div class="icon-with-text">
                         <div class="icon color-primary" title="spinner">
                             <Spinner />
                         </div>
-                        {i18n("audio.waiting")}
+                        {button_labels.waiting || i18n("audio.waiting")}
                     </div>
                 {:else if stream_state === "open"}
                     <div class="icon-with-text">
                         <div class="icon color-primary" title="stop recording">
                             <Square />
                         </div>
-                        {i18n("audio.stop")}
+                        {button_labels.stop || i18n("audio.stop")}
                     </div>
                 {:else}
                     <div class="icon-with-text">
                         <div class="icon color-primary" title="start recording">
                             <Circle />
                         </div>
-                        {i18n("audio.record")}
+                        {button_labels.start || i18n("audio.record")}
                     </div>
                 {/if}
             </button>
@@ -377,11 +378,12 @@
     }
 
 	.icon-with-text {
-		width: var(--size-20);
+		min-width: var(--size-16);
 		align-items: center;
 		margin: 0 var(--spacing-xl);
 		display: flex;
-		justify-content: space-evenly;
+        justify-content: space-evenly;    
+        gap: var(--size-2);
 	}
 
 	@media (--screen-md) {

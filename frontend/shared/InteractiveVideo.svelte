@@ -17,6 +17,7 @@
 	export let handle_reset_value: () => void = () => {};
 	export let stream_handler: Client["stream"];
 	export let time_limit: number | null = null;
+	export let button_labels: {start: string, stop: string, waiting: string};
 	export let server: {
 		offer: (body: any) => Promise<any>;
 	};
@@ -63,6 +64,7 @@
 		{icon}
 		{icon_button_color}
 		{pulse_color}
+		{button_labels}
 		on:error
 		on:start_recording
 		on:stop_recording

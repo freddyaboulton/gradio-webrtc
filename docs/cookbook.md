@@ -1,16 +1,16 @@
 <div class="grid cards" markdown>
 
--   :speaking_head:{ .lg .middle } __OpenAI Real Time Voice API__
+-   :speaking_head:{ .lg .middle }:eyes:{ .lg .middle } __Gemini Audio Video Chat__
 
     ---
 
-    Talk to ChatGPT in real time using OpenAI's voice API.
+    Stream BOTH your webcam video and audio feeds to Google Gemini. You can also upload images to augment your conversation!
 
-    <video width=98% src="https://github.com/user-attachments/assets/41a63376-43ec-496a-9b31-4f067d3903d6" controls style="text-align: center"></video>
+    <video width=98% src="https://github.com/user-attachments/assets/9636dc97-4fee-46bb-abb8-b92e69c08c71" controls style="text-align: center"></video>
 
-    [:octicons-arrow-right-24: Demo](https://huggingface.co/spaces/freddyaboulton/openai-realtime-voice)
+    [:octicons-arrow-right-24: Demo](https://huggingface.co/spaces/freddyaboulton/gemini-audio-video-chat)
     
-    [:octicons-code-16: Code](https://huggingface.co/spaces/freddyaboulton/openai-realtime-voice/blob/main/app.py)
+    [:octicons-code-16: Code](https://huggingface.co/spaces/freddyaboulton/gemini-audio-video-chat/blob/main/app.py)
 
 -   :speaking_head:{ .lg .middle } __Google Gemini Real Time Voice API__
 
@@ -23,6 +23,18 @@
     [:octicons-arrow-right-24: Demo](https://huggingface.co/spaces/freddyaboulton/gemini-voice)
     
     [:octicons-code-16: Code](https://huggingface.co/spaces/freddyaboulton/gemini-voice/blob/main/app.py)
+
+-   :speaking_head:{ .lg .middle } __OpenAI Real Time Voice API__
+
+    ---
+
+    Talk to ChatGPT in real time using OpenAI's voice API.
+
+    <video width=98% src="https://github.com/user-attachments/assets/41a63376-43ec-496a-9b31-4f067d3903d6" controls style="text-align: center"></video>
+
+    [:octicons-arrow-right-24: Demo](https://huggingface.co/spaces/freddyaboulton/openai-realtime-voice)
+    
+    [:octicons-code-16: Code](https://huggingface.co/spaces/freddyaboulton/openai-realtime-voice/blob/main/app.py)
 
 -   :speaking_head:{ .lg .middle } __Hello Llama: Stop Word Detection__
 
