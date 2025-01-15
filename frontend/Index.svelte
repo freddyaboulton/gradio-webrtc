@@ -13,6 +13,7 @@
 	export let elem_classes: string[] = [];
 	export let visible = true;
 	export let value: string = "__webrtc_value__";
+	export let button_labels: {start: string, stop: string, waiting: string};
 
 	export let label: string;
 	export let root: string;
@@ -116,6 +117,7 @@
 			{icon}
 			{icon_button_color}
 			{pulse_color}
+			{button_labels}
 			on:clear={() => gradio.dispatch("clear")}
 			on:play={() => gradio.dispatch("play")}
 			on:pause={() => gradio.dispatch("pause")}
@@ -147,6 +149,7 @@
 			{icon}
 			{icon_button_color}
 			{pulse_color}
+			{button_labels}
 			on:tick={() => gradio.dispatch("tick")}
 			on:error={({ detail }) => gradio.dispatch("error", detail)}
 			on:warning={({ detail }) => gradio.dispatch("warning", detail)}
