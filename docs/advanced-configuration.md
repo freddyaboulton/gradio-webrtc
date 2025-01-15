@@ -141,3 +141,20 @@ You can control the button color and pulse color with `icon_button_color` and `p
     )
     ```
     <img src="https://github.com/user-attachments/assets/39e9bb0b-53fb-448e-be44-d37f6785b4b6">
+
+
+## Changing the Button Text
+
+You can supply a `button_labels` dictionary to change the text displayed in the `Start`, `Stop` and `Waiting` buttons that are displayed in the UI.
+The keys must be `"start"`, `"stop"`, and `"waiting"`.
+
+``` python
+webrtc = WebRTC(
+    label="Video Chat",
+    modality="audio-video",
+    mode="send-receive",
+    button_labels={"start": "Start Talking to Gemini"}
+)
+```
+
+<img src="https://github.com/user-attachments/assets/04be0b95-189c-4b4b-b8cc-1eb598529dd3" />
