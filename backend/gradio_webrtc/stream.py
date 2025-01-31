@@ -125,15 +125,18 @@ class Stream(FastAPI, WebRTCConnectionMixin):
         self.additional_input_components = additional_inputs
         self.additional_outputs_handler = additional_outputs_handler
         self.rtc_configuration = rtc_configuration
-        self.router.post("/offer")(self.offer)
+        self.router.post("/webrtc/offer")(self.offer)
         self.router.websocket("/telephone/handler")(self.telephone_handler)
         self.router.get("/telephone/docs")(self.coming_soon)
-        self.router.get("/webrtc/docs")(self.coming_soon)
+        self.router.get("/webrtc/docs")(self.webrtc_docs)
         self._ui = self.generate_default_ui()
         gr.mount_gradio_app(self, self._ui, "/ui")
+    
+    def webrtc_docs(self):
+        return HTMLResponse(content=(curr_dir / "assets" / "webrtc_docs.html").read_text(), status_code=200)
 
     def coming_soon(self):
-        return HTMLResponse(content=(curr_dir / "coming_soon.html").read_text(), status_code=200)
+        return HTMLResponse(content=(curr_dir / "assets" / "coming_soon.html").read_text(), status_code=200)
 
     def generate_default_ui(
         self,
@@ -164,10 +167,11 @@ class Stream(FastAPI, WebRTCConnectionMixin):
                 """
                 )
                 with gr.Row():
-                    with gr.Column():
-                        for component in additional_input_components:
-                            component.render()
-                        button = gr.Button("Start Stream", variant="primary")
+                    if additional_input_components:
+                        with gr.Column():
+                            for component in additional_input_components:
+                                component.render()
+                            button = gr.Button("Start Stream", variant="primary")
                     with gr.Column():
                         output_video = WebRTC(
                             label="Video Stream",
@@ -214,11 +218,11 @@ class Stream(FastAPI, WebRTCConnectionMixin):
                         )
                         for component in additional_input_components:
                             component.render()
-
-                with gr.Column():
-                    for component in additional_output_components:
-                        if component not in same_components:
-                            component.render()
+                if additional_output_components:
+                    with gr.Column():
+                        for component in additional_output_components:
+                            if component not in same_components:
+                                component.render()
 
                     image.stream(
                         fn=self.event_handler,
@@ -247,16 +251,17 @@ class Stream(FastAPI, WebRTCConnectionMixin):
                         for component in additional_input_components:
                             component.render()
                         button = gr.Button("Start Stream", variant="primary")
-                    with gr.Column():
-                        output_video = WebRTC(
-                            label="Audio Stream",
-                            rtc_configuration=self.rtc_configuration,
-                            mode="receive",
-                            modality="audio",
-                        )
-                        for component in additional_output_components:
-                            if component not in same_components:
-                                component.render()
+                    if additional_output_components:
+                        with gr.Column():
+                            output_video = WebRTC(
+                                label="Audio Stream",
+                                rtc_configuration=self.rtc_configuration,
+                                mode="receive",
+                                modality="audio",
+                            )
+                            for component in additional_output_components:
+                                if component not in same_components:
+                                    component.render()
                 output_video.stream(
                     fn=self.event_handler,
                     inputs=self.additional_input_components,
@@ -292,10 +297,10 @@ class Stream(FastAPI, WebRTCConnectionMixin):
                             for component in additional_input_components:
                                 if component not in same_components:
                                     component.render()
-
-                    with gr.Column():
-                        for component in additional_output_components:
-                            component.render()
+                    if additional_output_components:
+                        with gr.Column():
+                            for component in additional_output_components:
+                                component.render()
 
                     image.stream(
                         fn=self.event_handler,

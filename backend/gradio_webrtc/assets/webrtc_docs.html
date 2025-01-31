@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebRTC Connection Guide</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/github.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+
+        body {
+            background: white;
+            min-height: 100vh;
+            padding: 2rem;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 1.5rem;
+            color: #333;
+            font-weight: 700;
+            letter-spacing: -1px;
+        }
+
+        .subtitle {
+            font-size: 1.25rem;
+            color: #666;
+            margin-bottom: 2.5rem;
+        }
+
+        .code-container {
+            position: relative;
+            margin-bottom: 2rem;
+        }
+
+        pre {
+            padding: 1.5rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            border: 2px solid #eee;
+            margin: 0;
+            font-size: 0.8rem;
+        }
+
+        code {
+            font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+            line-height: 1.5;
+        }
+
+        /* Only modify the background of hljs, keeping other styles */
+        .hljs {
+            background: white !important;
+        }
+        
+        /* Keep syntax colors from github theme */
+        .hljs-keyword, .hljs-function { color: #d73a49; }
+        .hljs-string { color: #032f62; }
+        .hljs-comment { color: #6a737d; }
+        .hljs-property { color: #005cc5; }
+        .hljs-number { color: #005cc5; }
+        .hljs-class { color: #6f42c1; }
+        .hljs-title { color: #6f42c1; }
+        .hljs-built_in { color: #005cc5; }
+
+        .copy-button {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: #fff;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            transition: all 0.2s ease;
+        }
+
+        .copy-button:hover {
+            background: #f0f0f0;
+            border-color: #ccc;
+        }
+
+        .copy-button.copied {
+            background: #4CAF50;
+            color: white;
+            border-color: #4CAF50;
+        }
+
+        .step {
+            margin-bottom: 2rem;
+        }
+
+        .step-title {
+            font-size: 1.5rem;
+            color: #333;
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+
+        .step-content {
+            color: #555;
+            margin-bottom: 1rem;
+        }
+
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 2rem;
+            }
+
+            .subtitle {
+                font-size: 1.1rem;
+            }
+
+            pre {
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>WebRTC Connection Guide</h1>
+        <div class="step">
+            <h2 class="step-title">Connecting</h2>
+            <p class="step-content">Here's the minimal code needed to establish a WebRTC connection with audio and data channel:</p>
+            <div class="code-container">
+                <button class="copy-button" onclick="copyCode(this)">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                    </svg>
+                </button>
+                <pre><code class="javascript">async function setupWebRTC() {
+    try {
+        // Get audio stream
+        const localStream = await navigator.mediaDevices.getUserMedia({
+            audio: true
+        });
+
+        // Create peer connection
+        const peerConnection = new RTCPeerConnection({
+            iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+        });
+
+        // Add audio track
+        const audioTrack = localStream.getAudioTracks()[0];
+        peerConnection.addTrack(audioTrack, localStream);
+
+        // Create data channel
+        const dataChannel = peerConnection.createDataChannel("text");
+        dataChannel.onopen = () => dataChannel.send("handshake");
+
+        // Create and send offer
+        const offer = await peerConnection.createOffer();
+        await peerConnection.setLocalDescription(offer);
+
+        // Send offer to server
+        const response = await fetch('/offer', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                sdp: offer.sdp,
+                type: offer.type,
+                webrtc_id: Math.random().toString(36).substring(7)
+            })
+        });
+
+        // Handle server response
+        const serverResponse = await response.json();
+        await peerConnection.setRemoteDescription(new RTCSessionDescription({
+            type: serverResponse.type,
+            sdp: serverResponse.sdp
+        }));
+    } catch (error) {
+        console.error('Connection error:', error);
+    }
+}</code></pre>
+            </div>
+        </div>
+
+        <div class="step">
+            <h2 class="step-title">Usage</h2>
+            <p class="step-content">Call this function when you want to establish the connection:</p>
+            <div class="code-container">
+                <button class="copy-button" onclick="copyCode(this)">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                    </svg>
+                    Copy
+                </button>
+                <pre><code class="javascript">// Create a button to start the connection
+document.getElementById('connectButton').onclick = setupWebRTC;</code></pre>
+            </div>
+        </div>
+
+        <div class="step">
+            <h2 class="step-title">Key Features</h2>
+            <p class="step-content">This implementation includes:</p>
+            <ul style="margin-left: 2rem; color: #555;">
+                <li>Audio stream capture</li>
+                <li>Data channel for text communication</li>
+                <li>Automatic handshake message</li>
+                <li>Random WebRTC ID generation</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', (event) => {
+            // Initialize syntax highlighting
+            hljs.highlightAll();
+        });
+
+        // Copy button functionality
+        function copyCode(button) {
+            const pre = button.nextElementSibling;
+            const code = pre.querySelector('code');
+            const text = code.textContent;
+
+            navigator.clipboard.writeText(text).then(() => {
+                button.classList.add('copied');
+                button.innerHTML = `
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                `;
+
+                setTimeout(() => {
+                    button.classList.remove('copied');
+                    button.innerHTML = `
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                        </svg>
+                    `;
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy:', err);
+            });
+        }
+    </script>
+</body>
+</html>
