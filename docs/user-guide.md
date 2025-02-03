@@ -200,6 +200,7 @@ Here is a complete example of using `AsyncStreamHandler` for using the Google Ge
             self.input_queue = asyncio.Queue()
             self.output_queue = asyncio.Queue()
             self.quit = asyncio.Event()
+            self.connected = asyncio.Event()
 
         def copy(self) -> "GeminiHandler":
             return GeminiHandler(
@@ -219,6 +220,7 @@ Here is a complete example of using `AsyncStreamHandler` for using the Google Ge
             async with client.aio.live.connect(
                 model="gemini-2.0-flash-exp", config=config
             ) as session:
+                self.connected.set()
                 async for audio in session.start_stream(
                     stream=self.stream(), mime_type="audio/pcm"
                 ):
@@ -240,7 +242,10 @@ Here is a complete example of using `AsyncStreamHandler` for using the Google Ge
         async def emit(self):
             if not self.args_set.is_set():
                 await self.wait_for_args()
-            asyncio.create_task(self.generator())
+            
+            if not self.connected.is_set():
+                asyncio.create_task(self.generator())
+                await self.connected.wait()
 
             array = await self.output_queue.get()
             return (self.output_sample_rate, array)
