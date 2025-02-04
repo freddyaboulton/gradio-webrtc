@@ -75,14 +75,16 @@ with gr.Blocks(css=css) as demo:
     with gr.Column(elem_classes=["my-column"]):
         with gr.Group(elem_classes=["my-group"]):
             image = WebRTC(
-                label="Stream", rtc_configuration=rtc_configuration,
+                label="Stream",
+                rtc_configuration=rtc_configuration,
                 mode="send-receive",
                 modality="video",
-                track_constraints={"width": {"exact": 800},
-                                   "height": {"exact": 600},
-                                   "aspectRatio": {"exact": 1.33333}
-                                   },
-                rtp_params={"degradationPreference": "maintain-resolution"}
+                track_constraints={
+                    "width": {"exact": 800},
+                    "height": {"exact": 600},
+                    "aspectRatio": {"exact": 1.33333},
+                },
+                rtp_params={"degradationPreference": "maintain-resolution"},
             )
             conf_threshold = gr.Slider(
                 label="Confidence Threshold",

@@ -198,16 +198,6 @@ class WebRTC(Component, WebRTCConnectionMixin):
             icon if not icon else cast(dict, self.serve_static_file(icon)).get("url")
         )
 
-    def set_additional_outputs(
-        self, webrtc_id: str
-    ) -> Callable[[AdditionalOutputs], None]:
-        def set_outputs(outputs: AdditionalOutputs):
-            if webrtc_id not in self.additional_outputs:
-                self.additional_outputs[webrtc_id] = []
-            self.additional_outputs[webrtc_id].append(outputs)
-
-        return set_outputs
-
     def preprocess(self, payload: str) -> str:
         """
         Parameters:
@@ -225,11 +215,6 @@ class WebRTC(Component, WebRTCConnectionMixin):
             VideoData object containing the video and subtitle files.
         """
         return value
-
-    def set_input(self, webrtc_id: str, *args):
-        if webrtc_id in self.connections:
-            for conn in self.connections[webrtc_id]:
-                conn.set_args(list(args))
 
     def on_additional_outputs(
         self,
@@ -372,7 +357,9 @@ class WebRTC(Component, WebRTCConnectionMixin):
 
     @server
     async def offer(self, body):
-        return await self.handle_offer(body, self.set_additional_outputs)
+        return await self.handle_offer(
+            body, self.set_additional_outputs(body["webrtc_id"])
+        )
 
     def example_payload(self) -> Any:
         return {

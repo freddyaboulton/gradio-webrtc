@@ -5,6 +5,7 @@ import gradio as gr
 from fastapi import FastAPI, Request, WebSocket
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
+from jinja2 import Template as JinjaTemplate
 
 from .tracks import StreamHandlerImpl, VideoEventHandler
 from .webrtc import WebRTC
@@ -17,7 +18,6 @@ from gradio.components.base import Component
 logger = logging.getLogger(__name__)
 
 curr_dir = Path(__file__).parent
-
 
 
 class Body(BaseModel):
@@ -40,6 +40,7 @@ class Stream(FastAPI, WebRTCConnectionMixin):
         rtc_configuration: dict[str, Any] | None = None,
         additional_inputs: list[Component] | None = None,
         additional_outputs: list[Component] | None = None,
+        generate_docs: bool = True,
         debug=False,
         routes=None,
         title="FastAPI",
@@ -128,15 +129,37 @@ class Stream(FastAPI, WebRTCConnectionMixin):
         self.router.post("/webrtc/offer")(self.offer)
         self.router.websocket("/telephone/handler")(self.telephone_handler)
         self.router.get("/telephone/docs")(self.coming_soon)
-        self.router.get("/webrtc/docs")(self.webrtc_docs)
         self._ui = self.generate_default_ui()
-        gr.mount_gradio_app(self, self._ui, "/ui")
-    
-    def webrtc_docs(self):
-        return HTMLResponse(content=(curr_dir / "assets" / "webrtc_docs.html").read_text(), status_code=200)
+        if generate_docs:
+            gr.mount_gradio_app(self, self._ui, "/ui")
+            gr.mount_gradio_app(self, self._webrtc_docs_gradio(), "/webrtc/docs")
+
+    def _webrtc_docs_gradio(self):
+        with gr.Blocks() as demo:
+            template = Path(__file__).parent / "assets" / "webrtc_docs.md"
+            contents = JinjaTemplate(template.read_text()).render(
+                modality=self.modality,
+                mode=self.mode,
+                additional_inputs=bool(self.additional_input_components),
+                additional_outputs=bool(self.additional_output_components),
+            )
+            if hasattr(gr, "Sidebar"):
+                with gr.Sidebar(label="Docs", width="50%", open=False):
+                    gr.Markdown(contents)
+                self.ui.render()
+            else:
+                with gr.Tabs():
+                    with gr.Tab(label="Docs"):
+                        gr.Markdown(contents)
+                    with gr.Tab("UI"):
+                        self.ui.render()
+        return demo
 
     def coming_soon(self):
-        return HTMLResponse(content=(curr_dir / "assets" / "coming_soon.html").read_text(), status_code=200)
+        return HTMLResponse(
+            content=(curr_dir / "assets" / "coming_soon.html").read_text(),
+            status_code=200,
+        )
 
     def generate_default_ui(
         self,
@@ -326,7 +349,9 @@ class Stream(FastAPI, WebRTCConnectionMixin):
         self._ui = blocks
 
     async def offer(self, body: Body):
-        return await self.handle_offer(body.model_dump(), set_outputs=lambda x: None)
+        return await self.handle_offer(
+            body.model_dump(), set_outputs=self.set_additional_outputs(body.webrtc_id)
+        )
 
     async def handle_incoming_call(self, request: Request):
         from twilio.twiml.voice_response import Connect, VoiceResponse

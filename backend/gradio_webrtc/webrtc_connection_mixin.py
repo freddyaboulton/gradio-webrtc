@@ -73,6 +73,24 @@ class WebRTCConnectionMixin:
         self.data_channels.pop(webrtc_id, None)
         return connection
 
+    def set_input(self, webrtc_id: str, *args):
+        if webrtc_id in self.connections:
+            for conn in self.connections[webrtc_id]:
+                conn.set_args(list(args))
+
+    def get_output(self, webrtc_id: str) -> list[AdditionalOutputs]:
+        return self.additional_outputs.get(webrtc_id, [])
+
+    def set_additional_outputs(
+        self, webrtc_id: str
+    ) -> Callable[[AdditionalOutputs], None]:
+        def set_outputs(outputs: AdditionalOutputs):
+            if webrtc_id not in self.additional_outputs:
+                self.additional_outputs[webrtc_id] = []
+            self.additional_outputs[webrtc_id].append(outputs)
+
+        return set_outputs
+
     async def handle_offer(self, body, set_outputs):
         logger.debug("Starting to handle offer")
         logger.debug("Offer body %s", body)

@@ -51,7 +51,7 @@ class YOLOv10:
             self.output_names, {self.input_names[0]: input_tensor}
         )
 
-        print(f"Inference time: {(time.perf_counter() - start)*1000:.2f} ms")
+        print(f"Inference time: {(time.perf_counter() - start) * 1000:.2f} ms")
         (
             boxes,
             scores,

@@ -23,7 +23,9 @@ def transcribe(audio: tuple[int, np.ndarray], transcript: list[dict]):
         channels=1,
     )
 
-    transcript.append({"role": "user", "content": gr.Audio((audio[0], audio[1].squeeze()))})
+    transcript.append(
+        {"role": "user", "content": gr.Audio((audio[0], audio[1].squeeze()))}
+    )
 
     with tempfile.NamedTemporaryFile(suffix=".mp3") as temp_audio:
         segment.export(temp_audio.name, format="mp3")
@@ -45,8 +47,12 @@ with gr.Blocks() as demo:
         with gr.Column():
             transcript = gr.Chatbot(label="transcript", type="messages")
 
-    audio.stream(ReplyOnPause(transcribe), inputs=[audio, transcript], outputs=[audio],
-                 time_limit=30)
+    audio.stream(
+        ReplyOnPause(transcribe),
+        inputs=[audio, transcript],
+        outputs=[audio],
+        time_limit=30,
+    )
     audio.on_additional_outputs(lambda s: s, outputs=transcript)
 
 if __name__ == "__main__":
