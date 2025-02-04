@@ -6,7 +6,9 @@ import asyncio
 import logging
 from collections import defaultdict
 from collections.abc import Callable
+from dataclasses import dataclass
 from typing import (
+    AsyncGenerator,
     Literal,
     ParamSpec,
     TypeVar,
@@ -19,7 +21,7 @@ from aiortc import (
 )
 from aiortc.contrib.media import MediaRelay  # type: ignore
 
-from gradio_webrtc.tracks import (
+from fastrtc.tracks import (
     AudioCallback,
     ServerToClientAudio,
     ServerToClientVideo,
@@ -27,8 +29,9 @@ from gradio_webrtc.tracks import (
     StreamHandlerImpl,
     VideoCallback,
     VideoStreamHandler,
+    HandlerType,
 )
-from gradio_webrtc.utils import (
+from fastrtc.utils import (
     AdditionalOutputs,
     DataChannel,
     create_message,
@@ -51,13 +54,25 @@ R = TypeVar("R")
 P = ParamSpec("P")
 
 
+@dataclass
+class OutputQueue:
+    queue: asyncio.Queue[AdditionalOutputs] = asyncio.Queue()
+    quit: asyncio.Event = asyncio.Event()
+
+
 class WebRTCConnectionMixin:
     pcs: set[RTCPeerConnection] = set([])
     relay = MediaRelay()
     connections: dict[str, list[Track]] = defaultdict(list)
     data_channels: dict[str, DataChannel] = {}
-    additional_outputs: dict[str, list[AdditionalOutputs]] = {}
-    handlers: dict[str, StreamHandlerBase | Callable] = {}
+    additional_outputs: dict[str, OutputQueue] = defaultdict(OutputQueue)
+    handlers: dict[str, HandlerType | Callable] = {}
+
+    concurrency_limit: int | float
+    event_handler: HandlerType
+    time_limit: float | int | None
+    modality: Literal["video", "audio", "audio-video"]
+    mode: Literal["send", "receive", "send-receive"]
 
     @staticmethod
     async def wait_for_time_limit(pc: RTCPeerConnection, time_limit: float):
@@ -79,16 +94,18 @@ class WebRTCConnectionMixin:
             for conn in self.connections[webrtc_id]:
                 conn.set_args(list(args))
 
-    def get_output(self, webrtc_id: str) -> list[AdditionalOutputs]:
-        return self.additional_outputs.get(webrtc_id, [])
+    async def output_stream(
+        self, webrtc_id: str
+    ) -> AsyncGenerator[AdditionalOutputs, None]:
+        outputs = self.additional_outputs[webrtc_id]
+        while not outputs.quit.is_set():
+            yield await outputs.queue.get()
 
     def set_additional_outputs(
         self, webrtc_id: str
     ) -> Callable[[AdditionalOutputs], None]:
         def set_outputs(outputs: AdditionalOutputs):
-            if webrtc_id not in self.additional_outputs:
-                self.additional_outputs[webrtc_id] = []
-            self.additional_outputs[webrtc_id].append(outputs)
+            self.additional_outputs[webrtc_id].queue.put_nowait(outputs)
 
         return set_outputs
 

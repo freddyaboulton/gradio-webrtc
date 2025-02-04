@@ -4,12 +4,12 @@ from dataclasses import dataclass
 from functools import lru_cache
 from logging import getLogger
 from threading import Event
-from typing import Any, Callable, Generator, Literal, Union, cast
+from typing import Any, Callable, Generator, Literal, cast
 
 import numpy as np
 
-from gradio_webrtc.pause_detection import SileroVADModel, SileroVadOptions
-from gradio_webrtc.tracks import EmitType, StreamHandler
+from .pause_detection import SileroVADModel, SileroVadOptions
+from .tracks import EmitType, StreamHandler
 
 logger = getLogger(__name__)
 
@@ -42,17 +42,16 @@ class AppState:
     buffer: np.ndarray | None = None
 
 
-ReplyFnGenerator = Union[
-    # For two arguments
+ReplyFnGenerator = (
     Callable[
         [tuple[int, np.ndarray], list[dict[Any, Any]]],
         Generator[EmitType, None, None],
-    ],
-    Callable[
+    ]
+    | Callable[
         [tuple[int, np.ndarray]],
         Generator[EmitType, None, None],
-    ],
-]
+    ]
+)
 
 
 async def iterate(generator: Generator) -> Any:

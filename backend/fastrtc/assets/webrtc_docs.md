@@ -46,7 +46,7 @@ async function setupWebRTC(peerConnection) {
     await peerConnection.setLocalDescription(offer);
 
     // Send offer to server
-    const response = await fetch('/offer', {
+    const response = await fetch('/webrtc/offer', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -85,12 +85,13 @@ const data_channel = peerConnection.createDataChannel("text");
 data_channel.onmessage = (event) => {
     event_json = JSON.parse(event.data);
     if (event_json.type === "send_input") {
-        fetch('/offer', {
+        fetch('/input_hook', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
             body: inputs
+        }
             )
         };
     };
@@ -114,10 +115,13 @@ Here is an example using `server-sent-events`:
 ```python
 @stream.get("/outputs")
 def _(webrtc_id: str)
-    def get_outputs():
-        for output in stream.get_output(webrtc_id):
-            # Serialize to a string prior to this step
-            yield f"data: {output}\n\n"
+    async def get_outputs():
+        while True:
+            for output in stream.get_output(webrtc_id):
+                # Serialize to a string prior to this step
+                yield f"data: {output}\n\n"
+            await
+    return StreamingResponse(get_outputs(),  media_type="text/event-stream")
 ```
 
 NOTE: It is completely up to you how you want to call the `get_output` hook.

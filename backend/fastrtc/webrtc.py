@@ -20,14 +20,14 @@ from gradio import wasm_utils
 from gradio.components.base import Component, server
 from gradio_client import handle_file
 
-from gradio_webrtc.tracks import (
+from .tracks import (
     AudioVideoStreamHandlerImpl,
     StreamHandler,
     StreamHandlerBase,
     StreamHandlerImpl,
     VideoEventHandler,
 )
-from gradio_webrtc.webrtc_connection_mixin import WebRTCConnectionMixin
+from .webrtc_connection_mixin import WebRTCConnectionMixin
 
 if TYPE_CHECKING:
     from gradio.blocks import Block
@@ -228,11 +228,8 @@ class WebRTC(Component, WebRTCConnectionMixin):
             inputs = list(inputs)
 
         def handler(webrtc_id: str, *args):
-            if (
-                webrtc_id in self.additional_outputs
-                and len(self.additional_outputs[webrtc_id]) > 0
-            ):
-                next_outputs = self.additional_outputs[webrtc_id].pop(0)
+            if self.additional_outputs[webrtc_id].queue.qsize() > 0:
+                next_outputs = self.additional_outputs[webrtc_id].queue.get_nowait()
                 return fn(*args, *next_outputs.args)  # type: ignore
             return (
                 tuple([None for _ in range(len(outputs))])
@@ -254,11 +251,13 @@ class WebRTC(Component, WebRTCConnectionMixin):
 
     def stream(
         self,
-        fn: Callable[..., Any]
-        | StreamHandlerImpl
-        | AudioVideoStreamHandlerImpl
-        | VideoEventHandler
-        | None = None,
+        fn: (
+            Callable[..., Any]
+            | StreamHandlerImpl
+            | AudioVideoStreamHandlerImpl
+            | VideoEventHandler
+            | None
+        ) = None,
         inputs: Block | Sequence[Block] | set[Block] | None = None,
         outputs: Block | Sequence[Block] | set[Block] | None = None,
         js: str | None = None,
@@ -278,8 +277,8 @@ class WebRTC(Component, WebRTCConnectionMixin):
         if isinstance(outputs, Block):
             outputs = [outputs]
 
-        self.concurrency_limit = (
-            1 if concurrency_limit in ["default", None] else concurrency_limit
+        self.concurrency_limit = cast(
+            int, (1 if concurrency_limit in ["default", None] else concurrency_limit)
         )
         self.event_handler = fn  # type: ignore
         self.time_limit = time_limit

@@ -3,6 +3,7 @@ from typing import Any, Callable, Literal, cast
 from pathlib import Path
 import gradio as gr
 from fastapi import FastAPI, Request, WebSocket
+from starlette.routing import Route
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
 from jinja2 import Template as JinjaTemplate
@@ -118,8 +119,9 @@ class Stream(FastAPI, WebRTCConnectionMixin):
         self.modality = modality
         self.rtp_params = rtp_params
         self.event_handler = handler
-        self.concurrency_limit = (
-            1 if concurrency_limit in ["default", None] else concurrency_limit
+        self.concurrency_limit = cast(
+            (int | float),
+            1 if concurrency_limit in ["default", None] else concurrency_limit,
         )
         self.time_limit = time_limit
         self.additional_output_components = additional_outputs
@@ -133,6 +135,7 @@ class Stream(FastAPI, WebRTCConnectionMixin):
         if generate_docs:
             gr.mount_gradio_app(self, self._ui, "/ui")
             gr.mount_gradio_app(self, self._webrtc_docs_gradio(), "/webrtc/docs")
+        self.generate_docs = generate_docs
 
     def _webrtc_docs_gradio(self):
         with gr.Blocks() as demo:
@@ -152,7 +155,7 @@ class Stream(FastAPI, WebRTCConnectionMixin):
                     with gr.Tab(label="Docs"):
                         gr.Markdown(contents)
                     with gr.Tab("UI"):
-                        self.ui.render()
+                        self._ui.render()
         return demo
 
     def coming_soon(self):
@@ -210,6 +213,43 @@ class Stream(FastAPI, WebRTCConnectionMixin):
                     inputs=self.additional_input_components,
                     outputs=[output_video],
                     trigger=button.click,
+                    time_limit=self.time_limit,
+                    concurrency_limit=self.concurrency_limit,  # type: ignore
+                )
+                if additional_output_components:
+                    assert self.additional_outputs_handler
+                    output_video.on_additional_outputs(
+                        self.additional_outputs_handler,
+                        outputs=additional_output_components,
+                    )
+        elif self.modality == "video" and self.mode == "send":
+            with gr.Blocks() as demo:
+                gr.HTML(
+                    f"""
+                <h1 style='text-align: center'>
+                {self.title if self.title != "FastAPI" else "Video Streaming"} (Powered by WebRTC ⚡️)
+                </h1>
+                """
+                )
+                with gr.Row():
+                    if additional_input_components:
+                        with gr.Column():
+                            for component in additional_input_components:
+                                component.render()
+                    with gr.Column():
+                        output_video = WebRTC(
+                            label="Video Stream",
+                            rtc_configuration=self.rtc_configuration,
+                            mode="send",
+                            modality="video",
+                        )
+                        for component in additional_output_components:
+                            if component not in same_components:
+                                component.render()
+                output_video.stream(
+                    fn=self.event_handler,
+                    inputs=self.additional_input_components,
+                    outputs=[output_video],
                     time_limit=self.time_limit,
                     concurrency_limit=self.concurrency_limit,  # type: ignore
                 )
@@ -345,8 +385,21 @@ class Stream(FastAPI, WebRTCConnectionMixin):
         return self._ui
 
     @ui.setter
-    def _(self, blocks: Blocks):
+    def ui(self, blocks: Blocks):
         self._ui = blocks
+        if self.generate_docs:
+            docs_index = next(
+                i
+                for i, r in enumerate(self.routes)
+                if cast(Route, r).path == "/webrtc/docs"
+            )
+            self.routes.pop(docs_index)
+            ui_index = next(
+                i for i, r in enumerate(self.routes) if cast(Route, r).path == "/ui"
+            )
+            self.routes.pop(ui_index)
+            gr.mount_gradio_app(self, self._ui, "/ui")
+            gr.mount_gradio_app(self, self._webrtc_docs_gradio(), "/webrtc/docs")
 
     async def offer(self, body: Body):
         return await self.handle_offer(

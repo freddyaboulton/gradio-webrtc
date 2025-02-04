@@ -13,10 +13,11 @@ from abc import ABC, abstractmethod
 from collections.abc import Callable
 from typing import (
     Any,
+    Generic,
     Generator,
     Literal,
     TypeAlias,
-    Union,
+    TypeVar,
     cast,
 )
 
@@ -32,7 +33,7 @@ from aiortc.contrib.media import AudioFrame, VideoFrame  # type: ignore
 from aiortc.mediastreams import MediaStreamError
 from numpy import typing as npt
 
-from gradio_webrtc.utils import (
+from fastrtc.utils import (
     AdditionalOutputs,
     DataChannel,
     current_channel,
@@ -43,9 +44,7 @@ from gradio_webrtc.utils import (
 
 logger = logging.getLogger(__name__)
 
-VideoEmitType = Union[
-    AdditionalOutputs, tuple[npt.ArrayLike, AdditionalOutputs], npt.ArrayLike, None
-]
+VideoEmitType = AdditionalOutputs
 VideoEventHandler = Callable[[npt.ArrayLike], VideoEmitType]
 
 
@@ -198,7 +197,7 @@ class StreamHandlerBase(ABC):
     ):
         if self.channel:
             self.channel.send(create_message("send_input", []))
-            logger.debug("Sent tick")
+            logger.debug("Sent send_input")
 
     async def wait_for_args(self):
         await self.fetch_args()
@@ -218,10 +217,6 @@ class StreamHandlerBase(ABC):
     def shutdown(self):
         pass
 
-    @abstractmethod
-    def copy(self) -> "StreamHandlerBase":
-        pass
-
     def resample(self, frame: AudioFrame) -> Generator[AudioFrame, None, None]:
         if self._resampler is None:
             self._resampler = av.AudioResampler(  # type: ignore
@@ -233,13 +228,13 @@ class StreamHandlerBase(ABC):
         yield from self._resampler.resample(frame)
 
 
-EmitType: TypeAlias = Union[
-    tuple[int, np.ndarray],
-    tuple[int, np.ndarray, Literal["mono", "stereo"]],
-    AdditionalOutputs,
-    tuple[tuple[int, np.ndarray], AdditionalOutputs],
-    None,
-]
+EmitType: TypeAlias = (
+    tuple[int, npt.ArrayLike]
+    | tuple[int, npt.ArrayLike, Literal["mono", "stereo"]]
+    | AdditionalOutputs
+    | tuple[tuple[int, npt.ArrayLike], AdditionalOutputs]
+    | None
+)
 AudioEmitType = EmitType
 
 
@@ -254,6 +249,10 @@ class StreamHandler(StreamHandlerBase):
     ) -> EmitType:
         pass
 
+    @abstractmethod
+    def copy(self) -> StreamHandler:
+        pass
+
 
 class AsyncStreamHandler(StreamHandlerBase):
     @abstractmethod
@@ -266,8 +265,12 @@ class AsyncStreamHandler(StreamHandlerBase):
     ) -> EmitType:
         pass
 
+    @abstractmethod
+    def copy(self) -> AsyncStreamHandler:
+        pass
 
-StreamHandlerImpl = Union[StreamHandler, AsyncStreamHandler]
+
+StreamHandlerImpl = StreamHandler | AsyncStreamHandler
 
 
 class AudioVideoStreamHandler(StreamHandlerBase):
@@ -279,6 +282,10 @@ class AudioVideoStreamHandler(StreamHandlerBase):
     def video_emit(
         self,
     ) -> VideoEmitType:
+        pass
+
+    @abstractmethod
+    def copy(self) -> AudioVideoStreamHandler:
         pass
 
 
@@ -293,12 +300,16 @@ class AsyncAudioVideoStreamHandler(StreamHandlerBase):
     ) -> VideoEmitType:
         pass
 
+    @abstractmethod
+    def copy(self) -> AsyncAudioVideoStreamHandler:
+        pass
 
-VideoStreamHandlerImpl = Union[AudioVideoStreamHandler, AsyncAudioVideoStreamHandler]
-AudioVideoStreamHandlerImpl = Union[
-    AudioVideoStreamHandler, AsyncAudioVideoStreamHandler
-]
-AsyncHandler = Union[AsyncStreamHandler, AsyncAudioVideoStreamHandler]
+
+VideoStreamHandlerImpl = AudioVideoStreamHandler | AsyncAudioVideoStreamHandler
+AudioVideoStreamHandlerImpl = AudioVideoStreamHandler | AsyncAudioVideoStreamHandler
+AsyncHandler = AsyncStreamHandler | AsyncAudioVideoStreamHandler
+
+HandlerType = StreamHandlerImpl | VideoStreamHandlerImpl | VideoEventHandler | Callable
 
 
 class VideoStreamHandler(VideoCallback):
