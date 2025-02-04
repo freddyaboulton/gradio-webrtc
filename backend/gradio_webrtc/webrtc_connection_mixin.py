@@ -31,6 +31,7 @@ from gradio_webrtc.tracks import (
 from gradio_webrtc.utils import (
     AdditionalOutputs,
     DataChannel,
+    create_message,
 )
 
 Track = (
@@ -210,7 +211,9 @@ class WebRTCConnectionMixin:
             def _(message):
                 logger.debug(f"Received message: {message}")
                 if channel.readyState == "open":
-                    channel.send(f"Server received: {message}")
+                    channel.send(
+                        create_message("log", data=f"Server received: {message}")
+                    )
 
         # handle offer
         await pc.setRemoteDescription(offer)

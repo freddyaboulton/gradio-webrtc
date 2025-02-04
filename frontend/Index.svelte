@@ -43,6 +43,10 @@
 		if (msg?.type === "info" || msg?.type === "warning" || msg?.type === "error") {
 			console.log("dispatching info", msg.message);
 			gradio.dispatch(msg?.type === "error"? "error": "warning", msg.message);
+		} else if (msg?.type === "fetch_output"){
+			gradio.dispatch("state_change");
+		} else if (msg?.type === "send_input") {
+			gradio.dispatch("tick");
 		}
 		gradio.dispatch(msg === "change" ? "state_change" : "tick");
 	}

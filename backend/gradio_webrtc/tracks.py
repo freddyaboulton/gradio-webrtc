@@ -38,6 +38,7 @@ from gradio_webrtc.utils import (
     current_channel,
     player_worker_decode,
     split_output,
+    create_message,
 )
 
 logger = logging.getLogger(__name__)
@@ -141,7 +142,7 @@ class VideoCallback(VideoStreamTrack):
                 and self.channel
             ):
                 self.set_additional_outputs(outputs)
-                self.channel.send("change")
+                self.channel.send(create_message("fetch_output", []))
             if array is None and self.mode == "send":
                 return
 
@@ -196,7 +197,7 @@ class StreamHandlerBase(ABC):
         self,
     ):
         if self.channel:
-            self.channel.send("tick")
+            self.channel.send(create_message("send_input", []))
             logger.debug("Sent tick")
 
     async def wait_for_args(self):
@@ -336,7 +337,7 @@ class VideoStreamHandler(VideoCallback):
                 and self.channel
             ):
                 self.set_additional_outputs(outputs)
-                self.channel.send("change")
+                self.channel.send(create_message("fetch_output", []))
             if array is None and self.mode == "send":
                 return
 
@@ -525,7 +526,7 @@ class ServerToClientVideo(VideoStreamTrack):
                     and self.channel
                 ):
                     self.set_additional_outputs(outputs)
-                    self.channel.send("change")
+                    self.channel.send(create_message("fetch_output", []))
             except StopIteration:
                 self.stop()
                 return

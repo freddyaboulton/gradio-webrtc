@@ -5,7 +5,7 @@ import json
 import logging
 import tempfile
 from contextvars import ContextVar
-from typing import Any, Callable, Protocol, TypedDict, cast
+from typing import Any, Callable, Protocol, TypedDict, cast, Literal
 
 import av
 import numpy as np
@@ -31,6 +31,13 @@ class DataChannel(Protocol):
     def send(self, message: str) -> None: ...
 
 
+def create_message(
+    type: Literal["send_input", "fetch_output", "stopword", "error", "warning", "log"],
+    data: list[Any] | str,
+) -> str:
+    return json.dumps({"type": type, "data": data})
+
+
 current_channel: ContextVar[DataChannel | None] = ContextVar(
     "current_channel", default=None
 )
@@ -48,7 +55,6 @@ def _send_log(message: str, type: str) -> None:
         )
 
     if channel := current_channel.get():
-        print("channel", channel)
         try:
             loop = asyncio.get_running_loop()
             asyncio.run_coroutine_threadsafe(_send(channel), loop)
@@ -131,7 +137,7 @@ async def player_worker_decode(
                 and channel()
             ):
                 set_additional_outputs(outputs)
-                cast(DataChannel, channel()).send("change")
+                cast(DataChannel, channel()).send(create_message("fetch_output", []))
 
             if frame is None:
                 if quit_on_none:

@@ -13,7 +13,7 @@ from .reply_on_pause import (
     SileroVadOptions,
 )
 from .speech_to_text import get_stt_model, stt_for_chunks
-from .utils import audio_to_float32
+from .utils import audio_to_float32, create_message
 
 logger = logging.getLogger(__name__)
 
@@ -64,7 +64,7 @@ class ReplyOnStopWords(ReplyOnPause):
         self,
     ):
         if self.channel:
-            self.channel.send("stopword")
+            self.channel.send(create_message("stopword", ""))
             logger.debug("Sent stopword")
 
     def send_stopword(self):

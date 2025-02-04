@@ -27,16 +27,11 @@ from gradio_webrtc.tracks import (
     StreamHandlerImpl,
     VideoEventHandler,
 )
-from gradio_webrtc.utils import (
-    AdditionalOutputs,
-)
 from gradio_webrtc.webrtc_connection_mixin import WebRTCConnectionMixin
 
 if TYPE_CHECKING:
     from gradio.blocks import Block
     from gradio.components import Timer
-    from gradio.events import Dependency
-
 
 if wasm_utils.IS_WASM:
     raise ValueError("Not supported in gradio-lite!")
