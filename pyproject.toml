@@ -17,7 +17,7 @@ authors = [{ name = "Freddy Boulton", email = "YOUREMAIL@domain.com" }]
 keywords = ["gradio-custom-component", "gradio-template-Video", "streaming", "webrtc", "realtime", 
             "machine learning", "computer vision", "audio", "video", "image", "audio processing", "video processing"]
 # Add dependencies here
-dependencies = ["gradio>=4.0,<6.0", "aiortc"]
+dependencies = ["gradio>=4.0,<6.0", "aiortc", "audioop-lts;python_version>='3.13'"]
 classifiers = [
   'Development Status :: 3 - Alpha',
   'Operating System :: OS Independent',

@@ -4,7 +4,7 @@ import random
 
 import cv2
 import gradio as gr
-from gradio_webrtc import AdditionalOutputs, WebRTC
+from fastrtc import AdditionalOutputs, WebRTC
 from huggingface_hub import hf_hub_download
 from inference import YOLOv10
 from twilio.rest import Client
@@ -84,7 +84,16 @@ with gr.Blocks(css=css) as demo:
                     "height": {"exact": 600},
                     "aspectRatio": {"exact": 1.33333},
                 },
-                rtp_params={"degradationPreference": "maintain-resolution"},
+                rtp_params={
+                    "degradationPreference": "maintain-resolution",
+                    "codecs": [
+                        {
+                            "mimeType": "video/H264",
+                            "clockRate": 90_000,
+                            "payloadType": 96,
+                        }
+                    ],
+                },
             )
             conf_threshold = gr.Slider(
                 label="Confidence Threshold",

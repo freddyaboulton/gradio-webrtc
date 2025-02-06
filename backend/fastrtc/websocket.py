@@ -1,38 +1,31 @@
 import asyncio
+import audioop
 import base64
-import io
+import logging
 from typing import Optional
 
+import librosa
 import numpy as np
 from fastapi import WebSocket
-from pydub import AudioSegment
 
 from .tracks import AsyncStreamHandler, StreamHandlerImpl
+from .utils import split_output
+
+logger = logging.getLogger(__file__)
 
 
 def convert_to_mulaw(audio_data: np.ndarray, original_rate: int) -> bytes:
     """Convert audio data to 8kHz mu-law format"""
-    # Create AudioSegment from numpy array
-    # Assuming audio_data is int16. If float32, we need to convert to int16 first
-    if audio_data.dtype == np.float32:
-        audio_data = (audio_data * 32768).astype(np.int16)
 
-    # Create AudioSegment
-    audio_segment = AudioSegment(
-        audio_data.tobytes(),
-        frame_rate=original_rate,
-        sample_width=2,  # 16-bit
-        channels=1,  # mono
-    )
+    if audio_data.dtype != np.float32:
+        audio_data = audio_data.astype(np.float32) / 32768.0
 
-    # Convert to 8kHz
     if original_rate != 8000:
-        audio_segment = audio_segment.set_frame_rate(8000)
+        audio_data = librosa.resample(audio_data, orig_sr=original_rate, target_sr=8000)
 
-    # Export as mu-law
-    buf = io.BytesIO()
-    audio_segment.export(buf, format="raw", codec="mulaw")
-    return buf.getvalue()
+    audio_data = (audio_data * 32768).astype(np.int16)
+
+    return audioop.lin2ulaw(audio_data, 2)  # type: ignore
 
 
 class WebSocketHandler:
@@ -45,8 +38,6 @@ class WebSocketHandler:
     async def handle_websocket(self, websocket: WebSocket):
         await websocket.accept()
         self.websocket = websocket
-
-        # Start emitting task
         self._emit_task = asyncio.create_task(self._emit_loop())
 
         try:
@@ -54,32 +45,25 @@ class WebSocketHandler:
                 message = await websocket.receive_json()
 
                 if message["event"] == "media":
-                    # Decode base64 audio payload
                     audio_payload = base64.b64decode(message["media"]["payload"])
 
-                    # Convert to numpy array (assuming 16-bit PCM)
-                    audio_array = np.frombuffer(audio_payload, dtype=np.int16)
+                    audio_array = np.frombuffer(
+                        audioop.ulaw2lin(audio_payload, 2), dtype=np.int16
+                    )
 
-                    # Pass to stream handler
                     if isinstance(self.stream_handler, AsyncStreamHandler):
-                        await self.stream_handler.receive(
-                            (self.stream_handler.input_sample_rate, audio_array)
-                        )
+                        await self.stream_handler.receive((8000, audio_array))
                     else:
-                        self.stream_handler.receive(
-                            (self.stream_handler.input_sample_rate, audio_array)
-                        )
+                        self.stream_handler.receive((8000, audio_array))
 
                 elif message["event"] == "start":
-                    # Store the StreamSid from the start event
                     self.stream_sid = message["streamSid"]
 
                 elif message["event"] == "stop":
-                    # Handle stream stop event
                     break
 
         except Exception as e:
-            print(f"Error in websocket handler: {e}")
+            logger.debug("Error in websocket handler %s", e)
         finally:
             if self._emit_task:
                 self._emit_task.cancel()
@@ -94,21 +78,13 @@ class WebSocketHandler:
                     output = self.stream_handler.emit()
 
                 if output is not None:
-                    # Handle different output types
-                    if isinstance(output, tuple):
-                        if len(output) == 2 and isinstance(output[1], np.ndarray):
-                            sample_rate, audio_data = output
-                        else:
-                            # Handle AdditionalOutputs case
-                            (sample_rate, audio_data), _ = output
+                    frame, _ = split_output(output)
+                    if not isinstance(frame, tuple):
+                        continue
 
-                    # Convert to 8kHz mu-law format
-                    mulaw_audio = convert_to_mulaw(audio_data, sample_rate)
-
-                    # Convert to base64
+                    mulaw_audio = convert_to_mulaw(frame[1], frame[0])
                     audio_payload = base64.b64encode(mulaw_audio).decode("utf-8")
 
-                    # Send media message
                     if self.websocket and self.stream_sid:
                         await self.websocket.send_json(
                             {
@@ -118,10 +94,9 @@ class WebSocketHandler:
                             }
                         )
 
-                # Add a small delay to prevent tight loop
-                await asyncio.sleep(0.02)  # 20ms delay
+                await asyncio.sleep(0.02)
 
         except asyncio.CancelledError:
-            print("Emit loop cancelled")
+            logger.debug("Emit loop cancelled")
         except Exception as e:
-            print(f"Error in emit loop: {e}")
+            logger.debug("Error in emit loop: %s", e)

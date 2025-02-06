@@ -1,20 +1,20 @@
 import logging
-from typing import Any, Callable, Literal, cast
 from pathlib import Path
+from typing import Any, Callable, Literal, cast
+
 import gradio as gr
 from fastapi import FastAPI, Request, WebSocket
-from starlette.routing import Route
 from fastapi.responses import HTMLResponse
-from pydantic import BaseModel
+from gradio import Blocks
+from gradio.components.base import Component
 from jinja2 import Template as JinjaTemplate
+from pydantic import BaseModel
+from starlette.routing import Route
 
 from .tracks import StreamHandlerImpl, VideoEventHandler
 from .webrtc import WebRTC
 from .webrtc_connection_mixin import WebRTCConnectionMixin
 from .websocket import WebSocketHandler
-from gradio import Blocks
-from gradio.components.base import Component
-
 
 logger = logging.getLogger(__name__)
 
@@ -131,6 +131,7 @@ class Stream(FastAPI, WebRTCConnectionMixin):
         self.router.post("/webrtc/offer")(self.offer)
         self.router.websocket("/telephone/handler")(self.telephone_handler)
         self.router.get("/telephone/docs")(self.coming_soon)
+        self.router.post("/telephone/incoming")(self.handle_incoming_call)
         self._ui = self.generate_default_ui()
         if generate_docs:
             gr.mount_gradio_app(self, self._ui, "/ui")
@@ -419,5 +420,63 @@ class Stream(FastAPI, WebRTCConnectionMixin):
 
     async def telephone_handler(self, websocket: WebSocket):
         handler = cast(StreamHandlerImpl, self.event_handler.copy())
+        handler.phone_mode = True
         ws = WebSocketHandler(handler)
         await ws.handle_websocket(websocket)
+
+    def fastphone(
+        self,
+        token: str | None = None,
+        host: str = "127.0.0.1",
+        port: int = 8000,
+        **kwargs,
+    ):
+        import secrets
+        import threading
+        import time
+        import urllib.parse
+
+        import httpx
+        import uvicorn
+        from gradio.networking import setup_tunnel
+        from gradio.tunneling import CURRENT_TUNNELS
+        from huggingface_hub import get_token
+
+        t = threading.Thread(
+            target=uvicorn.run,
+            args=(self,),
+            kwargs={"host": host, "port": port, **kwargs},
+        )
+        t.start()
+
+        url = setup_tunnel(
+            host, port, share_token=secrets.token_urlsafe(32), share_server_address=None
+        )
+        host = urllib.parse.urlparse(url).netloc
+
+        r = httpx.post(
+            "https://freddyaboulton-test-phone.hf.space/register",
+            json={"url": host},
+            headers={"Authorization": token or get_token() or ""},
+        )
+        r.raise_for_status()
+        data = r.json()
+        code = data["code"]
+        phone_number = data["phone"]
+        print(
+            f"Your FastPhone is now live! Call {phone_number} and use code {code} to connect to your stream."
+        )
+
+        try:
+            while True:
+                time.sleep(0.1)
+        except (KeyboardInterrupt, OSError):
+            print("Keyboard interruption in main thread... closing server.")
+            r = httpx.post(
+                "https://freddyaboulton-test-phone.hf.space/unregister",
+                json={"url": host, "code": code},
+                headers={"Authorization": token or get_token() or ""},
+            )
+            t.join(timeout=5)
+            for tunnel in CURRENT_TUNNELS:
+                tunnel.kill()

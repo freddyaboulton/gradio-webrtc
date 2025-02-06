@@ -13,8 +13,8 @@ from abc import ABC, abstractmethod
 from collections.abc import Callable
 from typing import (
     Any,
-    Generic,
     Generator,
+    Generic,
     Literal,
     TypeAlias,
     TypeVar,
@@ -36,10 +36,10 @@ from numpy import typing as npt
 from fastrtc.utils import (
     AdditionalOutputs,
     DataChannel,
+    create_message,
     current_channel,
     player_worker_decode,
     split_output,
-    create_message,
 )
 
 logger = logging.getLogger(__name__)
@@ -179,6 +179,7 @@ class StreamHandlerBase(ABC):
         self._loop: asyncio.AbstractEventLoop
         self.args_set = asyncio.Event()
         self.channel_set = asyncio.Event()
+        self._phone_mode = False
 
     @property
     def loop(self) -> asyncio.AbstractEventLoop:
@@ -187,6 +188,14 @@ class StreamHandlerBase(ABC):
     @property
     def channel(self) -> DataChannel | None:
         return self._channel
+
+    @property
+    def phone_mode(self) -> bool:
+        return self._phone_mode
+
+    @phone_mode.setter
+    def phone_mode(self, value: bool):
+        self._phone_mode = value
 
     def set_channel(self, channel: DataChannel):
         self._channel = channel

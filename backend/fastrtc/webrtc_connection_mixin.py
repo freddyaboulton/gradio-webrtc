@@ -23,13 +23,13 @@ from aiortc.contrib.media import MediaRelay  # type: ignore
 
 from fastrtc.tracks import (
     AudioCallback,
+    HandlerType,
     ServerToClientAudio,
     ServerToClientVideo,
     StreamHandlerBase,
     StreamHandlerImpl,
     VideoCallback,
     VideoStreamHandler,
-    HandlerType,
 )
 from fastrtc.utils import (
     AdditionalOutputs,

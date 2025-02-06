@@ -5,7 +5,7 @@ import json
 import logging
 import tempfile
 from contextvars import ContextVar
-from typing import Any, Callable, Protocol, TypedDict, cast, Literal
+from typing import Any, Callable, Literal, Protocol, TypedDict, cast
 
 import av
 import numpy as np

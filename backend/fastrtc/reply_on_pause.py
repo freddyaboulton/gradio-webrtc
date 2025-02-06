@@ -10,6 +10,7 @@ import numpy as np
 
 from .pause_detection import SileroVADModel, SileroVadOptions
 from .tracks import EmitType, StreamHandler
+from .utils import split_output
 
 logger = getLogger(__name__)
 
@@ -164,9 +165,13 @@ class ReplyOnPause(StreamHandler):
         else:
             if not self.generator:
                 if self._needs_additional_inputs and not self.args_set.is_set():
-                    asyncio.run_coroutine_threadsafe(
-                        self.wait_for_args(), self.loop
-                    ).result()
+                    if not self.phone_mode:
+                        asyncio.run_coroutine_threadsafe(
+                            self.wait_for_args(), self.loop
+                        ).result()
+                    else:
+                        self.latest_args = [None]
+                        self.args_set.set()
                 logger.debug("Creating generator")
                 audio = cast(np.ndarray, self.state.stream).reshape(1, -1)
                 if self._needs_additional_inputs:
@@ -178,10 +183,21 @@ class ReplyOnPause(StreamHandler):
             self.state.responding = True
             try:
                 if self.is_async:
-                    return asyncio.run_coroutine_threadsafe(
+                    output = asyncio.run_coroutine_threadsafe(
                         self.async_iterate(self.generator), self.loop
                     ).result()
                 else:
-                    return next(self.generator)
+                    output = next(self.generator)
+                if self.phone_mode:
+                    _, additional_outputs = split_output(output)
+                    if additional_outputs:
+                        self.latest_args = [None] + list(additional_outputs.args)
+                return output
             except (StopIteration, StopAsyncIteration):
+                self.reset()
+            except Exception as e:
+                import traceback
+
+                traceback.print_exc()
+                logger.debug("Error in ReplyOnPause: %s", e)
                 self.reset()
