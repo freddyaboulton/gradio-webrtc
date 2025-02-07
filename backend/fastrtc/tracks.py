@@ -457,13 +457,10 @@ class AudioCallback(AudioStreamTrack):
                 raise MediaStreamError
 
             if not self.event_handler.channel_set.is_set():
-                print("waiting for channel")
                 await self.event_handler.channel_set.wait()
             if current_channel.get() != self.event_handler.channel:
                 current_channel.set(self.event_handler.channel)
-            print("starrting")
             self.start()
-            print("started")
 
             frame = await self.queue.get()
             logger.debug("frame %s", frame)

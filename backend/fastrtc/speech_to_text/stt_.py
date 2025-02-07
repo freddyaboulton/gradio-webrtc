@@ -26,7 +26,6 @@ def stt(audio: tuple[int, NDArray[np.int16]]) -> str:
     model = get_stt_model()
     sr, audio_np = audio
     if audio_np.dtype != np.float32:
-        print("converting")
         audio_np = audio_np.astype(np.float32) / 32768.0
     try:
         import torch
@@ -38,9 +37,7 @@ def stt(audio: tuple[int, NDArray[np.int16]]) -> str:
     if audio_torch.ndim == 1:
         audio_torch = audio_torch.unsqueeze(0)
     assert audio_torch.ndim == 2, "Audio must have a batch dimension"
-    print("before")
     res = model.decoder(model.encoder(audio_torch)[0])
-    print("after")
     return res
 
 
