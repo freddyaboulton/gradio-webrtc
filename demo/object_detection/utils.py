@@ -170,11 +170,11 @@ def draw_detections(image, boxes, scores, class_ids, mask_alpha=0.3):
     for class_id, box, score in zip(class_ids, boxes, scores):
         color = colors[class_id]
 
-        draw_box(det_img, box, color)
+        draw_box(det_img, box, color)  # type: ignore
 
         label = class_names[class_id]
         caption = f"{label} {int(score * 100)}%"
-        draw_text(det_img, caption, box, color, font_size, text_thickness)
+        draw_text(det_img, caption, box, color, font_size, text_thickness)  # type: ignore
 
     return det_img
 
@@ -232,6 +232,6 @@ def draw_masks(
         x1, y1, x2, y2 = box.astype(int)
 
         # Draw fill rectangle in mask image
-        cv2.rectangle(mask_img, (x1, y1), (x2, y2), color, -1)
+        cv2.rectangle(mask_img, (x1, y1), (x2, y2), color, -1)  # type: ignore
 
     return cv2.addWeighted(mask_img, mask_alpha, image, 1 - mask_alpha, 0)

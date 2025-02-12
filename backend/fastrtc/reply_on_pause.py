@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from functools import lru_cache
 from logging import getLogger
 from threading import Event
-from typing import Any, Callable, Generator, Literal, cast
+from typing import Any, Callable, Generator, Literal, cast, AsyncGenerator
 
 import numpy as np
 
@@ -51,6 +51,14 @@ ReplyFnGenerator = (
     | Callable[
         [tuple[int, np.ndarray]],
         Generator[EmitType, None, None],
+    ]
+    | Callable[
+        [tuple[int, np.ndarray]],
+        AsyncGenerator[EmitType, None],
+    ]
+    | Callable[
+        [tuple[int, np.ndarray], list[dict[Any, Any]]],
+        AsyncGenerator[EmitType, None],
     ]
 )
 
@@ -166,9 +174,7 @@ class ReplyOnPause(StreamHandler):
             if not self.generator:
                 if self._needs_additional_inputs and not self.args_set.is_set():
                     if not self.phone_mode:
-                        asyncio.run_coroutine_threadsafe(
-                            self.wait_for_args(), self.loop
-                        ).result()
+                        self.wait_for_args_sync()
                     else:
                         self.latest_args = [None]
                         self.args_set.set()
@@ -176,7 +182,7 @@ class ReplyOnPause(StreamHandler):
                 audio = cast(np.ndarray, self.state.stream).reshape(1, -1)
                 if self._needs_additional_inputs:
                     self.latest_args[0] = (self.state.sampling_rate, audio)
-                    self.generator = self.fn(*self.latest_args)
+                    self.generator = self.fn(*self.latest_args)  # type: ignore
                 else:
                     self.generator = self.fn((self.state.sampling_rate, audio))  # type: ignore
                 logger.debug("Latest args: %s", self.latest_args)
@@ -187,7 +193,7 @@ class ReplyOnPause(StreamHandler):
                         self.async_iterate(self.generator), self.loop
                     ).result()
                 else:
-                    output = next(self.generator)
+                    output = next(self.generator)  # type: ignore
                 if self.phone_mode:
                     _, additional_outputs = split_output(output)
                     if additional_outputs:

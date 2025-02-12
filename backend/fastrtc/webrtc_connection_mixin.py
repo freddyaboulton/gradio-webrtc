@@ -6,7 +6,7 @@ import asyncio
 import logging
 from collections import defaultdict
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import (
     AsyncGenerator,
     Literal,
@@ -14,6 +14,7 @@ from typing import (
     TypeVar,
     cast,
 )
+import inspect
 
 from aiortc import (
     RTCPeerConnection,
@@ -56,7 +57,7 @@ P = ParamSpec("P")
 
 @dataclass
 class OutputQueue:
-    queue: asyncio.Queue[AdditionalOutputs] = asyncio.Queue()
+    queue: asyncio.Queue[AdditionalOutputs] = field(default_factory=asyncio.Queue)
     quit: asyncio.Event = asyncio.Event()
 
 
@@ -84,7 +85,10 @@ class WebRTCConnectionMixin:
         connection = self.connections.pop(webrtc_id, [])
         for conn in connection:
             if isinstance(conn, AudioCallback):
-                conn.event_handler.shutdown()
+                if inspect.iscoroutinefunction(conn.event_handler.shutdown):
+                    asyncio.create_task(conn.event_handler.shutdown())
+                else:
+                    conn.event_handler.shutdown()
         self.additional_outputs.pop(webrtc_id, None)
         self.data_channels.pop(webrtc_id, None)
         return connection
@@ -98,6 +102,7 @@ class WebRTCConnectionMixin:
         self, webrtc_id: str
     ) -> AsyncGenerator[AdditionalOutputs, None]:
         outputs = self.additional_outputs[webrtc_id]
+        print("outputs_webrtc_id", webrtc_id)
         while not outputs.quit.is_set():
             yield await outputs.queue.get()
 

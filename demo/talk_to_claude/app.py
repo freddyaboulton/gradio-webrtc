@@ -39,10 +39,10 @@ def response(
     response = claude_client.messages.create(
         model="claude-3-5-haiku-20241022",
         max_tokens=512,
-        messages=messages,
+        messages=messages,  # type: ignore
     )
     response_text = " ".join(
-        block.text
+        block.text  # type: ignore
         for block in response.content
         if getattr(block, "type", None) == "text"
     )
@@ -82,9 +82,7 @@ class InputData(BaseModel):
 
 @stream.get("/")
 async def _():
-    return HTMLResponse(
-        content=(curr_dir / "talk_to_claude_index.html").read_text(), status_code=200
-    )
+    return HTMLResponse(content=(curr_dir / "index.html").read_text(), status_code=200)
 
 
 @stream.post("/input_hook")

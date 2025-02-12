@@ -1,7 +1,7 @@
 import logging
 from pathlib import Path
 from typing import Any, Callable, Literal, cast
-
+import asyncio
 import gradio as gr
 from fastapi import FastAPI, Request, WebSocket
 from fastapi.responses import HTMLResponse
@@ -132,6 +132,8 @@ class Stream(FastAPI, WebRTCConnectionMixin):
         self.router.websocket("/telephone/handler")(self.telephone_handler)
         self.router.get("/telephone/docs")(self.coming_soon)
         self.router.post("/telephone/incoming")(self.handle_incoming_call)
+        self.router.websocket("/websocket/offer")(self.websocket_offer)
+        self.router.get("/websocket/docs")(self.coming_soon)
         self._ui = self.generate_default_ui()
         if generate_docs:
             gr.mount_gradio_app(self, self._ui, "/ui")
@@ -139,7 +141,7 @@ class Stream(FastAPI, WebRTCConnectionMixin):
         self.generate_docs = generate_docs
 
     def _webrtc_docs_gradio(self):
-        with gr.Blocks() as demo:
+        with gr.Blocks(css=self._ui.css or None) as demo:
             template = Path(__file__).parent / "assets" / "webrtc_docs.md"
             contents = JinjaTemplate(template.read_text()).render(
                 modality=self.modality,
@@ -249,7 +251,7 @@ class Stream(FastAPI, WebRTCConnectionMixin):
                                 component.render()
                 output_video.stream(
                     fn=self.event_handler,
-                    inputs=self.additional_input_components,
+                    inputs=[output_video] + additional_input_components,
                     outputs=[output_video],
                     time_limit=self.time_limit,
                     concurrency_limit=self.concurrency_limit,  # type: ignore
@@ -288,19 +290,20 @@ class Stream(FastAPI, WebRTCConnectionMixin):
                             if component not in same_components:
                                 component.render()
 
-                    image.stream(
-                        fn=self.event_handler,
-                        inputs=[image] + additional_input_components,
-                        outputs=[image],
-                        time_limit=self.time_limit,
-                        concurrency_limit=self.concurrency_limit,  # type: ignore
+                image.stream(
+                    fn=self.event_handler,
+                    inputs=[image] + additional_input_components,
+                    outputs=[image],
+                    time_limit=self.time_limit,
+                    concurrency_limit=self.concurrency_limit,  # type: ignore
+                )
+                if additional_output_components:
+                    assert self.additional_outputs_handler
+                    image.on_additional_outputs(
+                        self.additional_outputs_handler,
+                        inputs=additional_output_components,
+                        outputs=additional_output_components,
                     )
-                    if additional_output_components:
-                        assert self.additional_outputs_handler
-                        image.on_additional_outputs(
-                            self.additional_outputs_handler,
-                            outputs=additional_output_components,
-                        )
         elif self.modality == "audio" and self.mode == "receive":
             with gr.Blocks() as demo:
                 gr.HTML(
@@ -338,6 +341,45 @@ class Stream(FastAPI, WebRTCConnectionMixin):
                     assert self.additional_outputs_handler
                     output_video.on_additional_outputs(
                         self.additional_outputs_handler,
+                        inputs=additional_output_components,
+                        outputs=additional_output_components,
+                    )
+        elif self.modality == "audio" and self.mode == "send":
+            with gr.Blocks() as demo:
+                gr.HTML(
+                    f"""
+                <h1 style='text-align: center'>
+                {self.title if self.title != "FastAPI" else "Audio Streaming"} (Powered by WebRTC ⚡️)
+                </h1>
+                """
+                )
+                with gr.Row():
+                    if additional_input_components:
+                        with gr.Column():
+                            for component in additional_input_components:
+                                component.render()
+                    with gr.Column():
+                        output_video = WebRTC(
+                            label="Audio Stream",
+                            rtc_configuration=self.rtc_configuration,
+                            mode="send",
+                            modality="audio",
+                        )
+                        for component in additional_output_components:
+                            if component not in same_components:
+                                component.render()
+                output_video.stream(
+                    fn=self.event_handler,
+                    inputs=[output_video] + additional_input_components,
+                    outputs=[output_video],
+                    time_limit=self.time_limit,
+                    concurrency_limit=self.concurrency_limit,  # type: ignore
+                )
+                if additional_output_components:
+                    assert self.additional_outputs_handler
+                    output_video.on_additional_outputs(
+                        self.additional_outputs_handler,
+                        inputs=additional_output_components,
                         outputs=additional_output_components,
                     )
         elif self.modality == "audio" and self.mode == "send-receive":
@@ -377,6 +419,7 @@ class Stream(FastAPI, WebRTCConnectionMixin):
                         assert self.additional_outputs_handler
                         image.on_additional_outputs(
                             self.additional_outputs_handler,
+                            inputs=additional_output_components,
                             outputs=additional_output_components,
                         )
         return demo
@@ -421,7 +464,24 @@ class Stream(FastAPI, WebRTCConnectionMixin):
     async def telephone_handler(self, websocket: WebSocket):
         handler = cast(StreamHandlerImpl, self.event_handler.copy())
         handler.phone_mode = True
-        ws = WebSocketHandler(handler)
+        ws = WebSocketHandler(
+            handler, lambda s, a: None, lambda s: None, lambda s: lambda a: None
+        )
+        await ws.handle_websocket(websocket)
+
+    async def websocket_offer(self, websocket: WebSocket):
+        handler = cast(StreamHandlerImpl, self.event_handler.copy())
+        handler.phone_mode = False
+
+        def set_handler(s, a):
+            self.connections[s] = [a]
+
+        def clean_up(s):
+            self.clean_up(s)
+
+        ws = WebSocketHandler(
+            handler, set_handler, clean_up, lambda s: self.set_additional_outputs(s)
+        )
         await ws.handle_websocket(websocket)
 
     def fastphone(

@@ -204,16 +204,26 @@ class StreamHandlerBase(ABC):
     async def fetch_args(
         self,
     ):
+        print("self.channel", self.channel)
         if self.channel:
+            print("Sending send_input")
             self.channel.send(create_message("send_input", []))
             logger.debug("Sent send_input")
 
     async def wait_for_args(self):
+        print("Waiting for args in method")
         await self.fetch_args()
         await self.args_set.wait()
 
     def wait_for_args_sync(self):
-        asyncio.run_coroutine_threadsafe(self.wait_for_args(), self.loop).result()
+        print("self.loop", self.loop)
+        try:
+            asyncio.run_coroutine_threadsafe(self.wait_for_args(), self.loop).result()
+        except Exception as e:
+            print("Error in wait_for_args_sync", e)
+            import traceback
+
+            traceback.print_exc()
 
     def set_args(self, args: list[Any]):
         logger.debug("setting args in audio callback %s", args)

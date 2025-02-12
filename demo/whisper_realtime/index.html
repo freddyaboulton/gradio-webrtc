@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-time Whisper Transcription</title>
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #f9a45c 0%, #e66465 100%);
+            --background-cream: #faf8f5;
+            --text-dark: #2d2d2d;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--background-cream);
+            color: var(--text-dark);
+            min-height: 100vh;
+        }
+
+        .hero {
+            background: var(--primary-gradient);
+            color: white;
+            padding: 2.5rem 2rem;
+            text-align: center;
+        }
+
+        .hero h1 {
+            font-size: 2.5rem;
+            margin: 0;
+            font-weight: 600;
+            letter-spacing: -0.5px;
+        }
+
+        .hero p {
+            font-size: 1rem;
+            margin-top: 0.5rem;
+            opacity: 0.9;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 1.5rem auto;
+            padding: 0 2rem;
+        }
+
+        .transcript-container {
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            padding: 1.5rem;
+            height: 300px;
+            overflow-y: auto;
+            margin-bottom: 1.5rem;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .controls {
+            text-align: center;
+            margin: 1.5rem 0;
+        }
+
+        button {
+            background: var(--primary-gradient);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 0.95rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-weight: 500;
+        }
+
+        button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(230, 100, 101, 0.15);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        /* Transcript text styling */
+        .transcript-container p {
+            margin: 0.4rem 0;
+            padding: 0.6rem;
+            background: var(--background-cream);
+            border-radius: 4px;
+            line-height: 1.4;
+            font-size: 0.95rem;
+        }
+
+        /* Custom scrollbar - made thinner */
+        .transcript-container::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .transcript-container::-webkit-scrollbar-track {
+            background: var(--background-cream);
+            border-radius: 3px;
+        }
+
+        .transcript-container::-webkit-scrollbar-thumb {
+            background: #e66465;
+            border-radius: 3px;
+            opacity: 0.8;
+        }
+
+        .transcript-container::-webkit-scrollbar-thumb:hover {
+            background: #f9a45c;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="hero">
+        <h1>Real-time Transcription</h1>
+        <p>Powered by Groq and FastRTC</p>
+    </div>
+
+    <div class="container">
+        <div class="transcript-container" id="transcript"></div>
+        <div class="controls">
+            <button id="start-button">Start Recording</button>
+        </div>
+    </div>
+
+    <script>
+        let peerConnection;
+        let webrtc_id;
+
+        const startButton = document.getElementById('start-button');
+        const transcriptDiv = document.getElementById('transcript');
+
+        async function setupWebRTC() {
+            peerConnection = new RTCPeerConnection();
+
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    audio: true
+                });
+
+                stream.getTracks().forEach(track => {
+                    peerConnection.addTrack(track, stream);
+                });
+
+                // Create data channel for messages
+                const dataChannel = peerConnection.createDataChannel('text');
+                dataChannel.onmessage = handleMessage;
+
+                // Create and send offer
+                const offer = await peerConnection.createOffer();
+                await peerConnection.setLocalDescription(offer);
+
+                webrtc_id = Math.random().toString(36).substring(7);
+
+                const response = await fetch('/webrtc/offer', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        sdp: offer.sdp,
+                        type: offer.type,
+                        webrtc_id: webrtc_id
+                    })
+                });
+
+                const serverResponse = await response.json();
+                await peerConnection.setRemoteDescription(serverResponse);
+
+                // Create event stream to receive transcripts
+                const eventSource = new EventSource('/transcript?webrtc_id=' + webrtc_id);
+                eventSource.addEventListener("output", (event) => {
+                    appendTranscript(event.data);
+                });
+            } catch (err) {
+                console.error('Error setting up WebRTC:', err);
+            }
+        }
+
+        function handleMessage(event) {
+            // Handle any WebRTC data channel messages if needed
+            console.log('Received message:', event.data);
+        }
+
+        function appendTranscript(text) {
+            const p = document.createElement('p');
+            p.textContent = text;
+            transcriptDiv.appendChild(p);
+            transcriptDiv.scrollTop = transcriptDiv.scrollHeight;
+        }
+
+        function stop() {
+            if (peerConnection) {
+                if (peerConnection.getTransceivers) {
+                    peerConnection.getTransceivers().forEach(transceiver => {
+                        if (transceiver.stop) {
+                            transceiver.stop();
+                        }
+                    });
+                }
+
+                if (peerConnection.getSenders) {
+                    peerConnection.getSenders().forEach(sender => {
+                        if (sender.track && sender.track.stop) sender.track.stop();
+                    });
+                }
+
+                setTimeout(() => {
+                    peerConnection.close();
+                }, 500);
+            }
+        }
+
+        startButton.addEventListener('click', () => {
+            if (startButton.textContent === 'Start Recording') {
+                setupWebRTC();
+                startButton.textContent = 'Stop Recording';
+            } else {
+                stop();
+                startButton.textContent = 'Start Recording';
+            }
+        });
+    </script>
+</body>
+
+</html>

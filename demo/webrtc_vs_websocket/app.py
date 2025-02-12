@@ -12,6 +12,7 @@ from elevenlabs import ElevenLabs
 import os
 from pydantic import BaseModel
 import json
+import logging
 
 load_dotenv()
 
@@ -20,6 +21,19 @@ claude_client = anthropic.Anthropic()
 tts_client = ElevenLabs(api_key=os.environ["ELEVENLABS_API_KEY"])
 
 curr_dir = Path(__file__).parent
+
+
+console_handler = logging.FileHandler("gradio_webrtc.log")
+console_handler.setLevel(logging.DEBUG)
+
+# Create a formatter
+formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+console_handler.setFormatter(formatter)
+
+# Configure the logger for your specific library
+logger = logging.getLogger("gradio_webrtc")
+logger.setLevel(logging.DEBUG)
+logger.addHandler(console_handler)
 
 
 def response(
@@ -39,22 +53,20 @@ def response(
     response = claude_client.messages.create(
         model="claude-3-5-haiku-20241022",
         max_tokens=512,
-        messages=messages,
+        messages=messages,  # type: ignore
     )
     response_text = " ".join(
-        block.text
+        block.text  # type: ignore
         for block in response.content
         if getattr(block, "type", None) == "text"
     )
-    print("response_text", response_text)
     chatbot.append({"role": "assistant", "content": response_text})
     yield AdditionalOutputs(chatbot)
     iterator = tts_client.text_to_speech.convert_as_stream(
         text=response_text,
         voice_id="JBFqnCBsd6RMkjVDRZzb",
         model_id="eleven_multilingual_v2",
-        output_format="pcm_24000"
-        
+        output_format="pcm_24000",
     )
     for chunk in aggregate_bytes_to_16bit(iterator):
         audio_array = np.frombuffer(chunk, dtype=np.int16).reshape(1, -1)
@@ -66,10 +78,11 @@ stream = Stream(
     modality="audio",
     mode="send-receive",
     handler=ReplyOnPause(response),
-    additional_outputs_handler=lambda a: a,
+    additional_outputs_handler=lambda a, b: b,
     additional_inputs=[chatbot],
     additional_outputs=[chatbot],
 )
+
 
 class Message(BaseModel):
     role: str
@@ -81,12 +94,9 @@ class InputData(BaseModel):
     chatbot: list[Message]
 
 
-
 @stream.get("/")
 async def _():
-    return HTMLResponse(
-        content=(curr_dir / "talk_to_claude_index.html").read_text(), status_code=200
-    )
+    return HTMLResponse(content=(curr_dir / "index.html").read_text(), status_code=200)
 
 
 @stream.post("/input_hook")
@@ -97,6 +107,8 @@ async def _(body: InputData):
 
 @stream.get("/outputs")
 def _(webrtc_id: str):
+    print("outputs", webrtc_id)
+
     async def output_stream():
         async for output in stream.output_stream(webrtc_id):
             chatbot = output.args[0]
@@ -107,8 +119,6 @@ def _(webrtc_id: str):
 
 
 if __name__ == "__main__":
-    # import uvicorn
+    import uvicorn
 
-    # s = uvicorn.run(stream)
-
-    stream.fastphone()
+    s = uvicorn.run(stream)

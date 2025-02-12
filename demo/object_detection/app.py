@@ -1,0 +1,52 @@
+import cv2
+from fastrtc import Stream
+from huggingface_hub import hf_hub_download
+from fastapi.responses import HTMLResponse
+from pathlib import Path
+import gradio as gr
+from pydantic import BaseModel, Field
+
+
+try:
+    from demo.object_detection.inference import YOLOv10
+except ImportError:
+    from .inference import YOLOv10
+
+
+cur_dir = Path(__file__).parent
+
+model_file = hf_hub_download(
+    repo_id="onnx-community/yolov10n", filename="onnx/model.onnx"
+)
+
+model = YOLOv10(model_file)
+
+
+def detection(image, conf_threshold=0.3):
+    image = cv2.resize(image, (model.input_width, model.input_height))
+    print("conf_threshold", conf_threshold)
+    new_image = model.detect_objects(image, conf_threshold)
+    return cv2.resize(new_image, (500, 500))
+
+
+stream = Stream(
+    handler=detection,
+    modality="video",
+    mode="send-receive",
+    additional_inputs=[gr.Slider(minimum=0, maximum=1, step=0.01, value=0.3)],
+)
+
+
+@stream.get("/")
+async def _():
+    return HTMLResponse(content=open(cur_dir / "index.html").read())
+
+
+class InputData(BaseModel):
+    webrtc_id: str
+    conf_threshold: float = Field(ge=0, le=1)
+
+
+@stream.post("/input_hook")
+async def _(data: InputData):
+    stream.set_input(data.webrtc_id, data.conf_threshold)

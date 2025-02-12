@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Object Detection</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #2d2b52 0%, #191731 100%);
+            color: white;
+            margin: 0;
+            padding: 20px;
+            height: 100vh;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            text-align: center;
+        }
+
+        .video-container {
+            width: 100%;
+            aspect-ratio: 16/9;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            margin: 20px 0;
+        }
+
+        #video-output {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        button {
+            background: white;
+            color: #2d2b52;
+            border: none;
+            padding: 12px 32px;
+            border-radius: 24px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 0.5em;
+        }
+
+        p {
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 2em;
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+            margin-top: 20px;
+        }
+
+        .slider-container {
+            width: 100%;
+            max-width: 300px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .slider-container label {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 14px;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            -webkit-appearance: none;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            outline: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            background: white;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Real-time Object Detection</h1>
+        <p>Using YOLOv10 to detect objects in your webcam feed</p>
+        <div class="video-container">
+            <video id="video-output" autoplay playsinline></video>
+        </div>
+        <div class="controls">
+            <div class="slider-container">
+                <label>Confidence Threshold: <span id="conf-value">0.3</span></label>
+                <input type="range" id="conf-threshold" min="0" max="1" step="0.01" value="0.3">
+            </div>
+            <button id="start-button">Start</button>
+        </div>
+    </div>
+
+    <script>
+        let peerConnection;
+        let webrtc_id;
+        const startButton = document.getElementById('start-button');
+        const videoOutput = document.getElementById('video-output');
+        const confThreshold = document.getElementById('conf-threshold');
+        const confValue = document.getElementById('conf-value');
+
+        // Update confidence value display
+        confThreshold.addEventListener('input', (e) => {
+            confValue.textContent = e.target.value;
+            if (peerConnection) {
+                updateConfThreshold(e.target.value);
+            }
+        });
+
+        function updateConfThreshold(value) {
+            fetch('/input_hook', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    webrtc_id: webrtc_id,
+                    conf_threshold: parseFloat(value)
+                })
+            });
+        }
+
+        async function setupWebRTC() {
+            peerConnection = new RTCPeerConnection();
+
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: true
+                });
+
+                stream.getTracks().forEach(track => {
+                    peerConnection.addTrack(track, stream);
+                });
+
+                peerConnection.addEventListener('track', (evt) => {
+                    if (videoOutput && videoOutput.srcObject !== evt.streams[0]) {
+                        videoOutput.srcObject = evt.streams[0];
+                    }
+                });
+
+                const dataChannel = peerConnection.createDataChannel('text');
+                dataChannel.onmessage = (event) => {
+                    const eventJson = JSON.parse(event.data);
+                    if (eventJson.type === "send_input") {
+                        updateConfThreshold(confThreshold.value);
+                    }
+                };
+
+                const offer = await peerConnection.createOffer();
+                await peerConnection.setLocalDescription(offer);
+
+                webrtc_id = Math.random().toString(36).substring(7);
+
+                const response = await fetch('/webrtc/offer', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        sdp: offer.sdp,
+                        type: offer.type,
+                        webrtc_id: webrtc_id
+                    })
+                });
+
+                const serverResponse = await response.json();
+                await peerConnection.setRemoteDescription(serverResponse);
+
+                // Send initial confidence threshold
+                updateConfThreshold(confThreshold.value);
+
+            } catch (err) {
+                console.error('Error setting up WebRTC:', err);
+            }
+        }
+
+        function stop() {
+            if (peerConnection) {
+                if (peerConnection.getTransceivers) {
+                    peerConnection.getTransceivers().forEach(transceiver => {
+                        if (transceiver.stop) {
+                            transceiver.stop();
+                        }
+                    });
+                }
+
+                if (peerConnection.getSenders) {
+                    peerConnection.getSenders().forEach(sender => {
+                        if (sender.track && sender.track.stop) sender.track.stop();
+                    });
+                }
+
+                setTimeout(() => {
+                    peerConnection.close();
+                }, 500);
+            }
+
+            videoOutput.srcObject = null;
+        }
+
+        startButton.addEventListener('click', () => {
+            if (startButton.textContent === 'Start') {
+                setupWebRTC();
+                startButton.textContent = 'Stop';
+            } else {
+                stop();
+                startButton.textContent = 'Start';
+            }
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenAI Real-Time Chat</title>
+    <style>
+        body {
+            font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: #0a0a0a;
+            color: #ffffff;
+            margin: 0;
+            padding: 20px;
+            height: 100vh;
+            box-sizing: border-box;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            height: calc(100% - 100px);
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .chat-container {
+            border: 1px solid #333;
+            padding: 20px;
+            height: 90%;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-messages {
+            flex-grow: 1;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            padding: 10px;
+        }
+
+        .message {
+            margin-bottom: 20px;
+            padding: 12px;
+            border-radius: 4px;
+            font-size: 16px;
+            line-height: 1.5;
+        }
+
+        .message.user {
+            background-color: #1a1a1a;
+            margin-left: 20%;
+        }
+
+        .message.assistant {
+            background-color: #262626;
+            margin-right: 20%;
+        }
+
+        .controls {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        button {
+            background-color: transparent;
+            color: #ffffff;
+            border: 1px solid #ffffff;
+            padding: 12px 24px;
+            font-family: inherit;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        button:hover {
+            background-color: #ffffff;
+            color: #0a0a0a;
+        }
+
+        #audio-output {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="logo">
+            <h1>OpenAI Real-Time Chat</h1>
+        </div>
+        <div class="chat-container">
+            <div class="chat-messages" id="chat-messages"></div>
+        </div>
+        <div class="controls">
+            <button id="start-button">Start Conversation</button>
+        </div>
+    </div>
+    <audio id="audio-output"></audio>
+
+    <script>
+        let peerConnection;
+        let webrtc_id;
+        const audioOutput = document.getElementById('audio-output');
+        const startButton = document.getElementById('start-button');
+        const chatMessages = document.getElementById('chat-messages');
+
+        async function setupWebRTC() {
+            peerConnection = new RTCPeerConnection();
+
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    audio: true
+                });
+
+                stream.getTracks().forEach(track => {
+                    peerConnection.addTrack(track, stream);
+                });
+
+                peerConnection.addEventListener('track', (evt) => {
+                    if (audioOutput.srcObject !== evt.streams[0]) {
+                        audioOutput.srcObject = evt.streams[0];
+                        audioOutput.play();
+                    }
+                });
+
+                const dataChannel = peerConnection.createDataChannel('text');
+
+                const offer = await peerConnection.createOffer();
+                await peerConnection.setLocalDescription(offer);
+
+                webrtc_id = Math.random().toString(36).substring(7);
+
+                const response = await fetch('/webrtc/offer', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        sdp: offer.sdp,
+                        type: offer.type,
+                        webrtc_id: webrtc_id
+                    })
+                });
+
+                const serverResponse = await response.json();
+                await peerConnection.setRemoteDescription(serverResponse);
+
+                const eventSource = new EventSource('/outputs?webrtc_id=' + webrtc_id);
+                eventSource.addEventListener("output", (event) => {
+                    const eventJson = JSON.parse(event.data);
+                    addMessage("assistant", eventJson.content);
+
+                });
+            } catch (err) {
+                console.error('Error setting up WebRTC:', err);
+            }
+        }
+
+        function addMessage(role, content) {
+            const messageDiv = document.createElement('div');
+            messageDiv.classList.add('message', role);
+            messageDiv.textContent = content;
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function stop() {
+            if (peerConnection) {
+                if (peerConnection.getTransceivers) {
+                    peerConnection.getTransceivers().forEach(transceiver => {
+                        if (transceiver.stop) {
+                            transceiver.stop();
+                        }
+                    });
+                }
+
+                if (peerConnection.getSenders) {
+                    peerConnection.getSenders().forEach(sender => {
+                        if (sender.track && sender.track.stop) sender.track.stop();
+                    });
+                }
+
+                setTimeout(() => {
+                    peerConnection.close();
+                }, 500);
+            }
+        }
+
+        startButton.addEventListener('click', () => {
+            if (startButton.textContent === 'Start Conversation') {
+                setupWebRTC();
+                startButton.textContent = 'Stop Conversation';
+            } else {
+                stop();
+                startButton.textContent = 'Start Conversation';
+            }
+        });
+    </script>
+</body>
+
+</html>

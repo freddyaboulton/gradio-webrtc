@@ -1,18 +1,18 @@
-site_name: Gradio WebRTC
+site_name: FastRTC
 site_url: https://sitename.example
-repo_name: gradio-webrtc
+repo_name: fastrtc
 repo_url: https://github.com/freddyaboulton/gradio-webrtc
 theme:
   name: material
   palette:
-    scheme: slate
-    primary: black
-    accent: yellow
+    scheme: fastrtc-dark
   features:
     - content.code.copy
     - content.code.annotate
-  logo: bolt.svg
-  favicon: bolt.svg
+  logo: fastrtc_logo.png
+  favicon: fastrtc_logo.png
+extra_css:
+    - stylesheets/extra.css
 nav:
   - Home: index.md
   - User Guide: user-guide.md

@@ -12,6 +12,9 @@ node_modules
 backend/**/templates/
 demo/MobileNetSSD_deploy.caffemodel
 demo/MobileNetSSD_deploy.prototxt.txt
+demo/scratch
+.gradio
+.vscode
 .DS_Store
 test/
 .env

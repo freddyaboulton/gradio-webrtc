@@ -3,7 +3,11 @@ import time
 import cv2
 import numpy as np
 import onnxruntime
-from utils import draw_detections
+
+try:
+    from demo.object_detection.utils import draw_detections
+except ImportError:
+    from .utils import draw_detections
 
 
 class YOLOv10:
@@ -71,7 +75,7 @@ class YOLOv10:
             return [], [], []
 
         # Get the class with the highest confidence
-        class_ids = np.argmax(predictions[:, 4:], axis=1)
+        class_ids = predictions[:, 5].astype(int)
 
         # Get bounding boxes for each object
         boxes = self.extract_boxes(predictions)
