@@ -109,6 +109,7 @@ stream = Stream(
 
 7. The `Stream` object is a [FastAPI](https://fastapi.tiangolo.com/) app. Run it however you like to run FastAPI apps. Here we use `uvicorn app:stream`.
 
+Learn more about the [Stream](/userguide/streams) in the user guide.
 ## Key Features
 
 :speaking_head:{ .lg } Automatic Voice Detection and Turn Taking built-in, only worry about the logic for responding to the user.

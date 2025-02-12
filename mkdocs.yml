@@ -9,13 +9,16 @@ theme:
   features:
     - content.code.copy
     - content.code.annotate
+    - navigation.indexes
   logo: fastrtc_logo.png
   favicon: fastrtc_logo.png
 extra_css:
     - stylesheets/extra.css
 nav:
   - Home: index.md
-  - User Guide: user-guide.md
+  - User Guide:
+    - Stream: userguide/streams.md
+    - Gradio Component: userguide/gradio.md
   - Cookbook: cookbook.md
   - Deployment: deployment.md
   - Advanced Configuration: advanced-configuration.md

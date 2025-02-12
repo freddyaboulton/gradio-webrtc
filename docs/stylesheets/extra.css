@@ -47,7 +47,7 @@
     --md-typeset-table-color--light: hsla(0, 0%, 100%, 0.035);
 }
 
-[data-md-color-scheme="astral-dark"] div.admonition {
+[data-md-color-scheme="fastrtc-dark"] div.admonition.tip {
     color: var(--md-code-fg-color);
-    background-color: var(--md-code-bg-color);
+    background-color: var(--galaxy);
 }
