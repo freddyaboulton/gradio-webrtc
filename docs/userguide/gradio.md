@@ -1,19 +1,17 @@
-# User Guide
+# Gradio Component
 
-To get started with WebRTC streams, all that's needed is to import the `WebRTC` component from this package and implement its `stream` event. 
+The automatic gradio UI is a great way to test your stream. However, you may want to customize the UI to your liking or simply build a standalone Gradio application. 
 
-This page will show how to do so with simple code examples.
-For complete implementations of common tasks, see the [cookbook](/cookbook).
+## The WebRTC Component
 
-## Audio Streaming
+To build a standalone Gradio application, you can use the `WebRTC` component and implement the `stream` event.
+Similarly to the `Stream` object, you must set the `mode` and `modality` arguments and pass in a `handler`.
 
-### Reply on Pause
+Below are some common examples of how to use the `WebRTC` component.
 
-Typically, you want to run an AI model that generates audio when the user has stopped speaking. This can be done by wrapping a python generator with the `ReplyOnPause` class
-and passing it to the `stream` event of the `WebRTC` component.
 
-=== "Code"
-    ``` py title="ReplyonPause"
+=== "Reply On Pause"
+    ``` py
     import gradio as gr
     from gradio_webrtc import WebRTC, ReplyOnPause
 
@@ -54,122 +52,9 @@ and passing it to the `stream` event of the `WebRTC` component.
     4. The `WebRTC` component must be the first input and output component. 
 
     5. Set a `time_limit` to control how long a conversation will last. If the `concurrency_count` is 1 (default), only one conversation will be handled at a time.
-=== "Notes"
-    1. The python generator will receive the **entire** audio up until the user stopped. It will be a tuple of the form (sampling_rate, numpy array of audio). The array will have a shape of (1, num_samples). You can also pass in additional input components.
 
-    2. The generator must yield audio chunks as a tuple of (sampling_rate, numpy audio arrays). Each numpy audio array must have a shape of (1, num_samples).
-
-    3. The `mode` and `modality` arguments must be set to `"send-receive"` and `"audio"`.
-
-    4. The `WebRTC` component must be the first input and output component. 
-
-    5. Set a `time_limit` to control how long a conversation will last. If the `concurrency_count` is 1 (default), only one conversation will be handled at a time.
-
-
-### Reply On Stopwords
-
-You can configure your AI model to run whenever a set of "stop words" are detected, like "Hey Siri" or "computer", with the `ReplyOnStopWords` class. 
-
-The API is similar to `ReplyOnPause` with the addition of a `stop_words` parameter.
-
-=== "Code"
-    ``` py title="ReplyonPause"
-    import gradio as gr
-    from gradio_webrtc import WebRTC, ReplyOnPause
-
-    def response(audio: tuple[int, np.ndarray]):
-        """This function must yield audio frames"""
-        ...
-        for numpy_array in generated_audio:
-            yield (sampling_rate, numpy_array, "mono")
-
-
-    with gr.Blocks() as demo:
-        gr.HTML(
-        """
-        <h1 style='text-align: center'>
-        Chat (Powered by WebRTC ⚡️)
-        </h1>
-        """
-        )
-        with gr.Column():
-            with gr.Group():
-                audio = WebRTC(
-                    mode="send",
-                    modality="audio",
-                )
-        webrtc.stream(ReplyOnStopWords(generate,
-                                input_sample_rate=16000,
-                                stop_words=["computer"]), # (1)
-                      inputs=[webrtc, history, code],
-                      outputs=[webrtc], time_limit=90,
-                      concurrency_limit=10)
-
-    demo.launch()
-    ```
-
-    1. The `stop_words` can be single words or pairs of words. Be sure to include common misspellings of your word for more robust detection, e.g. "llama", "lamma". In my experience, it's best to use two very distinct words like "ok computer" or "hello iris". 
-    
-=== "Notes"
-    1. The `stop_words` can be single words or pairs of words. Be sure to include common misspellings of your word for more robust detection, e.g. "llama", "lamma". In my experience, it's best to use two very distinct words like "ok computer" or "hello iris". 
-
-### Stream Handler
-
-`ReplyOnPause` is an implementation of a `StreamHandler`. The `StreamHandler` is a low-level
-abstraction that gives you arbitrary control over how the input audio stream and output audio stream are created. The following example echos back the user audio.
-
-=== "Code"
-    ``` py title="Stream Handler"
-    import gradio as gr
-    from gradio_webrtc import WebRTC, StreamHandler
-    from queue import Queue
-
-    class EchoHandler(StreamHandler):
-        def __init__(self) -> None:
-            super().__init__()
-            self.queue = Queue()
-
-        def receive(self, frame: tuple[int, np.ndarray]) -> None: # (1)
-            self.queue.put(frame)
-
-        def emit(self) -> None: # (2)
-            return self.queue.get()
-        
-        def copy(self) -> StreamHandler:
-            return EchoHandler()
-
-
-    with gr.Blocks() as demo:
-        with gr.Column():
-            with gr.Group():
-                audio = WebRTC(
-                    mode="send-receive",
-                    modality="audio",
-                )
-
-            audio.stream(fn=EchoHandler(),
-                         inputs=[audio], outputs=[audio],
-                         time_limit=15)
-
-    demo.launch()
-    ```
-
-    1. The `StreamHandler` class implements three methods: `receive`, `emit` and `copy`. The `receive` method is called when a new frame is received from the client, and the `emit` method returns the next frame to send to the client. The `copy` method is called at the beginning of the stream to ensure each user has a unique stream handler.
-    2. The `emit` method SHOULD NOT block. If a frame is not ready to be sent, the method should return `None`.
-
-=== "Notes"
-    1. The `StreamHandler` class implements three methods: `receive`, `emit` and `copy`. The `receive` method is called when a new frame is received from the client, and the `emit` method returns the next frame to send to the client. The `copy` method is called at the beginning of the stream to ensure each user has a unique stream handler.
-    2. The `emit` method SHOULD NOT block. If a frame is not ready to be sent, the method should return `None`.
-
-
-### Async Stream Handlers
-
-It is also possible to create asynchronous stream handlers. This is very convenient for accessing async APIs from major LLM developers, like Google and OpenAI. The main difference is that `receive` and `emit` are now defined with `async def`.
-
-Here is a complete example of using `AsyncStreamHandler` for using the Google Gemini real time API:
-
-=== "Code"
-    ``` py title="AsyncStreamHandler"
+=== "AsyncStreamHandler"
+    ``` py
 
     import asyncio
     import base64
@@ -287,26 +172,11 @@ Here is a complete example of using `AsyncStreamHandler` for using the Google Ge
             lambda: (gr.update(visible=False), gr.update(visible=True)),
             None,
             [api_key_row, row],
-        )
-    
-    demo.launch()
+        )    
     ```
+=== "Server-To-Client Audio"
 
-### Accessing Other Component Values from a StreamHandler
-
-In the gemini demo above, you'll notice that we have the user input their google API key. This is stored in a `gr.Textbox` parameter.
-We can access the value of this component via the `latest_args` prop of the `StreamHandler`. The `latest_args` is a list storing the values of each component in the WebRTC `stream` event `inputs` parameter. The value of the `WebRTC` component is the 0th index and it's always the dummy string `__webrtc_value__`.
-
-In order to fetch the latest value from the user however, we `await self.wait_for_args()`. In a synchronous `StreamHandler`, we would call `self.wait_for_args_sync()`. 
-
-
-### Server-To-Client Only
-
-To stream only from the server to the client, implement a python generator and pass it to the component's `stream` event. The stream event must also specify a `trigger` corresponding to a UI interaction that starts the stream. In this case, it's a button click.
-
-=== "Code"
-
-    ``` py title="Server-To-CLient"
+    ``` py
     import gradio as gr
     from gradio_webrtc import WebRTC
     from pydub import AudioSegment
@@ -329,21 +199,13 @@ To stream only from the server to the client, implement a python generator and p
             trigger=button.click # (2)
         )
     ```
- 
-    1. Set `mode="receive"` to only receive audio from the server.
-    2. The `stream` event must take a `trigger` that corresponds to the gradio event that starts the stream. In this case, it's the button click.
-=== "Notes"
+
     1. Set `mode="receive"` to only receive audio from the server.
     2. The `stream` event must take a `trigger` that corresponds to the gradio event that starts the stream. In this case, it's the button click.
 
-## Video Streaming
-
-### Input/Output Streaming
-Set up a video Input/Output stream to continuosly receive webcam frames from the user and run an arbitrary python function to return a modified frame.
-
-=== "Code"
+=== "Video Streaming"
     
-    ``` py title="Input/Output Streaming"
+    ``` py
     import gradio as gr
     from gradio_webrtc import WebRTC
 
@@ -376,18 +238,9 @@ Set up a video Input/Output stream to continuosly receive webcam frames from the
     2. The function must return a numpy array. It can take arbitrary values from other components.
     3. Set the `modality="video"` and `mode="send-receive"`
     4. The `inputs` parameter should be a list where the first element is the WebRTC component. The only output allowed is the WebRTC component.
-=== "Notes"
-    1. The webcam frame will be represented as a numpy array of shape (height, width, RGB).
-    2. The function must return a numpy array. It can take arbitrary values from other components.
-    3. Set the `modality="video"` and `mode="send-receive"`
-    4. The `inputs` parameter should be a list where the first element is the WebRTC component. The only output allowed is the WebRTC component.
 
-### Server-to-Client Only
-
-Set up a server-to-client stream to stream video from an arbitrary user interaction.
-
-=== "Code"
-    ``` py title="Server-To-Client"
+=== "Server-To-Client Video"
+    ``` py
         import gradio as gr
         from gradio_webrtc import WebRTC
         import cv2
@@ -414,39 +267,9 @@ Set up a server-to-client stream to stream video from an arbitrary user interact
     1. The `stream` event's `fn` parameter is a generator function that yields the next frame from the video as a **numpy array**.
     2. Set `mode="receive"` to only receive audio from the server.
     3. The `trigger` parameter the gradio event that will trigger the stream. In this case, the button click event.
-=== "Notes"
-    1. The `stream` event's `fn` parameter is a generator function that yields the next frame from the video as a **numpy array**.
-    2. Set `mode="receive"` to only receive audio from the server.
-    3. The `trigger` parameter the gradio event that will trigger the stream. In this case, the button click event.
 
-## Audio-Video Streaming
-
-You can simultaneously stream audio and video simultaneously to/from a server using `AudioVideoStreamHandler` or `AsyncAudioVideoStreamHandler`.
-They are identical to the audio `StreamHandlers` with the addition of `video_receive` and `video_emit` methods which take and return a `numpy` array, respectively.
-
-Here is an example of the video handling functions for connecting with the Gemini multimodal API. In this case, we simply reflect the webcam feed back to the user but every second we'll send the latest webcam frame (and an additional image component) to the Gemini server.
-
-Please see the "Gemini Audio Video Chat" example in the [cookbook](/cookbook) for the complete code.
-
-``` python title="Async Gemini Video Handling"
-
-async def video_receive(self, frame: np.ndarray):
-    """Send video frames to the server"""
-    if self.session:
-        # send image every 1 second
-        # otherwise we flood the API
-        if time.time() - self.last_frame_time > 1:
-            self.last_frame_time = time.time()
-            await self.session.send(encode_image(frame))
-            if self.latest_args[2] is not None:
-                await self.session.send(encode_image(self.latest_args[2]))
-    self.video_queue.put_nowait(frame)
-
-async def video_emit(self) -> VideoEmitType:
-    """Return video frames to the client"""
-    return await self.video_queue.get()
-```
-
+!!! tip
+    You can configure the `time_limit` and `concurrency_limit` parameters of the `stream` event similar to the `Stream` object.
 
 ## Additional Outputs
 

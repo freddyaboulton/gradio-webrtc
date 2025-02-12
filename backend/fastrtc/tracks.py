@@ -211,16 +211,16 @@ class StreamHandlerBase(ABC):
             logger.debug("Sent send_input")
 
     async def wait_for_args(self):
-        print("Waiting for args in method")
-        await self.fetch_args()
-        await self.args_set.wait()
+        if not self.phone_mode:
+            await self.fetch_args()
+            await self.args_set.wait()
+        else:
+            self.args_set.set()
 
     def wait_for_args_sync(self):
-        print("self.loop", self.loop)
         try:
             asyncio.run_coroutine_threadsafe(self.wait_for_args(), self.loop).result()
-        except Exception as e:
-            print("Error in wait_for_args_sync", e)
+        except Exception:
             import traceback
 
             traceback.print_exc()

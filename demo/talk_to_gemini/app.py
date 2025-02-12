@@ -47,7 +47,6 @@ class GeminiHandler(AsyncStreamHandler):
         self.quit: asyncio.Event = asyncio.Event()
 
     def copy(self) -> "GeminiHandler":
-        """Required implementation of the copy method for AsyncStreamHandler"""
         return GeminiHandler(
             expected_layout="mono",
             output_sample_rate=self.output_sample_rate,
@@ -55,7 +54,6 @@ class GeminiHandler(AsyncStreamHandler):
         )
 
     async def stream(self) -> AsyncGenerator[bytes, None]:
-        """Helper method to stream input audio to the server. Used in start_stream."""
         while not self.quit.is_set():
             audio = await self.input_queue.get()
             yield audio
@@ -65,7 +63,6 @@ class GeminiHandler(AsyncStreamHandler):
         self, api_key: str | None = None, voice_name: str | None = None
     ) -> AsyncGenerator[bytes, None]:
         """Connect to to genai server and start the stream"""
-        print("Connecting to Gemini", api_key, voice_name)
         client = genai.Client(
             api_key=api_key or os.getenv("GEMINI_API_KEY"),
             http_options={"api_version": "v1alpha"},
@@ -90,33 +87,26 @@ class GeminiHandler(AsyncStreamHandler):
                     yield audio.data
 
     async def receive(self, frame: tuple[int, np.ndarray]) -> None:
-        """Receive audio from the user and put it in the input stream."""
         _, array = frame
         array = array.squeeze()
         audio_message = encode_audio(array)
         self.input_queue.put_nowait(audio_message)
 
     async def generator(self) -> None:
-        """Helper method for placing audio from the server into the output queue."""
         async for audio_response in async_aggregate_bytes_to_16bit(
             self.connect(*self.latest_args[1:])
         ):
             self.output_queue.put_nowait(audio_response)
 
     async def emit(self) -> tuple[int, np.ndarray]:
-        """Required implementation of the emit method for AsyncStreamHandler"""
         if not self.args_set.is_set():
-            if not self.phone_mode:
-                await self.wait_for_args()
-            else:
-                self.args_set.set()
+            await self.wait_for_args()
             asyncio.create_task(self.generator())
 
         array = await self.output_queue.get()
         return (self.output_sample_rate, array)
 
     def shutdown(self) -> None:
-        """Stop the stream method on shutdown"""
         self.quit.set()
         self.args_set.clear()
         self.quit.clear()

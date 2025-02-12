@@ -28,86 +28,124 @@ pip install gradio_webrtc[vad]
 
 ## Quickstart
 
-Add real-time voice chat to any LLM Agent.
+Import the [Stream](/userguide/stream) class and pass in a [handler](/userguide/streams/#handlers).
+The `Stream` is a [FastAPI](https://fastapi.tiangolo.com/) app that comes with the following routes:
 
-```py title="LLM Voice Chat"
-from fastrtc import (
-    ReplyOnPause, AdditionalOutputs, Stream,
-    audio_to_bytes, aggregate_bytes_to_16bit
-)
-import gradio as gr
-from groq import Groq
-import anthropic
-from elevenlabs import ElevenLabs
+- `/ui`: A Gradio UI for testing your stream.
+- `/webrtc/docs`: Documentation and Gradio UI for WebRTC connections.
+- `/websocket/docs`: Documentation for WebSocket connections.
+- `/telephone/docs`: Documentation for telephone integration.
 
-groq_client = Groq()
-claude_client = anthropic.Anthropic()
-tts_client = ElevenLabs()
+Launch the stream how you would any FastAPI app. Or use the `fastphone()` method to launch the stream and get a free temporary phone number!
 
-def response(
-    audio: tuple[int, np.ndarray], # (1)
-    chatbot: list[dict] | None = None, # (2)
-):
-    chatbot = chatbot or []
-    messages = [{"role": d["role"], "content": d["content"]} for d in chatbot]
-    prompt = groq_client.audio.transcriptions.create(
-        file=("audio-file.mp3", audio_to_bytes(audio)),
-        model="whisper-large-v3-turbo",
-        response_format="verbose_json",
-    ).text
-    chatbot.append({"role": "user", "content": prompt})
-    messages.append({"role": "user", "content": prompt})
-    response = claude_client.messages.create(
-        model="claude-3-5-haiku-20241022",
-        max_tokens=512,
-        messages=messages,
+=== "Object Detection"
+
+    ```python
+    from fastrtc import Stream
+    import gradio as gr
+
+    def detection(image, conf_threshold=0.3):
+        processed_frame = process_frame(image, conf_threshold)
+        return processed_frame
+
+    stream = Stream(
+        handler=detection,
+        modality="video", 
+        mode="send-receive",
+        additional_inputs=[
+            gr.Slider(minimum=0, maximum=1, step=0.01, value=0.3)
+        ]
     )
-    response_text = " ".join(
-        block.text
-        for block in response.content
-        if getattr(block, "type", None) == "text"
+
+    # Optional: Add routes
+    @stream.get("/")
+    async def _():
+        return HTMLResponse(content=open("index.html").read())
+
+    # launch the stream
+    # uvicorn app:stream --host 0.0.0.0 --port 8000
+    ```
+
+=== "LLM Voice Chat"
+
+    ```py title="LLM Voice Chat"
+    from fastrtc import (
+        ReplyOnPause, AdditionalOutputs, Stream,
+        audio_to_bytes, aggregate_bytes_to_16bit
     )
-    chatbot.append({"role": "assistant", "content": response_text})
-    yield AdditionalOutputs(chatbot) # (4)
-    iterator = tts_client.text_to_speech.convert_as_stream(
-        text=response_text,
-        voice_id="JBFqnCBsd6RMkjVDRZzb",
-        model_id="eleven_multilingual_v2",
-        output_format="pcm_24000"
-        
+    import gradio as gr
+    from groq import Groq
+    import anthropic
+    from elevenlabs import ElevenLabs
+
+    groq_client = Groq()
+    claude_client = anthropic.Anthropic()
+    tts_client = ElevenLabs()
+
+    def response(
+        audio: tuple[int, np.ndarray], # (1)
+        chatbot: list[dict] | None = None, # (2)
+    ):
+        chatbot = chatbot or []
+        messages = [{"role": d["role"], "content": d["content"]} for d in chatbot]
+        prompt = groq_client.audio.transcriptions.create(
+            file=("audio-file.mp3", audio_to_bytes(audio)),
+            model="whisper-large-v3-turbo",
+            response_format="verbose_json",
+        ).text
+        chatbot.append({"role": "user", "content": prompt})
+        messages.append({"role": "user", "content": prompt})
+        response = claude_client.messages.create(
+            model="claude-3-5-haiku-20241022",
+            max_tokens=512,
+            messages=messages,
+        )
+        response_text = " ".join(
+            block.text
+            for block in response.content
+            if getattr(block, "type", None) == "text"
+        )
+        chatbot.append({"role": "assistant", "content": response_text})
+        yield AdditionalOutputs(chatbot) # (4)
+        iterator = tts_client.text_to_speech.convert_as_stream(
+            text=response_text,
+            voice_id="JBFqnCBsd6RMkjVDRZzb",
+            model_id="eleven_multilingual_v2",
+            output_format="pcm_24000"
+            
+        )
+        for chunk in aggregate_bytes_to_16bit(iterator):
+            audio_array = np.frombuffer(chunk, dtype=np.int16).reshape(1, -1)
+            yield (24000, audio_array) # (3)
+
+    chatbot = gr.Chatbot(type="messages")
+    stream = Stream(
+        modality="audio", # (5)
+        mode="send-receive",
+        handler=ReplyOnPause(response),
+        additional_inputs=[chatbot], # (6)
+        additional_outputs=[chatbot],
+        additional_outputs_handler=lambda a,b: b,
+
     )
-    for chunk in aggregate_bytes_to_16bit(iterator):
-        audio_array = np.frombuffer(chunk, dtype=np.int16).reshape(1, -1)
-        yield (24000, audio_array) # (3)
 
-chatbot = gr.Chatbot(type="messages")
-stream = Stream(
-    modality="audio", # (5)
-    mode="send-receive",
-    handler=ReplyOnPause(response),
-    additional_inputs=[chatbot], # (6)
-    additional_outputs=[chatbot],
-    additional_outputs_handler=lambda a,b: b,
+    # Run the stream 
+    # uvicorn app:stream
+    ```
 
-)
+    1. The python generator will receive the **entire** audio up until the user stopped. It will be a tuple of the form (sampling_rate, numpy array of audio). The array will have a shape of (1, num_samples).
 
-# Run the stream 
-# uvicorn app:stream
-```
+    2. You can also pass in additional input components. The arguments can be whatever you want but for the automatic Gradio UI to work, the data should match the type expected by a Gradio component.
 
-1. The python generator will receive the **entire** audio up until the user stopped. It will be a tuple of the form (sampling_rate, numpy array of audio). The array will have a shape of (1, num_samples).
+    3. The generator must yield audio chunks as a tuple of (sampling_rate, numpy audio array). Each numpy audio array must have a shape of (1, num_samples).
 
-2. You can also pass in additional input components. The arguments can be whatever you want but for the automatic Gradio UI to work, the data should match the type expected by a Gradio component.
+    4. You can also yield any additional data as long as it is wrapped in an `AdditionalOutputs` object. Here we yield the latest `chatbot` data which will be displayed in the UI.
 
-3. The generator must yield audio chunks as a tuple of (sampling_rate, numpy audio array). Each numpy audio array must have a shape of (1, num_samples).
+    5. We create a `Stream` object with the `mode` and `modality` arguments set to `"send-receive"` and `"audio"`.
 
-4. You can also yield any additional data as long as it is wrapped in an `AdditionalOutputs` object. Here we yield the latest `chatbot` data which will be displayed in the UI.
+    6. We pass in the `chatbot` component as an additional input and output for the automatic Gradio UI to work.
 
-5. We create a `Stream` object with the `mode` and `modality` arguments set to `"send-receive"` and `"audio"`.
-
-6. We pass in the `chatbot` component as an additional input and output for the automatic Gradio UI to work.
-
-7. The `Stream` object is a [FastAPI](https://fastapi.tiangolo.com/) app. Run it however you like to run FastAPI apps. Here we use `uvicorn app:stream`.
+    7. The `Stream` object is a [FastAPI](https://fastapi.tiangolo.com/) app. Run it however you like to run FastAPI apps. Here we use `uvicorn app:stream`.
 
 Learn more about the [Stream](/userguide/streams) in the user guide.
 ## Key Features

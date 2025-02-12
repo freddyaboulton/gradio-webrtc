@@ -1,7 +1,6 @@
 import logging
 from pathlib import Path
-from typing import Any, Callable, Literal, cast
-import asyncio
+from typing import Any, Callable, Literal, cast, AsyncContextManager
 import gradio as gr
 from fastapi import FastAPI, Request, WebSocket
 from fastapi.responses import HTMLResponse
@@ -77,6 +76,7 @@ class Stream(FastAPI, WebRTCConnectionMixin):
         separate_input_output_schemas=True,
         **extra,
     ):
+        lifespan = self.inject_startup_message(lifespan)
         super().__init__(
             debug=debug,
             routes=routes,
@@ -166,6 +166,52 @@ class Stream(FastAPI, WebRTCConnectionMixin):
             content=(curr_dir / "assets" / "coming_soon.html").read_text(),
             status_code=200,
         )
+
+    def inject_startup_message(
+        self, lifespan: Callable[[FastAPI], AsyncContextManager] | None = None
+    ):
+        import contextlib
+        import click
+
+        def print_startup_message():
+            print(
+                click.style("INFO", fg="green")
+                + ":\t  Visit "
+                + click.style("/webrtc/docs", fg="cyan")
+                + " to test the stream and access WebRTC docs."
+            )
+            print(
+                click.style("INFO", fg="green")
+                + ":\t  Visit "
+                + click.style("/ui", fg="cyan")
+                + " to access a sample UI for the stream."
+            )
+            if self.modality == "audio":
+                print(
+                    click.style("INFO", fg="green")
+                    + ":\t  Visit "
+                    + click.style("/websocket/docs", fg="cyan")
+                    + " for websocket docs."
+                )
+            if self.modality == "audio" and self.mode == "send-receive":
+                print(
+                    click.style("INFO", fg="green")
+                    + ":\t  Visit "
+                    + click.style("/telephone/docs", fg="cyan")
+                    + " for docs on connecting with a telephone."
+                )
+
+        @contextlib.asynccontextmanager
+        async def new_lifespan(app: FastAPI):
+            if lifespan is None:
+                print_startup_message()
+                yield
+            else:
+                async with lifespan(app):
+                    print_startup_message()
+                    yield
+
+        return new_lifespan
 
     def generate_default_ui(
         self,

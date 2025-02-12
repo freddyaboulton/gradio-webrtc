@@ -17,8 +17,11 @@ extra_css:
 nav:
   - Home: index.md
   - User Guide:
-    - Stream: userguide/streams.md
-    - Gradio Component: userguide/gradio.md
+    - Core Concepts: userguide/streams.md
+    - Audio Streaming: userguide/audio.md
+    - Video Streaming: userguide/video.md
+    - Audio-Video Streaming: userguide/audio-video.md
+    - Gradio: userguide/gradio.md
   - Cookbook: cookbook.md
   - Deployment: deployment.md
   - Advanced Configuration: advanced-configuration.md

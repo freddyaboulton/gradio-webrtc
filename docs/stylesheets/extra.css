@@ -47,7 +47,17 @@
     --md-typeset-table-color--light: hsla(0, 0%, 100%, 0.035);
 }
 
-[data-md-color-scheme="fastrtc-dark"] div.admonition.tip {
+[data-md-color-scheme="fastrtc-dark"] div.admonition {
     color: var(--md-code-fg-color);
     background-color: var(--galaxy);
+}
+
+
+[data-md-color-scheme="fastrtc-dark"] .grid.cards>ul>li {
+    border-color: var(--rock);
+    border-width: thick;
+}
+
+[data-md-color-scheme="fastrtc-dark"] .grid.cards>ul>li>hr {
+    border-color: var(--rock);
 }
