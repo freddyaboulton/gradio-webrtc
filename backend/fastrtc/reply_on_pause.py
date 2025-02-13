@@ -160,6 +160,8 @@ class ReplyOnPause(StreamHandler):
 
     def reset(self):
         super().reset()
+        if self.phone_mode:
+            self.args_set.set()
         self.generator = None
         self.event.clear()
         self.state = AppState()

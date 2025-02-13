@@ -108,6 +108,11 @@ def _(webrtc_id: str):
 
 
 if __name__ == "__main__":
-    import uvicorn
+    import os
 
-    s = uvicorn.run(stream, host="0.0.0.0", port=7860)
+    if not os.getenv("PHONE"):
+        import uvicorn
+
+        s = uvicorn.run(stream, host="0.0.0.0", port=7860)
+    else:
+        stream.fastphone(host="0.0.0.0", port=7860)

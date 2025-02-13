@@ -176,8 +176,8 @@
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        sdp: offer.sdp,
-                        type: offer.type,
+                        sdp: peerConnection.localDescription.sdp,
+                        type: peerConnection.localDescription.type,
                         webrtc_id: webrtc_id
                     })
                 });

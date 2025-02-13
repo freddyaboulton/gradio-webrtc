@@ -15,8 +15,7 @@
 The Real-Time Communication Library for Python. 
 </h3>
 
-Turn any python function into a real-time stream handler that can send/receive audio and video over WebRTC or WebSockets.
-
+Turn any python function into a real-time audio and video stream over WebRTC or WebSockets.
 ## Installation
 
 ```bash
@@ -40,6 +39,37 @@ The `Stream` is a [FastAPI](https://fastapi.tiangolo.com/) app that comes with t
 - `/telephone/docs`: Documentation for telephone integration.
 
 Launch the stream how you would any FastAPI app. Or use the `fastphone()` method to launch the stream and get a free temporary phone number!
+
+
+=== "Echo Audio"
+
+    ```python
+    from fastrtc import Stream, ReplyOnPause
+    from fastapi.responses import HTMLResponse
+    import numpy as np
+
+    def detection(audio: tuple[int, np.ndarray]):
+        # The function will be passed the audio until the user pauses
+        # Implement any iterator that yields audio
+        # See "LLM Voice Chat" for a more complete example
+        yield audio
+
+    stream = Stream(
+        handler=ReplyOnPause(detection),
+        modality="audio", 
+        mode="send-receive",
+    )
+
+    # Optional: Add any routes
+    @stream.get("/")
+    async def _():
+        return HTMLResponse(content=open("index.html").read())
+
+    # launch the stream
+    # uvicorn app:stream --host 0.0.0.0 --port 8000
+    # OR use fastphone to get a free phone number! (HF token required)
+    stream.fastphone()
+    ```
 
 === "Object Detection"
 
@@ -71,7 +101,7 @@ Launch the stream how you would any FastAPI app. Or use the `fastphone()` method
 
 === "LLM Voice Chat"
 
-    ```py title="LLM Voice Chat"
+    ```py
     from fastrtc import (
         ReplyOnPause, AdditionalOutputs, Stream,
         audio_to_bytes, aggregate_bytes_to_16bit
@@ -132,8 +162,8 @@ Launch the stream how you would any FastAPI app. Or use the `fastphone()` method
 
     )
 
-    # Run the stream 
-    # uvicorn app:stream
+    # launch the stream
+    # uvicorn app:stream --host 0.0.0.0 --port 8000
     ```
 
     1. The python generator will receive the **entire** audio up until the user stopped. It will be a tuple of the form (sampling_rate, numpy array of audio). The array will have a shape of (1, num_samples).
