@@ -595,7 +595,10 @@ class Stream(FastAPI, WebRTCConnectionMixin):
             while True:
                 time.sleep(0.1)
         except (KeyboardInterrupt, OSError):
-            print("Keyboard interruption in main thread... closing server.")
+            print(
+                click.style("INFO", fg="green")
+                + ":\t  Keyboard interruption in main thread... closing server."
+            )
             r = httpx.post(
                 "https://freddyaboulton-test-phone.hf.space/unregister",
                 json={"url": host, "code": code},
