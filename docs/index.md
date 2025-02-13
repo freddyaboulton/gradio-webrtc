@@ -1,6 +1,9 @@
 <div style='text-align: center; margin-bottom: 1rem; display: flex; justify-content: center; align-items: center;'>
     <h1 style='color: white; margin: 0;'>FastRTC</h1>
-    <img src="/fastrtc_logo.png" alt="FastRTC Logo" style="height: 40px; margin-right: 10px;">
+    <img src="/fastrtc_logo.png" 
+         onerror="this.onerror=null; this.src='https://huggingface.co/datasets/freddyaboulton/bucket/resolve/main/fastrtc_logo.png';" 
+         alt="FastRTC Logo" 
+         style="height: 40px; margin-right: 10px;">
 </div>
 
 <div style="display: flex; flex-direction: row; justify-content: center">
