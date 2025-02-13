@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -63,16 +64,40 @@
         .hljs {
             background: white !important;
         }
-        
+
         /* Keep syntax colors from github theme */
-        .hljs-keyword, .hljs-function { color: #d73a49; }
-        .hljs-string { color: #032f62; }
-        .hljs-comment { color: #6a737d; }
-        .hljs-property { color: #005cc5; }
-        .hljs-number { color: #005cc5; }
-        .hljs-class { color: #6f42c1; }
-        .hljs-title { color: #6f42c1; }
-        .hljs-built_in { color: #005cc5; }
+        .hljs-keyword,
+        .hljs-function {
+            color: #d73a49;
+        }
+
+        .hljs-string {
+            color: #032f62;
+        }
+
+        .hljs-comment {
+            color: #6a737d;
+        }
+
+        .hljs-property {
+            color: #005cc5;
+        }
+
+        .hljs-number {
+            color: #005cc5;
+        }
+
+        .hljs-class {
+            color: #6f42c1;
+        }
+
+        .hljs-title {
+            color: #6f42c1;
+        }
+
+        .hljs-built_in {
+            color: #005cc5;
+        }
 
         .copy-button {
             position: absolute;
@@ -132,12 +157,14 @@
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <h1>WebRTC Connection Guide</h1>
         <div class="step">
             <h2 class="step-title">Connecting</h2>
-            <p class="step-content">Here's the minimal code needed to establish a WebRTC connection with audio and data channel:</p>
+            <p class="step-content">Here's the minimal code needed to establish a WebRTC connection with audio and data
+                channel:</p>
             <div class="code-container">
                 <button class="copy-button" onclick="copyCode(this)">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -169,13 +196,28 @@
         const offer = await peerConnection.createOffer();
         await peerConnection.setLocalDescription(offer);
 
+        // wait for ice gathering to complete
+        await new Promise((resolve) => {
+            if (peerConnection.iceGatheringState === "complete") {
+                resolve();
+            } else {
+                const checkState = () => {
+                    if (peerConnection.iceGatheringState === "complete") {
+                        peerConnection.removeEventListener("icegatheringstatechange", checkState);
+                        resolve();
+                    }
+                };
+                peerConnection.addEventListener("icegatheringstatechange", checkState);
+            }
+        });
+
         // Send offer to server
         const response = await fetch('/offer', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                sdp: offer.sdp,
-                type: offer.type,
+                sdp: peerConnection.localDescription.sdp,
+                type: peerConnection.localDescription.type,
                 webrtc_id: Math.random().toString(36).substring(7)
             })
         });
@@ -256,4 +298,5 @@ document.getElementById('connectButton').onclick = setupWebRTC;</code></pre>
         }
     </script>
 </body>
+
 </html>

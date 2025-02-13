@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import inspect
 import logging
 from collections import defaultdict
 from collections.abc import Callable
@@ -14,7 +15,6 @@ from typing import (
     TypeVar,
     cast,
 )
-import inspect
 
 from aiortc import (
     RTCPeerConnection,
@@ -58,7 +58,7 @@ P = ParamSpec("P")
 @dataclass
 class OutputQueue:
     queue: asyncio.Queue[AdditionalOutputs] = field(default_factory=asyncio.Queue)
-    quit: asyncio.Event = asyncio.Event()
+    quit: asyncio.Event = field(default_factory=asyncio.Event)
 
 
 class WebRTCConnectionMixin:
@@ -89,7 +89,10 @@ class WebRTCConnectionMixin:
                     asyncio.create_task(conn.event_handler.shutdown())
                 else:
                     conn.event_handler.shutdown()
-        self.additional_outputs.pop(webrtc_id, None)
+        output = self.additional_outputs.pop(webrtc_id, None)
+        if output:
+            logger.debug("setting quit for webrtc id %s", webrtc_id)
+            output.quit.set()
         self.data_channels.pop(webrtc_id, None)
         return connection
 
@@ -102,9 +105,11 @@ class WebRTCConnectionMixin:
         self, webrtc_id: str
     ) -> AsyncGenerator[AdditionalOutputs, None]:
         outputs = self.additional_outputs[webrtc_id]
-        print("outputs_webrtc_id", webrtc_id)
         while not outputs.quit.is_set():
-            yield await outputs.queue.get()
+            try:
+                yield await asyncio.wait_for(outputs.queue.get(), 10)
+            except (asyncio.TimeoutError, TimeoutError):
+                logger.debug("Timeout waiting for output")
 
     def set_additional_outputs(
         self, webrtc_id: str

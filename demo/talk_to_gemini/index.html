@@ -167,7 +167,8 @@
         }
 
         async function setupWebRTC() {
-            peerConnection = new RTCPeerConnection();
+            const config = __RTC_CONFIGURATION__;
+            peerConnection = new RTCPeerConnection(config);
             webrtc_id = Math.random().toString(36).substring(7);
 
             try {
@@ -205,12 +206,26 @@
                 const offer = await peerConnection.createOffer();
                 await peerConnection.setLocalDescription(offer);
 
+                await new Promise((resolve) => {
+                    if (peerConnection.iceGatheringState === "complete") {
+                        resolve();
+                    } else {
+                        const checkState = () => {
+                            if (peerConnection.iceGatheringState === "complete") {
+                                peerConnection.removeEventListener("icegatheringstatechange", checkState);
+                                resolve();
+                            }
+                        };
+                        peerConnection.addEventListener("icegatheringstatechange", checkState);
+                    }
+                });
+
                 const response = await fetch('/webrtc/offer', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        sdp: offer.sdp,
-                        type: offer.type,
+                        sdp: peerConnection.localDescription.sdp,
+                        type: peerConnection.localDescription.type,
                         webrtc_id: webrtc_id,
                     })
                 });

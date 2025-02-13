@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from functools import lru_cache
 from logging import getLogger
 from threading import Event
-from typing import Any, Callable, Generator, Literal, cast, AsyncGenerator
+from typing import Any, AsyncGenerator, Callable, Generator, Literal, cast
 
 import numpy as np
 

@@ -1,21 +1,29 @@
 import asyncio
 import base64
+import json
+import os
 import pathlib
 from typing import AsyncGenerator, Literal
+
+import gradio as gr
+import numpy as np
 from dotenv import load_dotenv
-import os
+from fastapi.responses import HTMLResponse
+from fastrtc import (
+    AsyncStreamHandler,
+    Stream,
+    async_aggregate_bytes_to_16bit,
+    get_twilio_turn_credentials,
+)
 from google import genai
-from pydantic import BaseModel
 from google.genai.types import (
     LiveConnectConfig,
     PrebuiltVoiceConfig,
     SpeechConfig,
     VoiceConfig,
 )
-import gradio as gr
-from fastrtc import Stream, AsyncStreamHandler, async_aggregate_bytes_to_16bit
-import numpy as np
-from fastapi.responses import HTMLResponse
+from gradio.utils import get_space
+from pydantic import BaseModel
 
 current_dir = pathlib.Path(__file__).parent
 
@@ -60,7 +68,7 @@ class GeminiHandler(AsyncStreamHandler):
         return
 
     async def connect(
-        self, api_key: str | None = None, voice_name: str | None = None
+        self, api_key: str | None = None, voice_name: str | None = "Kore"
     ) -> AsyncGenerator[bytes, None]:
         """Connect to to genai server and start the stream"""
         client = genai.Client(
@@ -116,6 +124,7 @@ stream = Stream(
     modality="audio",
     mode="send-receive",
     handler=GeminiHandler(),
+    rtc_configuration=get_twilio_turn_credentials() if get_space() else None,
     additional_inputs=[
         gr.Textbox(label="API Key", type="password", value=os.getenv("GEMINI_API_KEY")),
         gr.Dropdown(
@@ -147,6 +156,18 @@ async def _(body: InputData):
 
 @stream.get("/")
 async def index():
-    return HTMLResponse(
-        content=(current_dir / "index.html").read_text(), status_code=200
-    )
+    rtc_config = get_twilio_turn_credentials() if get_space() else None
+    html_content = (current_dir / "index.html").read_text()
+    html_content = html_content.replace("__RTC_CONFIGURATION__", json.dumps(rtc_config))
+    return HTMLResponse(content=html_content)
+
+
+if __name__ == "__main__":
+    import os
+
+    import uvicorn
+
+    if os.getenv("FASTPHONE"):
+        stream.fastphone(host="0.0.0.0", port=7860)
+    else:
+        uvicorn.run(stream, host="0.0.0.0", port=7860)

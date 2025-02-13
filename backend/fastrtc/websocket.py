@@ -2,15 +2,15 @@ import asyncio
 import audioop
 import base64
 import logging
-from typing import Optional, Callable, cast, Any
+from typing import Any, Callable, Optional, cast
 
+import anyio
 import librosa
 import numpy as np
 from fastapi import WebSocket
-import anyio
 
 from .tracks import AsyncStreamHandler, StreamHandlerImpl
-from .utils import split_output, AdditionalOutputs, DataChannel
+from .utils import AdditionalOutputs, DataChannel, split_output
 
 
 class WebSocketDataChannel(DataChannel):

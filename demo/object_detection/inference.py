@@ -6,8 +6,8 @@ import onnxruntime
 
 try:
     from demo.object_detection.utils import draw_detections
-except ImportError:
-    from .utils import draw_detections
+except (ImportError, ModuleNotFoundError):
+    from utils import draw_detections
 
 
 class YOLOv10:

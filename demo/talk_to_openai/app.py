@@ -1,18 +1,20 @@
 import asyncio
 import base64
+import json
 from pathlib import Path
 
 import gradio as gr
 import numpy as np
 import openai
 from dotenv import load_dotenv
+from fastapi.responses import HTMLResponse, StreamingResponse
 from fastrtc import (
     AdditionalOutputs,
     AsyncStreamHandler,
     Stream,
+    get_twilio_turn_credentials,
 )
-from fastapi.responses import HTMLResponse, StreamingResponse
-
+from gradio.utils import get_space
 from openai.types.beta.realtime import ResponseAudioTranscriptDoneEvent
 
 load_dotenv()
@@ -113,12 +115,16 @@ stream = Stream(
     additional_inputs=[chatbot],
     additional_outputs=[chatbot],
     additional_outputs_handler=update_chatbot,
+    rtc_configuration=get_twilio_turn_credentials() if get_space() else None,
 )
 
 
 @stream.get("/")
 async def _():
-    return HTMLResponse(content=open(cur_dir / "index.html").read())
+    rtc_config = get_twilio_turn_credentials() if get_space() else None
+    html_content = (cur_dir / "index.html").read_text()
+    html_content = html_content.replace("__RTC_CONFIGURATION__", json.dumps(rtc_config))
+    return HTMLResponse(content=html_content)
 
 
 @stream.get("/outputs")
@@ -131,3 +137,9 @@ def _(webrtc_id: str):
             yield f"event: output\ndata: {s}\n\n"
 
     return StreamingResponse(output_stream(), media_type="text/event-stream")
+
+
+if __name__ == "__main__":
+    import uvicorn
+
+    uvicorn.run(stream, host="0.0.0.0", port=7860)

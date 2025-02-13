@@ -1,0 +1,6 @@
+fastrtc[vad]==0.0.32rc1
+elevenlabs
+groq
+anthropic
+twilio
+python-dotenv

@@ -112,7 +112,9 @@
         const chatMessages = document.getElementById('chat-messages');
 
         async function setupWebRTC() {
-            peerConnection = new RTCPeerConnection();
+            const config = __RTC_CONFIGURATION__;
+
+            peerConnection = new RTCPeerConnection(config);
 
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({
@@ -135,14 +137,28 @@
                 const offer = await peerConnection.createOffer();
                 await peerConnection.setLocalDescription(offer);
 
+                await new Promise((resolve) => {
+                    if (peerConnection.iceGatheringState === "complete") {
+                        resolve();
+                    } else {
+                        const checkState = () => {
+                            if (peerConnection.iceGatheringState === "complete") {
+                                peerConnection.removeEventListener("icegatheringstatechange", checkState);
+                                resolve();
+                            }
+                        };
+                        peerConnection.addEventListener("icegatheringstatechange", checkState);
+                    }
+                });
+
                 webrtc_id = Math.random().toString(36).substring(7);
 
                 const response = await fetch('/webrtc/offer', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        sdp: offer.sdp,
-                        type: offer.type,
+                        sdp: peerConnection.localDescription.sdp,
+                        type: peerConnection.localDescription.type,
                         webrtc_id: webrtc_id
                     })
                 });

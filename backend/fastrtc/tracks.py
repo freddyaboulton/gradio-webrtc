@@ -204,9 +204,7 @@ class StreamHandlerBase(ABC):
     async def fetch_args(
         self,
     ):
-        print("self.channel", self.channel)
         if self.channel:
-            print("Sending send_input")
             self.channel.send(create_message("send_input", []))
             logger.debug("Sent send_input")
 

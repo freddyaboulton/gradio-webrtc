@@ -110,10 +110,49 @@
             max-width: 1400px;
             margin: 0 auto 20px auto;
         }
+
+        /* Update nav bar styles */
+        .nav-bar {
+            background-color: #f5f5f5;
+            padding: 10px 20px;
+            margin-bottom: 20px;
+        }
+
+        .nav-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            gap: 10px;
+        }
+
+        .nav-button {
+            background-color: #1976d2;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 14px;
+            transition: background-color 0.2s;
+        }
+
+        .nav-button:hover {
+            background-color: #1565c0;
+        }
     </style>
 </head>
 
 <body>
+    <nav class="nav-bar">
+        <div class="nav-container">
+            <a href="./webrtc/docs" class="nav-button">WebRTC Docs</a>
+            <a href="./websocket/docs" class="nav-button">WebSocket Docs</a>
+            <a href="./telephone/docs" class="nav-button">Telephone Docs</a>
+            <a href="./ui" class="nav-button">UI</a>
+        </div>
+    </nav>
+
     <div class="disclaimer">
         This page compares the WebRTC Round-Trip-Time calculated from <code>getStats()</code> to the time taken to
         process a ping/pong response pattern over websockets. It may not be a gold standard benchmark. Both WebRTC and
@@ -206,7 +245,8 @@
             const button = document.getElementById('webrtc-button');
             button.textContent = "Stop";
 
-            webrtcPeerConnection = new RTCPeerConnection();
+            const config = __RTC_CONFIGURATION__;
+            webrtcPeerConnection = new RTCPeerConnection(config);
             const webrtcId = generateId();
 
             try {
@@ -229,12 +269,26 @@
                 const offer = await webrtcPeerConnection.createOffer();
                 await webrtcPeerConnection.setLocalDescription(offer);
 
+                await new Promise((resolve) => {
+                    if (webrtcPeerConnection.iceGatheringState === "complete") {
+                        resolve();
+                    } else {
+                        const checkState = () => {
+                            if (webrtcPeerConnection.iceGatheringState === "complete") {
+                                webrtcPeerConnection.removeEventListener("icegatheringstatechange", checkState);
+                                resolve();
+                            }
+                        };
+                        webrtcPeerConnection.addEventListener("icegatheringstatechange", checkState);
+                    }
+                });
+
                 const response = await fetch('/webrtc/offer', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        sdp: offer.sdp,
-                        type: offer.type,
+                        sdp: webrtcPeerConnection.localDescription.sdp,
+                        type: webrtcPeerConnection.localDescription.type,
                         webrtc_id: webrtcId
                     })
                 });
@@ -354,7 +408,7 @@
                 source.connect(analyser);
 
                 // Connect to websocket endpoint
-                webSocket = new WebSocket(`ws://${window.location.host}/websocket/offer`);
+                webSocket = new WebSocket(`${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/websocket/offer`);
 
                 webSocket.onopen = () => {
                     // Send initial start message

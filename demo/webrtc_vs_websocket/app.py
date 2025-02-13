@@ -1,28 +1,24 @@
-from dotenv import load_dotenv
-
-import numpy as np
-import gradio as gr
-from fastrtc import ReplyOnPause, Stream, AdditionalOutputs
-from fastrtc.utils import audio_to_bytes, aggregate_bytes_to_16bit
-from pathlib import Path
-from fastapi.responses import HTMLResponse, StreamingResponse
-from groq import Groq
-import anthropic
-from elevenlabs import ElevenLabs
-import os
-from pydantic import BaseModel
 import json
 import logging
+import os
+from pathlib import Path
 
-load_dotenv()
+import anthropic
+import gradio as gr
+import numpy as np
+from dotenv import load_dotenv
+from elevenlabs import ElevenLabs
+from fastapi.responses import HTMLResponse, StreamingResponse
+from fastrtc import AdditionalOutputs, ReplyOnPause, Stream, get_twilio_turn_credentials
+from fastrtc.utils import aggregate_bytes_to_16bit, audio_to_bytes
+from gradio.utils import get_space
+from groq import Groq
+from pydantic import BaseModel
 
-groq_client = Groq()
-claude_client = anthropic.Anthropic()
-tts_client = ElevenLabs(api_key=os.environ["ELEVENLABS_API_KEY"])
+# Configure the root logger to WARNING to suppress debug messages from other libraries
+logging.basicConfig(level=logging.WARNING)
 
-curr_dir = Path(__file__).parent
-
-
+# Create a console handler
 console_handler = logging.FileHandler("gradio_webrtc.log")
 console_handler.setLevel(logging.DEBUG)
 
@@ -31,9 +27,18 @@ formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(messag
 console_handler.setFormatter(formatter)
 
 # Configure the logger for your specific library
-logger = logging.getLogger("gradio_webrtc")
+logger = logging.getLogger("fastrtc")
 logger.setLevel(logging.DEBUG)
 logger.addHandler(console_handler)
+
+
+load_dotenv()
+
+groq_client = Groq()
+claude_client = anthropic.Anthropic()
+tts_client = ElevenLabs(api_key=os.environ["ELEVENLABS_API_KEY"])
+
+curr_dir = Path(__file__).parent
 
 
 def response(
@@ -81,6 +86,7 @@ stream = Stream(
     additional_outputs_handler=lambda a, b: b,
     additional_inputs=[chatbot],
     additional_outputs=[chatbot],
+    rtc_configuration=get_twilio_turn_credentials() if get_space() else None,
 )
 
 
@@ -96,7 +102,10 @@ class InputData(BaseModel):
 
 @stream.get("/")
 async def _():
-    return HTMLResponse(content=(curr_dir / "index.html").read_text(), status_code=200)
+    rtc_config = get_twilio_turn_credentials() if get_space() else None
+    html_content = (curr_dir / "index.html").read_text()
+    html_content = html_content.replace("__RTC_CONFIGURATION__", json.dumps(rtc_config))
+    return HTMLResponse(content=html_content, status_code=200)
 
 
 @stream.post("/input_hook")
@@ -121,4 +130,4 @@ def _(webrtc_id: str):
 if __name__ == "__main__":
     import uvicorn
 
-    s = uvicorn.run(stream)
+    s = uvicorn.run(stream, port=7860, host="0.0.0.0")

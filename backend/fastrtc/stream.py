@@ -1,6 +1,7 @@
 import logging
 from pathlib import Path
-from typing import Any, Callable, Literal, cast, AsyncContextManager
+from typing import Any, AsyncContextManager, Callable, Literal, cast
+
 import gradio as gr
 from fastapi import FastAPI, Request, WebSocket
 from fastapi.responses import HTMLResponse
@@ -133,12 +134,22 @@ class Stream(FastAPI, WebRTCConnectionMixin):
         self.router.get("/telephone/docs")(self.coming_soon)
         self.router.post("/telephone/incoming")(self.handle_incoming_call)
         self.router.websocket("/websocket/offer")(self.websocket_offer)
-        self.router.get("/websocket/docs")(self.coming_soon)
         self._ui = self.generate_default_ui()
         if generate_docs:
             gr.mount_gradio_app(self, self._ui, "/ui")
             gr.mount_gradio_app(self, self._webrtc_docs_gradio(), "/webrtc/docs")
+            gr.mount_gradio_app(self, self._websocket_docs(), "/websocket/docs")
         self.generate_docs = generate_docs
+
+    def _websocket_docs(self):
+        with gr.Blocks() as demo:
+            template = Path(__file__).parent / "assets" / "websocket_docs.md"
+            contents = JinjaTemplate(template.read_text()).render(
+                modality=self.modality,
+                mode=self.mode,
+            )
+            gr.Markdown(contents)
+        return demo
 
     def _webrtc_docs_gradio(self):
         with gr.Blocks(css=self._ui.css or None) as demo:
@@ -171,6 +182,7 @@ class Stream(FastAPI, WebRTCConnectionMixin):
         self, lifespan: Callable[[FastAPI], AsyncContextManager] | None = None
     ):
         import contextlib
+
         import click
 
         def print_startup_message():
@@ -542,6 +554,7 @@ class Stream(FastAPI, WebRTCConnectionMixin):
         import time
         import urllib.parse
 
+        import click
         import httpx
         import uvicorn
         from gradio.networking import setup_tunnel
@@ -570,7 +583,12 @@ class Stream(FastAPI, WebRTCConnectionMixin):
         code = data["code"]
         phone_number = data["phone"]
         print(
-            f"Your FastPhone is now live! Call {phone_number} and use code {code} to connect to your stream."
+            click.style("INFO", fg="green")
+            + ":\t  Your FastPhone is now live! Call "
+            + click.style(phone_number, fg="cyan")
+            + " and use code "
+            + click.style(code, fg="cyan")
+            + " to connect to your stream."
         )
 
         try:

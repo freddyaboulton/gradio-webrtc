@@ -1,15 +1,16 @@
-from fastapi.responses import StreamingResponse, HTMLResponse
+from pathlib import Path
+
 import gradio as gr
 import numpy as np
-from groq import AsyncClient
+from dotenv import load_dotenv
+from fastapi.responses import HTMLResponse, StreamingResponse
 from fastrtc import (
-    Stream,
     AdditionalOutputs,
     ReplyOnPause,
+    Stream,
     audio_to_bytes,
 )
-from pathlib import Path
-from dotenv import load_dotenv
+from groq import AsyncClient
 
 cur_dir = Path(__file__).parent
 

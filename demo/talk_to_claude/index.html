@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -100,17 +101,16 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: repeating-linear-gradient(
-                0deg,
-                rgba(0, 255, 0, 0.03),
-                rgba(0, 255, 0, 0.03) 1px,
-                transparent 1px,
-                transparent 2px
-            );
+            background: repeating-linear-gradient(0deg,
+                    rgba(0, 255, 0, 0.03),
+                    rgba(0, 255, 0, 0.03) 1px,
+                    transparent 1px,
+                    transparent 2px);
             pointer-events: none;
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <div class="visualization-container">
@@ -152,8 +152,9 @@
 
         // Initialize WebRTC
         async function setupWebRTC() {
-            peerConnection = new RTCPeerConnection();
-            
+            const config = __RTC_CONFIGURATION__;
+            peerConnection = new RTCPeerConnection(config);
+
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({
                     audio: true
@@ -170,7 +171,7 @@
                     if (audioOutput && audioOutput.srcObject !== evt.streams[0]) {
                         audioOutput.srcObject = evt.streams[0];
                         audioOutput.play();
-                        
+
                         // Set up audio visualization on the output stream
                         audioContext = new AudioContext();
                         analyser = audioContext.createAnalyser();
@@ -189,14 +190,28 @@
                 const offer = await peerConnection.createOffer();
                 await peerConnection.setLocalDescription(offer);
 
-                webrtc_id =  Math.random().toString(36).substring(7);
+                await new Promise((resolve) => {
+                    if (peerConnection.iceGatheringState === "complete") {
+                        resolve();
+                    } else {
+                        const checkState = () => {
+                            if (peerConnection.iceGatheringState === "complete") {
+                                peerConnection.removeEventListener("icegatheringstatechange", checkState);
+                                resolve();
+                            }
+                        };
+                        peerConnection.addEventListener("icegatheringstatechange", checkState);
+                    }
+                });
+
+                webrtc_id = Math.random().toString(36).substring(7);
 
                 const response = await fetch('/webrtc/offer', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        sdp: offer.sdp,
-                        type: offer.type,
+                        sdp: peerConnection.localDescription.sdp,
+                        type: peerConnection.localDescription.type,
                         webrtc_id: webrtc_id
                     })
                 });
@@ -206,7 +221,7 @@
 
                 // Start visualization
                 draw();
-                
+
                 // create event stream to receive messages from /output
                 const eventSource = new EventSource('/outputs?webrtc_id=' + webrtc_id);
                 eventSource.addEventListener("output", (event) => {
@@ -245,32 +260,32 @@
 
         function draw() {
             animationId = requestAnimationFrame(draw);
-            
+
             analyser.getByteTimeDomainData(dataArray);
-            
+
             ctx.fillStyle = 'rgb(0, 0, 0)';
             ctx.fillRect(0, 0, visualizer.width, visualizer.height);
-            
+
             ctx.lineWidth = 2;
             ctx.strokeStyle = 'rgb(0, 255, 0)';
             ctx.beginPath();
-            
+
             const sliceWidth = visualizer.width / dataArray.length;
             let x = 0;
-            
+
             for (let i = 0; i < dataArray.length; i++) {
                 const v = dataArray[i] / 128.0;
                 const y = v * visualizer.height / 2;
-                
+
                 if (i === 0) {
                     ctx.moveTo(x, y);
                 } else {
                     ctx.lineTo(x, y);
                 }
-                
+
                 x += sliceWidth;
             }
-            
+
             ctx.lineTo(visualizer.width, visualizer.height / 2);
             ctx.stroke();
         }
@@ -316,4 +331,5 @@
         });
     </script>
 </body>
+
 </html>

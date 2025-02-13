@@ -1,17 +1,18 @@
-from dotenv import load_dotenv
-
-import numpy as np
-import gradio as gr
-from fastrtc import ReplyOnPause, Stream, AdditionalOutputs
-from fastrtc.utils import audio_to_bytes, aggregate_bytes_to_16bit
-from pathlib import Path
-from fastapi.responses import HTMLResponse, StreamingResponse
-from groq import Groq
-import anthropic
-from elevenlabs import ElevenLabs
-import os
-from pydantic import BaseModel
 import json
+import os
+from pathlib import Path
+
+import anthropic
+import gradio as gr
+import numpy as np
+from dotenv import load_dotenv
+from elevenlabs import ElevenLabs
+from fastapi.responses import HTMLResponse, StreamingResponse
+from fastrtc import AdditionalOutputs, ReplyOnPause, Stream, get_twilio_turn_credentials
+from fastrtc.utils import aggregate_bytes_to_16bit, audio_to_bytes
+from gradio.utils import get_space
+from groq import Groq
+from pydantic import BaseModel
 
 load_dotenv()
 
@@ -67,6 +68,7 @@ stream = Stream(
     additional_outputs_handler=lambda a, b: b,
     additional_inputs=[chatbot],
     additional_outputs=[chatbot],
+    rtc_configuration=get_twilio_turn_credentials() if get_space() else None,
 )
 
 
@@ -82,7 +84,10 @@ class InputData(BaseModel):
 
 @stream.get("/")
 async def _():
-    return HTMLResponse(content=(curr_dir / "index.html").read_text(), status_code=200)
+    rtc_config = get_twilio_turn_credentials() if get_space() else None
+    html_content = (curr_dir / "index.html").read_text()
+    html_content = html_content.replace("__RTC_CONFIGURATION__", json.dumps(rtc_config))
+    return HTMLResponse(content=html_content, status_code=200)
 
 
 @stream.post("/input_hook")
@@ -105,6 +110,4 @@ def _(webrtc_id: str):
 if __name__ == "__main__":
     import uvicorn
 
-    s = uvicorn.run(stream)
-
-    # stream.fastphone()
+    s = uvicorn.run(stream, host="0.0.0.0", port=7860)
