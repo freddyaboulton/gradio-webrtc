@@ -1,0 +1,4 @@
+fastrtc[vad]==0.0.32rc1
+groq
+python-dotenv
+twilio

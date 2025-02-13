@@ -136,7 +136,8 @@
         const transcriptDiv = document.getElementById('transcript');
 
         async function setupWebRTC() {
-            peerConnection = new RTCPeerConnection();
+            const config = __RTC_CONFIGURATION__;
+            peerConnection = new RTCPeerConnection(config);
 
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({
@@ -154,6 +155,20 @@
                 // Create and send offer
                 const offer = await peerConnection.createOffer();
                 await peerConnection.setLocalDescription(offer);
+
+                await new Promise((resolve) => {
+                    if (peerConnection.iceGatheringState === "complete") {
+                        resolve();
+                    } else {
+                        const checkState = () => {
+                            if (peerConnection.iceGatheringState === "complete") {
+                                peerConnection.removeEventListener("icegatheringstatechange", checkState);
+                                resolve();
+                            }
+                        };
+                        peerConnection.addEventListener("icegatheringstatechange", checkState);
+                    }
+                });
 
                 webrtc_id = Math.random().toString(36).substring(7);
 

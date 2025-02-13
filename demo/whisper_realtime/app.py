@@ -1,7 +1,9 @@
 from pathlib import Path
 
 import gradio as gr
+from gradio.utils import get_space
 import numpy as np
+import json
 from dotenv import load_dotenv
 from fastapi.responses import HTMLResponse, StreamingResponse
 from fastrtc import (
@@ -9,6 +11,7 @@ from fastrtc import (
     ReplyOnPause,
     Stream,
     audio_to_bytes,
+    get_twilio_turn_credentials,
 )
 from groq import AsyncClient
 
@@ -37,6 +40,7 @@ stream = Stream(
         gr.Textbox(label="Transcript"),
     ],
     additional_outputs_handler=lambda a, b: a + " " + b,
+    rtc_configuration=get_twilio_turn_credentials() if get_space() else None,
 )
 
 
@@ -52,4 +56,13 @@ def _(webrtc_id: str):
 
 @stream.get("/")
 def index():
+    rtc_config = get_twilio_turn_credentials() if get_space() else None
+    html_content = (cur_dir / "index.html").read_text()
+    html_content = html_content.replace("__RTC_CONFIGURATION__", json.dumps(rtc_config))
     return HTMLResponse(content=open(cur_dir / "index.html").read())
+
+
+if __name__ == "__main__":
+    import uvicorn
+
+    uvicorn.run(stream, host="0.0.0.0", port=7860)
