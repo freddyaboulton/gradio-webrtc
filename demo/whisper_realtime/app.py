@@ -59,7 +59,7 @@ def index():
     rtc_config = get_twilio_turn_credentials() if get_space() else None
     html_content = (cur_dir / "index.html").read_text()
     html_content = html_content.replace("__RTC_CONFIGURATION__", json.dumps(rtc_config))
-    return HTMLResponse(content=open(cur_dir / "index.html").read())
+    return HTMLResponse(content=html_content)
 
 
 if __name__ == "__main__":
