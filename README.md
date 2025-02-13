@@ -1,31 +1,40 @@
-<h1 style='text-align: center; margin-bottom: 1rem'> Gradio WebRTC ⚡️ </h1>
+<div style='text-align: center; margin-bottom: 1rem; display: flex; justify-content: center; align-items: center;'>
+    <h1 style='color: white; margin: 0;'>FastRTC</h1>
+    <img src="/fastrtc_logo.png" 
+         onerror="this.onerror=null; this.src='https://huggingface.co/datasets/freddyaboulton/bucket/resolve/main/fastrtc_logo.png';" 
+         alt="FastRTC Logo" 
+         style="height: 40px; margin-right: 10px;">
+</div>
 
 <div style="display: flex; flex-direction: row; justify-content: center">
 <img style="display: block; padding-right: 5px; height: 20px;" alt="Static Badge" src="https://img.shields.io/pypi/v/gradio_webrtc"> 
-<a href="https://github.com/freddyaboulton/gradio-webrtc" target="_blank"><img alt="Static Badge" style="display: block; padding-right: 5px; height: 20px;" src="https://img.shields.io/badge/github-white?logo=github&logoColor=black"></a>
-<a href="https://freddyaboulton.github.io/gradio-webrtc/" target="_blank"><img alt="Static Badge" src="https://img.shields.io/badge/Docs-ffcf40"></a>
+<a href="https://github.com/freddyaboulton/gradio-webrtc" target="_blank"><img alt="Static Badge" src="https://img.shields.io/badge/github-white?logo=github&logoColor=black"></a>
 </div>
 
 <h3 style='text-align: center'>
-Stream video and audio in real time with Gradio using WebRTC. 
+The Real-Time Communication Library for Python. 
 </h3>
+
+Turn any python function into a real-time audio and video stream over WebRTC or WebSockets.
+## Installation
+
 
 ## Installation
 
 ```bash
-pip install gradio_webrtc
+pip install fastrtc
 ```
 
 to use built-in pause detection (see [ReplyOnPause](https://freddyaboulton.github.io/gradio-webrtc//user-guide/#reply-on-pause)), install the `vad` extra:
 
 ```bash
-pip install gradio_webrtc[vad]
+pip install fastrtc[vad]
 ```
 
 For stop word detection (see [ReplyOnStopWords](https://freddyaboulton.github.io/gradio-webrtc//user-guide/#reply-on-stopwords)), install the `stopword` extra:
 
 ```bash
-pip install gradio_webrtc[stopword]
+pip install fastrtc[stopword]
 ```
 
 ## Docs
