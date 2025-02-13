@@ -1,14 +1,13 @@
 <div style='text-align: center; margin-bottom: 1rem; display: flex; justify-content: center; align-items: center;'>
     <h1 style='color: white; margin: 0;'>FastRTC</h1>
-    <img src="/fastrtc_logo.png" 
-         onerror="this.onerror=null; this.src='https://huggingface.co/datasets/freddyaboulton/bucket/resolve/main/fastrtc_logo.png';" 
+    <img src='https://huggingface.co/datasets/freddyaboulton/bucket/resolve/main/fastrtc_logo.png'
          alt="FastRTC Logo" 
          style="height: 40px; margin-right: 10px;">
 </div>
 
 <div style="display: flex; flex-direction: row; justify-content: center">
-<img style="display: block; padding-right: 5px; height: 20px;" alt="Static Badge" src="https://img.shields.io/pypi/v/gradio_webrtc"> 
-<a href="https://github.com/freddyaboulton/gradio-webrtc" target="_blank"><img alt="Static Badge" src="https://img.shields.io/badge/github-white?logo=github&logoColor=black"></a>
+<img style="display: block; padding-right: 5px; height: 20px;" alt="Static Badge" src="https://img.shields.io/pypi/v/fastrtc"> 
+<a href="https://github.com/freddyaboulton/fastrtc" target="_blank"><img alt="Static Badge" src="https://img.shields.io/badge/github-white?logo=github&logoColor=black"></a>
 </div>
 
 <h3 style='text-align: center'>
@@ -16,8 +15,6 @@ The Real-Time Communication Library for Python.
 </h3>
 
 Turn any python function into a real-time audio and video stream over WebRTC or WebSockets.
-## Installation
-
 
 ## Installation
 
