@@ -1,4 +1,8 @@
+
+Any of the parameters for the `Stream` class can be passed to the [`WebRTC`](/userguide/gradio) component directly.
+
 ## Track Constraints
+
 
 You can specify the `track_constraints` parameter to control how the data is streamed to the server. The full documentation on track constraints is [here](https://developer.mozilla.org/en-US/docs/Web/API/MediaTrackConstraints#constraints).
 
@@ -10,9 +14,11 @@ track_constraints = {
     "height": {"exact": 500},
     "frameRate": {"ideal": 30},
 }
-webrtc = WebRTC(track_constraints=track_constraints,
-                modality="video",
-                mode="send-receive")
+webrtc = Stream(
+    handler=...,
+    track_constraints=track_constraints,
+    modality="video",
+    mode="send-receive")
 ```
 
 
@@ -23,8 +29,8 @@ webrtc = WebRTC(track_constraints=track_constraints,
     really want to enforce height, width and resolution constraints, use the `rtp_params` parameter as set `"degradationPreference": "maintain-resolution"`. 
 
     ```python
-    image = WebRTC(
-        label="Stream",
+    image = Stream(
+        modality="video",
         mode="send",
         track_constraints=track_constraints,
         rtp_params={"degradationPreference": "maintain-resolution"}
@@ -50,19 +56,18 @@ The `ReplyOnPause` class runs a Voice Activity Detection (VAD) algorithm to dete
 The following parameters control this argument:
 
 ```python
-from gradio_webrtc import AlgoOptions, ReplyOnPause, WebRTC
+from fastrtc import AlgoOptions, ReplyOnPause, Stream
 
 options = AlgoOptions(audio_chunk_duration=0.6, # (1)
                       started_talking_threshold=0.2, # (2)
                       speech_threshold=0.1, # (3)
                       )
 
-with gr.Blocks as demo:
-    audio = WebRTC(...)
-    audio.stream(ReplyOnPause(..., algo_options=algo_options)
-    )
-
-demo.launch()
+Stream(
+    handler=ReplyOnPause(..., algo_options=algo_options),
+    modality="audio",
+    mode="send-receive"
+)
 ```
 
 1. This is the length (in seconds) of audio chunks.
@@ -75,14 +80,13 @@ demo.launch()
 You can configure the sampling rate of the audio passed to the `ReplyOnPause` or `StreamHandler` instance with the `input_sampling_rate` parameter. The current default is `48000`
 
 ```python
-from gradio_webrtc import ReplyOnPause, WebRTC
+from fastrtc import ReplyOnPause, Stream
 
-with gr.Blocks as demo:
-    audio = WebRTC(...)
-    audio.stream(ReplyOnPause(..., input_sampling_rate=24000)
-    )
-
-demo.launch()
+stream = Stream(
+    handler=ReplyOnPause(..., input_sampling_rate=24000),
+    modality="audio",
+    mode="send-receive"
+)
 ```
 
 
@@ -94,14 +98,13 @@ with the `output_sample_rate` and `output_frame_size` parameters.
 The following code (which uses the default values of these parameters), states that each output chunk will be a frame of 960 samples at a frame rate of `24,000` hz. So it will correspond to `0.04` seconds.
 
 ```python
-from gradio_webrtc import ReplyOnPause, WebRTC
+from fastrtc import ReplyOnPause, Stream
 
-with gr.Blocks as demo:
-    audio = WebRTC(...)
-    audio.stream(ReplyOnPause(..., output_sample_rate=24000, output_frame_size=960)
-    )
-
-demo.launch()
+stream = Stream(
+    handler=ReplyOnPause(..., output_sample_rate=24000, output_frame_size=960),
+    modality="audio",
+    mode="send-receive"
+)
 ```
 
 !!! tip
@@ -116,6 +119,10 @@ You can display an icon of your choice instead of the default wave animation for
 Pass any local path or url to an image (svg, png, jpeg) to the components `icon` parameter. This will display the icon as a circular button. When audio is sent or recevied (depending on the `mode` parameter) a pulse animation will emanate from the button.
 
 You can control the button color and pulse color with `icon_button_color` and `pulse_color` parameters. They can take any valid css color.
+
+!!! warning
+
+    The `icon` parameter is only supported in the `WebRTC` component.
 
 === "Code"
     ``` python
@@ -147,6 +154,10 @@ You can control the button color and pulse color with `icon_button_color` and `p
 
 You can supply a `button_labels` dictionary to change the text displayed in the `Start`, `Stop` and `Waiting` buttons that are displayed in the UI.
 The keys must be `"start"`, `"stop"`, and `"waiting"`.
+
+!!! warning
+
+    The `button_labels` parameter is only supported in the `WebRTC` component.
 
 ``` python
 webrtc = WebRTC(

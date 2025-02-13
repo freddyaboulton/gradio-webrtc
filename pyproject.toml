@@ -14,10 +14,25 @@ readme = "README.md"
 license = "apache-2.0"
 requires-python = ">=3.10"
 authors = [{ name = "Freddy Boulton", email = "YOUREMAIL@domain.com" }]
-keywords = ["gradio-custom-component", "gradio-template-Video", "streaming", "webrtc", "realtime", 
-            "machine learning", "computer vision", "audio", "video", "image", "audio processing", "video processing"]
+keywords = [
+  "streaming",
+  "webrtc",
+  "realtime",
+  "machine learning",
+  "computer vision",
+  "audio",
+  "video",
+  "image",
+  "audio processing",
+  "video processing",
+]
 # Add dependencies here
-dependencies = ["gradio>=4.0,<6.0", "aiortc", "audioop-lts;python_version>='3.13'"]
+dependencies = [
+  "gradio>=4.0,<6.0",
+  "aiortc",
+  "audioop-lts;python_version>='3.13'",
+  "librosa",
+]
 classifiers = [
   'Development Status :: 3 - Alpha',
   'Operating System :: OS Independent',
@@ -50,8 +65,8 @@ Documentation = "https://freddyaboulton.github.io/gradio-webrtc/cookbook/"
 
 [project.optional-dependencies]
 dev = ["build", "twine"]
-vad = ["librosa", "onnxruntime"]
-stopword = ["silero", "librosa", "onnxruntime"]
+vad = ["onnxruntime"]
+stopword = ["silero", "onnxruntime"]
 
 [tool.hatch.build]
 artifacts = ["/backend/fastrtc/templates", "*.pyi"]

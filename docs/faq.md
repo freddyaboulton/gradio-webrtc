@@ -9,25 +9,28 @@ This is what's causing the recorded audio to sound muffled when the streamed aud
 You can disable this via the `track_constraints` (see [advanced configuration](./advanced-configuration])) with the following code:
 
 ```python
-	audio = WebRTC(
-		label="Stream",
-		track_constraints={
-                "echoCancellation": False,
-                "noiseSuppression": {"exact": True},
-                "autoGainControl": {"exact": True},
-                "sampleRate": {"ideal": 24000},
-                "sampleSize": {"ideal": 16},
-                "channelCount": {"exact": 1},
-            },
-		rtc_configuration=None,
-		mode="send-receive",
-		modality="audio",
-	)
+stream = Stream(
+    track_constraints={
+            "echoCancellation": False,
+            "noiseSuppression": {"exact": True},
+            "autoGainControl": {"exact": True},
+            "sampleRate": {"ideal": 24000},
+            "sampleSize": {"ideal": 16},
+            "channelCount": {"exact": 1},
+        },
+    rtc_configuration=None,
+    mode="send-receive",
+    modality="audio",
+)
 ```
 
 ## How to raise errors in the UI
 
 You can raise `WebRTCError` in order for an error message to show up in the user's screen. This is similar to how `gr.Error` works.
+
+!!! warning
+
+    The `WebRTCError` class is only supported in the `WebRTC` component.
 
 Here is a simple example:
 
