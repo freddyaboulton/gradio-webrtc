@@ -41,6 +41,7 @@ stream = Stream(
     ],
     additional_outputs_handler=lambda a, b: a + " " + b,
     rtc_configuration=get_twilio_turn_credentials() if get_space() else None,
+    concurrency_limit=20 if get_space() else None,
 )
 
 

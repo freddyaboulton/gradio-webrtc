@@ -1,6 +1,59 @@
+
+
+<style>
+.tag-button {
+    cursor: pointer;
+    opacity: 0.5;
+    transition: opacity 0.2s ease;
+}
+
+.tag-button > code {
+    color: var(--supernova);
+}
+
+.tag-button.active {
+    opacity: 1;
+}
+</style>
+
+A collection of applications built with FastRTC. Click on the tags below to find the app you're looking for!
+
+
+<div class="tag-buttons">
+  <button class="tag-button" data-tag="audio"><code>audio</code></button>
+  <button class="tag-button" data-tag="video"><code>video</code></button>
+  <button class="tag-button" data-tag="llm"><code>llm</code></button>
+  <button class="tag-button" data-tag="computer-vision"><code>computer-vision</code></button>
+  <button class="tag-button" data-tag="real-time-api"><code>real-time-api</code></button>
+  <button class="tag-button" data-tag="voice-chat"><code>voice chat</code></button>
+  <button class="tag-button" data-tag="code-generation"><code>code generation</code></button>
+</div>
+
+<script>
+function filterCards() {
+    const activeButtons = document.querySelectorAll('.tag-button.active');
+    const selectedTags = Array.from(activeButtons).map(button => button.getAttribute('data-tag'));
+    const cards = document.querySelectorAll('.grid.cards > ul > li > p[data-tags]');
+    
+    cards.forEach(card => {
+        const cardTags = card.getAttribute('data-tags').split(',');
+        const shouldShow = selectedTags.length === 0 || selectedTags.some(tag => cardTags.includes(tag));
+        card.parentElement.style.display = shouldShow ? 'block' : 'none';
+    });
+}
+document.querySelectorAll('.tag-button').forEach(button => {
+    button.addEventListener('click', () => {
+        button.classList.toggle('active');
+        filterCards();
+    });
+});
+</script>
+
+
 <div class="grid cards" markdown>
 
 -   :speaking_head:{ .lg .middle }:eyes:{ .lg .middle } __Gemini Audio Video Chat__
+{: data-tags="audio,video,real-time-api"}
 
     ---
 
@@ -13,6 +66,7 @@
     [:octicons-code-16: Code](https://huggingface.co/spaces/freddyaboulton/gemini-audio-video-chat/blob/main/app.py)
 
 -   :speaking_head:{ .lg .middle } __Google Gemini Real Time Voice API__
+{: data-tags="audio,real-time-api,voice-chat"}
 
     ---
 
@@ -25,6 +79,7 @@
     [:octicons-code-16: Code](https://huggingface.co/spaces/freddyaboulton/gemini-voice/blob/main/app.py)
 
 -   :speaking_head:{ .lg .middle } __OpenAI Real Time Voice API__
+{: data-tags="audio,real-time-api,voice-chat"}
 
     ---
 
@@ -37,6 +92,7 @@
     [:octicons-code-16: Code](https://huggingface.co/spaces/freddyaboulton/openai-realtime-voice/blob/main/app.py)
 
 -   :speaking_head:{ .lg .middle } __Hello Llama: Stop Word Detection__
+{: data-tags="audio,llm,code-generation"}
 
     ---
 
@@ -50,6 +106,7 @@
     [:octicons-code-16: Code](https://huggingface.co/spaces/freddyaboulton/hey-llama-code-editor/blob/main/app.py)
 
 -   :robot:{ .lg .middle } __Llama Code Editor__
+{: data-tags="audio,llm,code-generation"}
 
     ---
 
@@ -62,6 +119,7 @@
     [:octicons-code-16: Code](https://huggingface.co/spaces/freddyaboulton/llama-code-editor/blob/main/app.py)
 
 -   :speaking_head:{ .lg .middle } __Audio Input/Output with mini-omni2__
+{: data-tags="audio,llm,voice-chat"}
 
     ---
 
@@ -74,6 +132,7 @@
     [:octicons-code-16: Code](https://huggingface.co/spaces/freddyaboulton/mini-omni2-webrtc/blob/main/app.py)
 
 -   :speaking_head:{ .lg .middle } __Talk to Claude__
+{: data-tags="audio,llm,voice-chat"}
 
     ---
 
@@ -86,6 +145,7 @@
     [:octicons-code-16: Code](https://huggingface.co/spaces/freddyaboulton/talk-to-claude/blob/main/app.py)
 
 -   :speaking_head:{ .lg .middle } __Kyutai Moshi__
+{: data-tags="audio,llm,voice-chat"}
 
     ---
 
@@ -98,6 +158,7 @@
     [:octicons-code-16: Code](https://huggingface.co/spaces/freddyaboulton/talk-to-moshi/blob/main/app.py)
 
 -   :speaking_head:{ .lg .middle } __Talk to Ultravox__
+{: data-tags="audio,llm,voice-chat"}
 
     ---
 
@@ -111,6 +172,7 @@
 
 
 -   :speaking_head:{ .lg .middle } __Talk to Llama 3.2 3b__
+{: data-tags="audio,llm,voice-chat"}
 
     ---
 
@@ -124,6 +186,7 @@
 
 
 -   :robot:{ .lg .middle } __Talk to Qwen2-Audio__
+{: data-tags="audio,llm,voice-chat"}
 
     ---
 
@@ -137,6 +200,7 @@
 
 
 -   :camera:{ .lg .middle } __Yolov10 Object Detection__
+{: data-tags="video,computer-vision"}
 
     ---
 
@@ -149,6 +213,7 @@
     [:octicons-code-16: Code](https://huggingface.co/spaces/freddyaboulton/webrtc-yolov10n/blob/main/app.py)
 
 -   :camera:{ .lg .middle } __Video Object Detection with RT-DETR__
+{: data-tags="video,computer-vision"}
 
     ---
 
@@ -159,6 +224,7 @@
     [:octicons-code-16: Code](https://huggingface.co/spaces/freddyaboulton/rt-detr-object-detection-webrtc/blob/main/app.py)
 
 -   :speaker:{ .lg .middle } __Text-to-Speech with Parler__
+{: data-tags="audio"}
 
     ---
 

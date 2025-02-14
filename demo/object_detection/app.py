@@ -37,6 +37,7 @@ stream = Stream(
     mode="send-receive",
     additional_inputs=[gr.Slider(minimum=0, maximum=1, step=0.01, value=0.3)],
     rtc_configuration=get_twilio_turn_credentials() if get_space() else None,
+    concurrency_limit=20 if get_space() else None,
 )
 
 

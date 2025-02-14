@@ -5,6 +5,7 @@ from functools import lru_cache
 from logging import getLogger
 from threading import Event
 from typing import Any, AsyncGenerator, Callable, Generator, Literal, cast
+import click
 
 import numpy as np
 
@@ -19,8 +20,15 @@ counter = 0
 
 @lru_cache
 def get_vad_model() -> SileroVADModel:
-    """Returns the VAD model instance."""
-    return SileroVADModel()
+    """Returns the VAD model instance and warms it up with dummy data."""
+    model = SileroVADModel()
+    # Warm up the model with dummy data
+    print(click.style("INFO", fg="green") + ":\t  Warming up VAD model.")
+    for _ in range(10):
+        dummy_audio = np.zeros(1024, dtype=np.float32)
+        model.vad((16000, dummy_audio), None)
+    print(click.style("INFO", fg="green") + ":\t  VAD model warmed up.")
+    return model
 
 
 @dataclass

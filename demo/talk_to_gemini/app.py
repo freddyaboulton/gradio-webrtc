@@ -125,6 +125,7 @@ stream = Stream(
     mode="send-receive",
     handler=GeminiHandler(),
     rtc_configuration=get_twilio_turn_credentials() if get_space() else None,
+    concurrency_limit=20 if get_space() else None,
     additional_inputs=[
         gr.Textbox(label="API Key", type="password", value=os.getenv("GEMINI_API_KEY")),
         gr.Dropdown(

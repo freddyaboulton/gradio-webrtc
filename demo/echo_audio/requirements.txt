@@ -1,4 +1,3 @@
 fastrtc[vad]
-openai
 twilio
 python-dotenv

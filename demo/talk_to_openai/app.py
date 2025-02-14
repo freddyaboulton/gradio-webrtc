@@ -116,6 +116,7 @@ stream = Stream(
     additional_outputs=[chatbot],
     additional_outputs_handler=update_chatbot,
     rtc_configuration=get_twilio_turn_credentials() if get_space() else None,
+    concurrency_limit=20 if get_space() else None,
 )
 
 
