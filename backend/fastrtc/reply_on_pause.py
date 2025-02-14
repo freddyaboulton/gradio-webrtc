@@ -21,6 +21,14 @@ counter = 0
 @lru_cache
 def get_vad_model() -> SileroVADModel:
     """Returns the VAD model instance and warms it up with dummy data."""
+    try:
+        import importlib.util
+
+        mod = importlib.util.find_spec("onnxruntime")
+        if mod is None:
+            raise RuntimeError("Install fastrtc[vad] to use ReplyOnPause")
+    except (ValueError, ModuleNotFoundError):
+        raise RuntimeError("Install fastrtc[vad] to use ReplyOnPause")
     model = SileroVADModel()
     # Warm up the model with dummy data
     print(click.style("INFO", fg="green") + ":\t  Warming up VAD model.")
