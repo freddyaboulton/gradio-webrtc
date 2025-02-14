@@ -27,6 +27,7 @@ A collection of applications built with FastRTC. Click on the tags below to find
   <button class="tag-button" data-tag="real-time-api"><code>real-time-api</code></button>
   <button class="tag-button" data-tag="voice-chat"><code>voice chat</code></button>
   <button class="tag-button" data-tag="code-generation"><code>code generation</code></button>
+  <button class="tag-button" data-tag="transcription"><code>transcription</code></button>
 </div>
 
 <script>
@@ -72,11 +73,11 @@ document.querySelectorAll('.tag-button').forEach(button => {
 
     Talk to Gemini in real time using Google's voice API.
 
-    <video width=98% src="https://github.com/user-attachments/assets/da8c8a2a-5d99-4ac7-8927-0f7812e4146f" controls style="text-align: center"></video>
+    <video width=98% src="https://github.com/user-attachments/assets/ea6d18cb-8589-422b-9bba-56332d9f61de" controls style="text-align: center"></video>
 
-    [:octicons-arrow-right-24: Demo](https://huggingface.co/spaces/freddyaboulton/gemini-voice)
+    [:octicons-arrow-right-24: Demo](https://huggingface.co/spaces/fastrtc/talk-to-gemini)
     
-    [:octicons-code-16: Code](https://huggingface.co/spaces/freddyaboulton/gemini-voice/blob/main/app.py)
+    [:octicons-code-16: Code](https://huggingface.co/spaces/fastrtc/talk-to-gemini/blob/main/app.py)
 
 -   :speaking_head:{ .lg .middle } __OpenAI Real Time Voice API__
 {: data-tags="audio,real-time-api,voice-chat"}
@@ -85,11 +86,11 @@ document.querySelectorAll('.tag-button').forEach(button => {
 
     Talk to ChatGPT in real time using OpenAI's voice API.
 
-    <video width=98% src="https://github.com/user-attachments/assets/41a63376-43ec-496a-9b31-4f067d3903d6" controls style="text-align: center"></video>
+    <video width=98% src="https://github.com/user-attachments/assets/178bdadc-f17b-461a-8d26-e915c632ff80" controls style="text-align: center"></video>
 
-    [:octicons-arrow-right-24: Demo](https://huggingface.co/spaces/freddyaboulton/openai-realtime-voice)
+    [:octicons-arrow-right-24: Demo](https://huggingface.co/spaces/fastrtc/talk-to-openai)
     
-    [:octicons-code-16: Code](https://huggingface.co/spaces/freddyaboulton/openai-realtime-voice/blob/main/app.py)
+    [:octicons-code-16: Code](https://huggingface.co/spaces/fastrtc/talk-to-openai/blob/main/app.py)
 
 -   :speaking_head:{ .lg .middle } __Hello Llama: Stop Word Detection__
 {: data-tags="audio,llm,code-generation"}
@@ -117,6 +118,20 @@ document.querySelectorAll('.tag-button').forEach(button => {
     [:octicons-arrow-right-24: Demo](https://huggingface.co/spaces/fastrtc/llama-code-editor)
     
     [:octicons-code-16: Code](https://huggingface.co/spaces/fastrtc/llama-code-editor/blob/main/app.py)
+
+-   :musical_note:{ .lg .middle } __Whisper Transcription__
+{: data-tags="audio,transcription"}
+
+    ---
+
+    Have whisper transcribe your speech in real time!
+
+    <video width=98% src="https://github.com/user-attachments/assets/87603053-acdc-4c8a-810f-f618c49caafb" controls style="text-align: center"></video>
+
+    [:octicons-arrow-right-24: Demo](https://huggingface.co/spaces/fastrtc/whisper-realtime)
+    
+    [:octicons-code-16: Code](https://huggingface.co/spaces/fastrtc/whisper-realtime/blob/main/app.py)
+
 
 -   :speaking_head:{ .lg .middle } __Audio Input/Output with mini-omni2__
 {: data-tags="audio,llm,voice-chat"}
