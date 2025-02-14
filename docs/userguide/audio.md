@@ -234,6 +234,51 @@ Here is a complete example of using `AsyncStreamHandler` for using the Google Ge
             self.quit.clear()
     ```
 
+## Text To Speech
+
+You can use an on-device text to speech model if you have the `tts` extra installed.
+Import the `get_tts_model` function and call it with the model name you want to use.
+At the moment, the only model supported is `kokoro`.
+
+The `get_tts_model` function returns an object with three methods:
+
+- `tts`: Synchronous text to speech.
+- `stream_tts_sync`: Synchronous text to speech streaming.
+- `stream_tts`: Asynchronous text to speech streaming.
+
+
+
+```python
+from fastrtc import get_tts_model
+
+model = get_tts_model(model="kokoro")
+
+for audio in model.stream_tts_sync("Hello, world!"):
+    yield audio
+
+async for audio in model.stream_tts("Hello, world!"):
+    yield audio
+
+audio = model.tts("Hello, world!")
+```
+
+!!! tip
+    You can customize the audio by passing in an instace of `KokoroTTSOptions` to the method.
+    See [here](https://huggingface.co/hexgrad/Kokoro-82M/blob/main/VOICES.md) for a list of available voices.
+    ```python
+    from fastrtc import KokoroTTSOptions, get_tts_model
+
+    model = get_tts_model(model="kokoro")
+
+    options = KokoroTTSOptions(
+        voice="af_heart",
+        speed=1.0,
+        lang="en-us"
+    )
+
+    audio = model.tts("Hello, world!", options=options)
+    ```
+
 ## Requesting Inputs
 
 In `ReplyOnPause` and `ReplyOnStopWords`, any additional input data is automatically passed to your generator. For `StreamHandler`s, you must manually request the input data from the client.

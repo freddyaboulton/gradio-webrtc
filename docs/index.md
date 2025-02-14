@@ -22,10 +22,10 @@ Turn any python function into a real-time audio and video stream over WebRTC or 
 pip install fastrtc
 ```
 
-to use built-in pause detection (see [ReplyOnPause](userguide/audio/#reply-on-pause)), install the `vad` extra:
+to use built-in pause detection (see [ReplyOnPause](userguide/audio/#reply-on-pause)), and text to speech (see [TextToSpeech](userguide/audio/#text-to-speech)), install the `vad` and `tts` extras:
 
 ```bash
-pip install fastrtc[vad]
+pip install fastrtc[vad, tts]
 ```
 
 ## Quickstart
