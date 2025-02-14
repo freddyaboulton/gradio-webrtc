@@ -1,9 +1,8 @@
+import json
 from pathlib import Path
 
 import gradio as gr
-from gradio.utils import get_space
 import numpy as np
-import json
 from dotenv import load_dotenv
 from fastapi.responses import HTMLResponse, StreamingResponse
 from fastrtc import (
@@ -13,6 +12,7 @@ from fastrtc import (
     audio_to_bytes,
     get_twilio_turn_credentials,
 )
+from gradio.utils import get_space
 from groq import AsyncClient
 
 cur_dir = Path(__file__).parent

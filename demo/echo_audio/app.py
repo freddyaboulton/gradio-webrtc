@@ -1,7 +1,7 @@
-from fastrtc import Stream, ReplyOnPause, get_twilio_turn_credentials
-from fastapi.responses import RedirectResponse
-from gradio.utils import get_space
 import numpy as np
+from fastapi.responses import RedirectResponse
+from fastrtc import ReplyOnPause, Stream, get_twilio_turn_credentials
+from gradio.utils import get_space
 
 
 def detection(audio: tuple[int, np.ndarray]):

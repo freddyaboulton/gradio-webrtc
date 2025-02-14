@@ -1,5 +1,5 @@
-from fastrtc import Stream
 from fastapi.responses import RedirectResponse
+from fastrtc import Stream
 from gradio.utils import get_space
 
 try:

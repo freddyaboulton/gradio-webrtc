@@ -8,7 +8,13 @@ import numpy as np
 from dotenv import load_dotenv
 from elevenlabs import ElevenLabs
 from fastapi.responses import HTMLResponse, StreamingResponse
-from fastrtc import AdditionalOutputs, ReplyOnPause, Stream, get_twilio_turn_credentials
+from fastrtc import (
+    AdditionalOutputs,
+    ReplyOnPause,
+    Stream,
+    get_tts_model,
+    get_twilio_turn_credentials,
+)
 from fastrtc.utils import aggregate_bytes_to_16bit, audio_to_bytes
 from gradio.utils import get_space
 from groq import Groq
@@ -21,6 +27,8 @@ claude_client = anthropic.Anthropic()
 tts_client = ElevenLabs(api_key=os.environ["ELEVENLABS_API_KEY"])
 
 curr_dir = Path(__file__).parent
+
+tts_model = get_tts_model()
 
 
 def response(
@@ -49,15 +57,8 @@ def response(
     )
     chatbot.append({"role": "assistant", "content": response_text})
     yield AdditionalOutputs(chatbot)
-    iterator = tts_client.text_to_speech.convert_as_stream(
-        text=response_text,
-        voice_id="JBFqnCBsd6RMkjVDRZzb",
-        model_id="eleven_multilingual_v2",
-        output_format="pcm_24000",
-    )
-    for chunk in aggregate_bytes_to_16bit(iterator):
-        audio_array = np.frombuffer(chunk, dtype=np.int16).reshape(1, -1)
-        yield (24000, audio_array, "mono")
+    for chunk in tts_model.stream_tts_sync(response_text):
+        yield chunk
 
 
 chatbot = gr.Chatbot(type="messages")

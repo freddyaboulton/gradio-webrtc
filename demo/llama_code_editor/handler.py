@@ -1,16 +1,17 @@
+import base64
+import os
+import re
+from pathlib import Path
+
+import numpy as np
+import openai
+from dotenv import load_dotenv
 from fastrtc import (
-    ReplyOnPause,
     AdditionalOutputs,
+    ReplyOnPause,
     audio_to_bytes,
 )
-import numpy as np
-import os
-import base64
-import openai
-import re
 from groq import Groq
-from dotenv import load_dotenv
-from pathlib import Path
 
 load_dotenv()
 

@@ -14,10 +14,9 @@ from collections.abc import Callable
 from typing import (
     Any,
     Generator,
-    Generic,
     Literal,
     TypeAlias,
-    TypeVar,
+    Union,
     cast,
 )
 
@@ -44,7 +43,15 @@ from fastrtc.utils import (
 
 logger = logging.getLogger(__name__)
 
-VideoEmitType = AdditionalOutputs
+VideoNDArray: TypeAlias = Union[
+    np.ndarray[Any, np.dtype[np.uint8]],
+    np.ndarray[Any, np.dtype[np.uint16]],
+    np.ndarray[Any, np.dtype[np.float32]],
+]
+
+VideoEmitType = (
+    VideoNDArray | tuple[VideoNDArray, AdditionalOutputs] | AdditionalOutputs
+)
 VideoEventHandler = Callable[[npt.ArrayLike], VideoEmitType]
 
 
@@ -246,10 +253,10 @@ class StreamHandlerBase(ABC):
 
 
 EmitType: TypeAlias = (
-    tuple[int, npt.ArrayLike]
-    | tuple[int, npt.ArrayLike, Literal["mono", "stereo"]]
+    tuple[int, npt.NDArray[np.int16 | np.float32]]
+    | tuple[int, npt.NDArray[np.int16 | np.float32], Literal["mono", "stereo"]]
     | AdditionalOutputs
-    | tuple[tuple[int, npt.ArrayLike], AdditionalOutputs]
+    | tuple[tuple[int, npt.NDArray[np.int16 | np.float32]], AdditionalOutputs]
     | None
 )
 AudioEmitType = EmitType
@@ -257,7 +264,7 @@ AudioEmitType = EmitType
 
 class StreamHandler(StreamHandlerBase):
     @abstractmethod
-    def receive(self, frame: tuple[int, np.ndarray]) -> None:
+    def receive(self, frame: tuple[int, npt.NDArray[np.int16]]) -> None:
         pass
 
     @abstractmethod
@@ -273,7 +280,7 @@ class StreamHandler(StreamHandlerBase):
 
 class AsyncStreamHandler(StreamHandlerBase):
     @abstractmethod
-    async def receive(self, frame: tuple[int, np.ndarray]) -> None:
+    async def receive(self, frame: tuple[int, npt.NDArray[np.int16]]) -> None:
         pass
 
     @abstractmethod
@@ -292,7 +299,7 @@ StreamHandlerImpl = StreamHandler | AsyncStreamHandler
 
 class AudioVideoStreamHandler(StreamHandlerBase):
     @abstractmethod
-    def video_receive(self, frame: npt.NDArray) -> None:
+    def video_receive(self, frame: npt.NDArray[np.float32]) -> None:
         pass
 
     @abstractmethod
@@ -308,7 +315,7 @@ class AudioVideoStreamHandler(StreamHandlerBase):
 
 class AsyncAudioVideoStreamHandler(StreamHandlerBase):
     @abstractmethod
-    async def video_receive(self, frame: npt.NDArray) -> None:
+    async def video_receive(self, frame: npt.NDArray[np.float32]) -> None:
         pass
 
     @abstractmethod

@@ -1,17 +1,18 @@
+from pathlib import Path
+
+import gradio as gr
 from dotenv import load_dotenv
 from fastrtc import WebRTC, get_twilio_turn_credentials
-import gradio as gr
 from gradio.utils import get_space
-from pathlib import Path
 
 try:
     from demo.llama_code_editor.handler import (
         CodeHandler,
-        system_prompt,
         display_in_sandbox,
+        system_prompt,
     )
 except (ImportError, ModuleNotFoundError):
-    from handler import CodeHandler, system_prompt, display_in_sandbox
+    from handler import CodeHandler, display_in_sandbox, system_prompt
 
 load_dotenv()
 

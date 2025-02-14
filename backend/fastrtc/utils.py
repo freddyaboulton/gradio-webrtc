@@ -159,6 +159,9 @@ async def player_worker_decode(
             )
             format = "s16" if audio_array.dtype == "int16" else "fltp"  # type: ignore
 
+            if audio_array.ndim == 1:
+                audio_array = audio_array.reshape(1, -1)
+
             # Convert to audio frame and resample
             # This runs in the same timeout context
             frame = av.AudioFrame.from_ndarray(  # type: ignore
@@ -173,7 +176,6 @@ async def player_worker_decode(
                 processed_frame.time_base = audio_time_base
                 audio_samples += processed_frame.samples
                 await queue.put(processed_frame)
-            logger.debug("Queue size utils.py: %s", queue.qsize())
 
         except (TimeoutError, asyncio.TimeoutError):
             logger.warning(

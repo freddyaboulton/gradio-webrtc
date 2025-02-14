@@ -12,7 +12,7 @@ from pydantic import BaseModel, Field
 try:
     from demo.object_detection.inference import YOLOv10
 except (ImportError, ModuleNotFoundError):
-    from inference import YOLOv10
+    from .inference import YOLOv10
 
 
 cur_dir = Path(__file__).parent
