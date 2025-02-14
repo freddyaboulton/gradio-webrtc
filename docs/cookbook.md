@@ -92,20 +92,6 @@ document.querySelectorAll('.tag-button').forEach(button => {
     
     [:octicons-code-16: Code](https://huggingface.co/spaces/fastrtc/talk-to-openai/blob/main/app.py)
 
--   :speaking_head:{ .lg .middle } __Hello Llama: Stop Word Detection__
-{: data-tags="audio,llm,code-generation"}
-
-    ---
-
-    A code editor built with Llama 3.3 70b that is triggered by the phrase "Hello Llama".
-    Build a Siri-like coding assistant in 100 lines of code!
-
-    <video width=98% src="https://github.com/user-attachments/assets/3e10cb15-ff1b-4b17-b141-ff0ad852e613" controls style="text-align: center"></video>
-
-    [:octicons-arrow-right-24: Demo](hhttps://huggingface.co/spaces/freddyaboulton/hey-llama-code-editor)
-    
-    [:octicons-code-16: Code](https://huggingface.co/spaces/freddyaboulton/hey-llama-code-editor/blob/main/app.py)
-
 -   :robot:{ .lg .middle } __Llama Code Editor__
 {: data-tags="audio,llm,code-generation"}
 
@@ -118,6 +104,19 @@ document.querySelectorAll('.tag-button').forEach(button => {
     [:octicons-arrow-right-24: Demo](https://huggingface.co/spaces/fastrtc/llama-code-editor)
     
     [:octicons-code-16: Code](https://huggingface.co/spaces/fastrtc/llama-code-editor/blob/main/app.py)
+
+-   :speaking_head:{ .lg .middle } __Talk to Claude__
+{: data-tags="audio,llm,voice-chat"}
+
+    ---
+
+    Use the Anthropic and Play.Ht APIs to have an audio conversation with Claude.
+
+    <video width=98% src="https://github.com/user-attachments/assets/fb6ef07f-3ccd-444a-997b-9bc9bdc035d3" controls style="text-align: center"></video>
+
+    [:octicons-arrow-right-24: Demo](https://huggingface.co/spaces/fastrtc/talk-to-claude)
+    
+    [:octicons-code-16: Code](https://huggingface.co/spaces/fastrtc/talk-to-claude/blob/main/app.py)
 
 -   :musical_note:{ .lg .middle } __Whisper Transcription__
 {: data-tags="audio,transcription"}
@@ -132,6 +131,20 @@ document.querySelectorAll('.tag-button').forEach(button => {
     
     [:octicons-code-16: Code](https://huggingface.co/spaces/fastrtc/whisper-realtime/blob/main/app.py)
 
+-   :speaking_head:{ .lg .middle } __Hello Llama: Stop Word Detection__
+{: data-tags="audio,llm,code-generation"}
+
+    ---
+
+    A code editor built with Llama 3.3 70b that is triggered by the phrase "Hello Llama".
+    Build a Siri-like coding assistant in 100 lines of code!
+
+    <video width=98% src="https://github.com/user-attachments/assets/3e10cb15-ff1b-4b17-b141-ff0ad852e613" controls style="text-align: center"></video>
+
+    [:octicons-arrow-right-24: Demo](hhttps://huggingface.co/spaces/freddyaboulton/hey-llama-code-editor)
+    
+    [:octicons-code-16: Code](https://huggingface.co/spaces/freddyaboulton/hey-llama-code-editor/blob/main/app.py)
+
 
 -   :speaking_head:{ .lg .middle } __Audio Input/Output with mini-omni2__
 {: data-tags="audio,llm,voice-chat"}
@@ -145,19 +158,6 @@ document.querySelectorAll('.tag-button').forEach(button => {
     [:octicons-arrow-right-24: Demo](https://huggingface.co/spaces/freddyaboulton/mini-omni2-webrtc)
     
     [:octicons-code-16: Code](https://huggingface.co/spaces/freddyaboulton/mini-omni2-webrtc/blob/main/app.py)
-
--   :speaking_head:{ .lg .middle } __Talk to Claude__
-{: data-tags="audio,llm,voice-chat"}
-
-    ---
-
-    Use the Anthropic and Play.Ht APIs to have an audio conversation with Claude.
-
-    <video width=98% src="https://github.com/user-attachments/assets/650bc492-798e-4995-8cef-159e1cfc2185" controls style="text-align: center"></video>
-
-    [:octicons-arrow-right-24: Demo](https://huggingface.co/spaces/freddyaboulton/talk-to-claude)
-    
-    [:octicons-code-16: Code](https://huggingface.co/spaces/freddyaboulton/talk-to-claude/blob/main/app.py)
 
 -   :speaking_head:{ .lg .middle } __Kyutai Moshi__
 {: data-tags="audio,llm,voice-chat"}
