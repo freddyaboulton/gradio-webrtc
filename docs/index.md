@@ -19,13 +19,13 @@ Turn any python function into a real-time audio and video stream over WebRTC or 
 ## Installation
 
 ```bash
-pip install gradio_webrtc
+pip install fastrtc
 ```
 
 to use built-in pause detection (see [ReplyOnPause](/user-guide/#reply-on-pause)), install the `vad` extra:
 
 ```bash
-pip install gradio_webrtc[vad]
+pip install fastrtc[vad]
 ```
 
 ## Quickstart
