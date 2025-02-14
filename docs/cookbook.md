@@ -112,7 +112,7 @@ document.querySelectorAll('.tag-button').forEach(button => {
 
     Create and edit HTML pages with just your voice! Powered by SambaNova systems.
 
-    <video width=98% src="https://github.com/user-attachments/assets/a09647f1-33e1-4154-a5a3-ffefda8a736a" controls style="text-align: center"></video>
+    <video width=98% src="https://github.com/user-attachments/assets/98523cf3-dac8-4127-9649-d91a997e3ef5" controls style="text-align: center"></video>
 
     [:octicons-arrow-right-24: Demo](https://huggingface.co/spaces/fastrtc/llama-code-editor)
     
@@ -206,11 +206,11 @@ document.querySelectorAll('.tag-button').forEach(button => {
 
     Run the Yolov10 model on a user webcam stream in real time!
 
-    <video width=98% src="https://github.com/user-attachments/assets/c90d8c9d-d2d5-462e-9e9b-af969f2ea73c" controls style="text-align: center"></video>
+    <video width=98% src="https://github.com/user-attachments/assets/f82feb74-a071-4e81-9110-a01989447ceb" controls style="text-align: center"></video>
 
-    [:octicons-arrow-right-24: Demo](https://huggingface.co/spaces/freddyaboulton/webrtc-yolov10n)
+    [:octicons-arrow-right-24: Demo](https://huggingface.co/spaces/fastrtc/object-detection)
 
-    [:octicons-code-16: Code](https://huggingface.co/spaces/freddyaboulton/webrtc-yolov10n/blob/main/app.py)
+    [:octicons-code-16: Code](https://huggingface.co/spaces/fastrtc/object-detection/blob/main/app.py)
 
 -   :camera:{ .lg .middle } __Video Object Detection with RT-DETR__
 {: data-tags="video,computer-vision"}

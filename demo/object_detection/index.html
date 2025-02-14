@@ -24,16 +24,20 @@
             width: 100%;
             max-width: 800px;
             text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
         .video-container {
             width: 100%;
-            aspect-ratio: 16/9;
+            max-width: 500px;
+            aspect-ratio: 1/1;
             background: rgba(255, 255, 255, 0.1);
             border-radius: 12px;
             overflow: hidden;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-            margin: 20px 0;
+            margin: 10px 0;
         }
 
         #video-output {
@@ -62,20 +66,20 @@
 
         h1 {
             font-size: 2.5em;
-            margin-bottom: 0.5em;
+            margin-bottom: 0.3em;
         }
 
         p {
             color: rgba(255, 255, 255, 0.8);
-            margin-bottom: 2em;
+            margin-bottom: 1em;
         }
 
         .controls {
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 12px;
             align-items: center;
-            margin-top: 20px;
+            margin-top: 10px;
         }
 
         .slider-container {
