@@ -93,7 +93,7 @@ FastRTC automatically configures several documentation routes for your Stream:
 You can add additional inputs to your stream using the `additional_inputs` argument. These inputs will be displayed in the generated Gradio UI and they will be passed to the handler as additional arguments.
 
 !!! tip
-    For audio `StreamHandlers`, please read the special [note](/userguide/audio#requesting-inputs) on requesting inputs.
+    For audio `StreamHandlers`, please read the special [note](../audio#requesting-inputs) on requesting inputs.
 
 In the automatic gradio UI, these inputs will be the same python type corresponding to the Gradio component. In the our case, we used a `gr.Slider` as the additional input, so it will be passed as a float. See the [Gradio documentation](https://www.gradio.app/docs/gradio) for a complete list of components and their corresponding types.
 

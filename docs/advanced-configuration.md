@@ -1,5 +1,5 @@
 
-Any of the parameters for the `Stream` class can be passed to the [`WebRTC`](/userguide/gradio) component directly.
+Any of the parameters for the `Stream` class can be passed to the [`WebRTC`](../userguide/gradio) component directly.
 
 ## Track Constraints
 
@@ -42,7 +42,8 @@ webrtc = Stream(
 You can configure how the connection is created on the client by passing an `rtc_configuration` parameter to the `WebRTC` component constructor.
 See the list of available arguments [here](https://developer.mozilla.org/en-US/docs/Web/API/RTCPeerConnection/RTCPeerConnection#configuration).
 
-When deploying on a remote server, an `rtc_configuration` parameter must be passed in. See [Deployment](/deployment).
+!!! warning
+When deploying on a remote server, an `rtc_configuration` parameter must be passed in. See [Deployment](../deployment).
 
 ## Reply on Pause Voice-Activity-Detection
 

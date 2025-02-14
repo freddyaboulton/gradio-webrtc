@@ -5,7 +5,7 @@ They are identical to the audio `StreamHandlers` with the addition of `video_rec
 
 Here is an example of the video handling functions for connecting with the Gemini multimodal API. In this case, we simply reflect the webcam feed back to the user but every second we'll send the latest webcam frame (and an additional image component) to the Gemini server.
 
-Please see the "Gemini Audio Video Chat" example in the [cookbook](/cookbook) for the complete code.
+Please see the "Gemini Audio Video Chat" example in the [cookbook](../../cookbook) for the complete code.
 
 ``` python title="Async Gemini Video Handling"
 

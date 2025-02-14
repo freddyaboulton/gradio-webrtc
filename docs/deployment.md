@@ -1,12 +1,12 @@
 When deploying in a cloud environment (like Hugging Face Spaces, EC2, etc), you need to set up a TURN server to relay the WebRTC traffic. This guide will cover the different options for setting up a TURN server.
 
 !!! tip
-    The `rtc_configuration` parameter of the `Stream` class also be passed to the [`WebRTC`](/userguide/gradio) component directly if you're building a standalone gradio app.
+    The `rtc_configuration` parameter of the `Stream` class also be passed to the [`WebRTC`](../userguide/gradio) component directly if you're building a standalone gradio app.
 
 ## Community Server
 
 Hugging Face graciously provides a TURN server for the community.
-In order to use it, you need to first create a Hugging Face account by going to the [huggingface.co](https://huggingface.co/).
+In order to use it, you need to first create a Hugging Face account by going to [huggingface.co](https://huggingface.co/).
 
 Then navigate to this [space](https://huggingface.co/spaces/freddyaboulton/turn-server-login) and follow the instructions on the page. You just have to click the "Log in" button and then the "Sign Up" button.
 

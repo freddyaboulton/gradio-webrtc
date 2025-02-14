@@ -2,7 +2,7 @@
 
 ## Input/Output Streaming
 
-We already saw this example in the [Quickstart](/#quickstart) and the [Core Concepts](/userguide/streams) section.
+We already saw this example in the [Quickstart](../../#quickstart) and the [Core Concepts](../streams) section.
 
 === "Code"
     

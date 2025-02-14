@@ -128,7 +128,7 @@ The API is similar to `ReplyOnPause` with the addition of a `stop_words` paramet
     3. The `shutdown` method is called when the stream is closed. It should be used to clean up any resources.
 
 !!! tip
-    See this [demo](https://github.com/fastrtc/fastrtc/blob/main/examples/echo_handler.py) for a complete example of a more complex stream handler.
+    See this [demo](https://github.com/freddyaboulton/gradio-webrtc/blob/8a05c50005732400415ce185bf3e4b0ecbc40bb7/demo/talk_to_openai/app.py#L27) for a complete example of a more complex stream handler.
 
 ## Async Stream Handlers
 

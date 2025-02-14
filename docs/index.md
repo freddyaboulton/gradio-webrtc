@@ -22,7 +22,7 @@ Turn any python function into a real-time audio and video stream over WebRTC or 
 pip install gradio_webrtc
 ```
 
-to use built-in pause detection (see [ReplyOnPause](/user-guide/#reply-on-pause)), install the `vad` extra:
+to use built-in pause detection (see [ReplyOnPause](userguide/audio/#reply-on-pause)), install the `vad` extra:
 
 ```bash
 pip install gradio_webrtc[vad]
@@ -30,7 +30,7 @@ pip install gradio_webrtc[vad]
 
 ## Quickstart
 
-Import the [Stream](/userguide/stream) class and pass in a [handler](/userguide/streams/#handlers).
+Import the [Stream](userguide/streams) class and pass in a [handler](userguide/streams/#handlers).
 The `Stream` is a [FastAPI](https://fastapi.tiangolo.com/) app that comes with the following routes:
 
 - `/ui`: A Gradio UI for testing your stream.
@@ -180,7 +180,7 @@ Launch the stream how you would any FastAPI app. Or use the `fastphone()` method
 
     7. The `Stream` object is a [FastAPI](https://fastapi.tiangolo.com/) app. Run it however you like to run FastAPI apps. Here we use `uvicorn app:stream`.
 
-Learn more about the [Stream](/userguide/streams) in the user guide.
+Learn more about the [Stream](userguide/streams) in the user guide.
 ## Key Features
 
 :speaking_head:{ .lg } Automatic Voice Detection and Turn Taking built-in, only worry about the logic for responding to the user.
@@ -191,7 +191,7 @@ Learn more about the [Stream](/userguide/streams) in the user guide.
 
 :telephone:{ .lg } Automatic Telephone Support - Us the `fastphone()` method of the stream to launch the application and get a free temporary phone number! Go to `http://localhost:8080/telephone/docs` to see the docs on how to call into the server with your own phone.
 
-:robot:{ .lg } Completely customizable backend - A `Stream` is just a FastAPI app so you can easily extend it to fit your production application. See the [Talk To Claude](/demo/talk_to_claude/app.py) demo for an example on how to serve a custom JS frontend.
+:robot:{ .lg } Completely customizable backend - A `Stream` is just a FastAPI app so you can easily extend it to fit your production application. See the [Talk To Claude](https://huggingface.co/spaces/fastrtc/talk-to-claude) demo for an example on how to serve a custom JS frontend.
 
 
 ## Examples
