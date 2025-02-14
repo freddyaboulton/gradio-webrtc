@@ -114,9 +114,9 @@ document.querySelectorAll('.tag-button').forEach(button => {
 
     <video width=98% src="https://github.com/user-attachments/assets/a09647f1-33e1-4154-a5a3-ffefda8a736a" controls style="text-align: center"></video>
 
-    [:octicons-arrow-right-24: Demo](https://huggingface.co/spaces/freddyaboulton/llama-code-editor)
+    [:octicons-arrow-right-24: Demo](https://huggingface.co/spaces/fastrtc/llama-code-editor)
     
-    [:octicons-code-16: Code](https://huggingface.co/spaces/freddyaboulton/llama-code-editor/blob/main/app.py)
+    [:octicons-code-16: Code](https://huggingface.co/spaces/fastrtc/llama-code-editor/blob/main/app.py)
 
 -   :speaking_head:{ .lg .middle } __Audio Input/Output with mini-omni2__
 {: data-tags="audio,llm,voice-chat"}
