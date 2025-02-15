@@ -3,7 +3,7 @@
 	import type { ComponentType } from "svelte";
 	import type { FileData, Client } from "@gradio/client";
 	import { BlockLabel } from "@gradio/atoms";
-	import  Webcam  from "./Webcam.svelte";
+	import Webcam from "./Webcam.svelte";
 	import { Video } from "@gradio/icons";
 
 	import type { I18nFormatter } from "@gradio/utils";
@@ -17,7 +17,7 @@
 	export let handle_reset_value: () => void = () => {};
 	export let stream_handler: Client["stream"];
 	export let time_limit: number | null = null;
-	export let button_labels: {start: string, stop: string, waiting: string};
+	export let button_labels: { start: string; stop: string; waiting: string };
 	export let server: {
 		offer: (body: any) => Promise<any>;
 	};
@@ -27,8 +27,8 @@
 	export let on_change_cb: (msg: "change" | "tick") => void;
 	export let rtp_params: RTCRtpParameters = {} as RTCRtpParameters;
 	export let icon: string | undefined | ComponentType = undefined;
-    export let icon_button_color: string = "var(--color-accent)";
-    export let pulse_color: string = "var(--color-accent)";
+	export let icon_button_color: string = "var(--color-accent)";
+	export let pulse_color: string = "var(--color-accent)";
 
 	const dispatch = createEventDispatcher<{
 		change: FileData | null;
@@ -47,8 +47,7 @@
 	let dragging = false;
 	$: dispatch("drag", dragging);
 
-	$: console.log("value", value)
-
+	$: console.log("value", value);
 </script>
 
 <BlockLabel {show_label} Icon={Video} label={label || "Video"} />

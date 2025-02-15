@@ -11,7 +11,7 @@ upload-all:
 
 # Run a demo with uvicorn
 run name:
-    uvicorn demo.{{name}}.app:stream --host 0.0.0.0 --port 7860
+    uvicorn demo.{{name}}.app:stream --port 8000
 
 # Run a demo with phone mode
 phone name:
@@ -34,3 +34,14 @@ publish:
     latest_wheel = max(wheels, key=os.path.getctime)
     print(f"Uploading {latest_wheel}")
     os.system(f"twine upload {latest_wheel}")
+
+
+# Build the package
+build:
+    gradio cc build --no-generate-docs
+
+# Format the code
+format:
+    ruff format .
+    ruff check --fix .
+    ruff check --select I --fix .

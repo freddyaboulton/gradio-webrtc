@@ -11,7 +11,7 @@ import numpy as np
 
 from .pause_detection import SileroVADModel, SileroVadOptions
 from .tracks import EmitType, StreamHandler
-from .utils import split_output
+from .utils import create_message, split_output
 
 logger = getLogger(__name__)
 
@@ -190,6 +190,7 @@ class ReplyOnPause(StreamHandler):
             return None
         else:
             if not self.generator:
+                self.send_message_sync(create_message("log", "pause_detected"))
                 if self._needs_additional_inputs and not self.args_set.is_set():
                     if not self.phone_mode:
                         self.wait_for_args_sync()
@@ -212,8 +213,10 @@ class ReplyOnPause(StreamHandler):
                     ).result()
                 else:
                     output = next(self.generator)  # type: ignore
+                audio, additional_outputs = split_output(output)
+                if audio is not None:
+                    self.send_message_sync(create_message("log", "response_starting"))
                 if self.phone_mode:
-                    _, additional_outputs = split_output(output)
                     if additional_outputs:
                         self.latest_args = [None] + list(additional_outputs.args)
                 return output

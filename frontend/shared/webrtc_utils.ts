@@ -51,8 +51,9 @@ export async function start(
   server_fn,
   webrtc_id,
   modality: "video" | "audio" = "video",
-  on_change_cb: (msg: "change" | "tick") => void = () => {},
+  on_change_cb: (msg: "change" | "tick") => void = () => { },
   rtp_params = {},
+  additional_message_cb: (msg: object) => void = () => { },
 ) {
   pc = createPeerConnection(pc, node);
   const data_channel = pc.createDataChannel("text");
@@ -70,7 +71,6 @@ export async function start(
     } catch (e) {
       console.debug("Error parsing JSON");
     }
-    console.log("event_json", event_json);
     if (
       event.data === "change" ||
       event.data === "tick" ||
@@ -81,9 +81,9 @@ export async function start(
       event_json?.type === "fetch_output" ||
       event_json?.type === "stopword"
     ) {
-      console.debug(`${event.data} event received`);
       on_change_cb(event_json ?? event.data);
     }
+    additional_message_cb(event_json ?? event.data);
   };
 
   if (stream) {

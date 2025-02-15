@@ -8,7 +8,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "fastrtc"
-version = "0.0.2post7"
+version = "0.0.2post8"
 description = "The realtime communication library for Python"
 readme = "README.md"
 license = "apache-2.0"
@@ -25,6 +25,7 @@ keywords = [
   "image",
   "audio processing",
   "video processing",
+  "gradio-custom-component",
 ]
 # Add dependencies here
 dependencies = [
@@ -32,7 +33,7 @@ dependencies = [
   "aiortc",
   "audioop-lts;python_version>='3.13'",
   "librosa",
-  "numpy>=2.0.2",
+  "numpy>=2.0.2",                       # because of librosa
   "numba>=0.60.0",
 ]
 classifiers = [

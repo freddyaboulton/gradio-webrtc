@@ -1,16 +1,13 @@
 <script lang="ts">
-	import { Empty } from "@gradio/atoms";
-	import {
-		BlockLabel,
-	} from "@gradio/atoms";
-	import { Music } from "@gradio/icons";
-	import type { I18nFormatter } from "@gradio/utils";
-	import { createEventDispatcher } from "svelte";
+    import { Empty } from "@gradio/atoms";
+    import { BlockLabel } from "@gradio/atoms";
+    import { Music } from "@gradio/icons";
+    import type { I18nFormatter } from "@gradio/utils";
+    import { createEventDispatcher } from "svelte";
     import { onMount } from "svelte";
 
     import { start, stop } from "./webrtc_utils";
     import AudioWave from "./AudioWave.svelte";
-
 
     export let value: string | null = null;
     export let label: string | undefined = undefined;
@@ -21,7 +18,7 @@
     export let icon: string | undefined = undefined;
     export let icon_button_color: string = "var(--color-accent)";
     export let pulse_color: string = "var(--color-accent)";
-    
+
     export let server: {
         offer: (body: any) => Promise<any>;
     };
@@ -31,13 +28,12 @@
     let pc: RTCPeerConnection;
     let _webrtc_id = Math.random().toString(36).substring(2);
 
-
     const dispatch = createEventDispatcher<{
         tick: undefined;
-        error: string
+        error: string;
         play: undefined;
         stop: undefined;
-	}>();
+    }>();
 
     onMount(() => {
         window.setInterval(() => {
@@ -45,38 +41,48 @@
                 dispatch("tick");
             }
         }, 1000);
-        }
-    )
+    });
 
     async function start_stream(value: string): Promise<string> {
-        if( value === "start_webrtc_stream") {
+        if (value === "start_webrtc_stream") {
             stream_state = "waiting";
-            _webrtc_id = Math.random().toString(36).substring(2)
+            _webrtc_id = Math.random().toString(36).substring(2);
             value = _webrtc_id;
             console.log("set value to ", value);
             pc = new RTCPeerConnection(rtc_configuration);
-            pc.addEventListener("connectionstatechange",
-                async (event) => {
-                    switch(pc.connectionState) {
-                        case "connected":
-                            console.info("connected");
-                            stream_state = "open";
-                            break;
-                        case "disconnected":
-                            console.info("closed");
-                            stop(pc);
-                            break;
-                        default:
-                            break;
-                    }
+            pc.addEventListener("connectionstatechange", async (event) => {
+                switch (pc.connectionState) {
+                    case "connected":
+                        console.info("connected");
+                        stream_state = "open";
+                        break;
+                    case "disconnected":
+                        console.info("closed");
+                        stop(pc);
+                        break;
+                    default:
+                        break;
                 }
-            )
+            });
             let stream = null;
-            start(stream, pc, audio_player, server.offer, _webrtc_id, "audio", on_change_cb).then((connection) => {
+            start(
+                stream,
+                pc,
+                audio_player,
+                server.offer,
+                _webrtc_id,
+                "audio",
+                on_change_cb,
+            )
+                .then((connection) => {
                     pc = connection;
-                }).catch(() => {
-                    console.info("catching")
-                    dispatch("error", "Too many concurrent users. Come back later!");
+                })
+                .catch(() => {
+                    console.info("catching");
+                    dispatch(
+                        "error",
+                        "Too many concurrent users. Come back later!",
+                    );
                 });
         }
         return value;
@@ -85,16 +91,13 @@
     $: start_stream(value).then((val) => {
         value = val;
     });
-
-
-    
 </script>
 
 <BlockLabel
-	{show_label}
-	Icon={Music}
-	float={false}
-	label={label || i18n("audio.audio")}
+    {show_label}
+    Icon={Music}
+    float={false}
+    label={label || i18n("audio.audio")}
 />
 <audio
     class="standard-player"
@@ -106,8 +109,14 @@
 />
 {#if value !== "__webrtc_value__"}
     <div class="audio-container">
-    <AudioWave audio_source_callback={() => audio_player.srcObject} {stream_state} {icon} {icon_button_color} {pulse_color}/>
-    </div>  
+        <AudioWave
+            audio_source_callback={() => audio_player.srcObject}
+            {stream_state}
+            {icon}
+            {icon_button_color}
+            {pulse_color}
+        />
+    </div>
 {/if}
 {#if value === "__webrtc_value__"}
     <Empty size="small">
@@ -115,15 +124,14 @@
     </Empty>
 {/if}
 
-
 <style>
     .audio-container {
-		display: flex;
-		height: 100%;
-		flex-direction: column;
-		justify-content: center;
-		align-items: center;
-	}
+        display: flex;
+        height: 100%;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+    }
 
     .standard-player {
         width: 100%;

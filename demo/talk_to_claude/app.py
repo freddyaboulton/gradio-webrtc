@@ -15,7 +15,7 @@ from fastrtc import (
     get_tts_model,
     get_twilio_turn_credentials,
 )
-from fastrtc.utils import aggregate_bytes_to_16bit, audio_to_bytes
+from fastrtc.utils import audio_to_bytes
 from gradio.utils import get_space
 from groq import Groq
 from pydantic import BaseModel
@@ -44,6 +44,7 @@ def response(
     ).text
     print("prompt", prompt)
     chatbot.append({"role": "user", "content": prompt})
+    yield AdditionalOutputs(chatbot)
     messages.append({"role": "user", "content": prompt})
     response = claude_client.messages.create(
         model="claude-3-5-haiku-20241022",
@@ -56,9 +57,16 @@ def response(
         if getattr(block, "type", None) == "text"
     )
     chatbot.append({"role": "assistant", "content": response_text})
-    yield AdditionalOutputs(chatbot)
-    for chunk in tts_model.stream_tts_sync(response_text):
+    import time
+
+    start = time.time()
+
+    print("starting tts", start)
+    for i, chunk in enumerate(tts_model.stream_tts_sync(response_text)):
+        print("chunk", i, time.time() - start)
         yield chunk
+    print("finished tts", time.time() - start)
+    yield AdditionalOutputs(chatbot)
 
 
 chatbot = gr.Chatbot(type="messages")

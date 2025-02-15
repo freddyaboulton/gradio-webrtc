@@ -1,4 +1,5 @@
 import asyncio
+import re
 from dataclasses import dataclass
 from functools import lru_cache
 from typing import AsyncGenerator, Generator, Literal, Protocol
@@ -60,10 +61,20 @@ class KokoroTTSModel(TTSModel):
         self, text: str, options: KokoroTTSOptions | None = None
     ) -> AsyncGenerator[tuple[int, NDArray[np.float32]], None]:
         options = options or KokoroTTSOptions()
-        async for chunk in self.model.create_stream(
-            text, voice=options.voice, speed=options.speed, lang=options.lang
-        ):
-            yield chunk[1], chunk[0]
+
+        sentences = re.split(r"(?<=[.!?])\s+", text.strip())
+
+        for s_idx, sentence in enumerate(sentences):
+            if not sentence.strip():
+                continue
+
+            chunk_idx = 0
+            async for chunk in self.model.create_stream(
+                sentence, voice=options.voice, speed=options.speed, lang=options.lang
+            ):
+                if s_idx != 0 and chunk_idx == 0:
+                    yield chunk[1], np.zeros(chunk[1] // 7, dtype=np.float32)
+                yield chunk[1], chunk[0]
 
     def stream_tts_sync(
         self, text: str, options: KokoroTTSOptions | None = None

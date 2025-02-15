@@ -230,6 +230,15 @@ class StreamHandlerBase(ABC):
 
             traceback.print_exc()
 
+    async def send_message(self, msg: str):
+        if self.channel:
+            self.channel.send(msg)
+            logger.debug("Sent msg %s", msg)
+
+    def send_message_sync(self, msg: str):
+        asyncio.run_coroutine_threadsafe(self.send_message(msg), self.loop).result()
+        logger.debug("Sent msg %s", msg)
+
     def set_args(self, args: list[Any]):
         logger.debug("setting args in audio callback %s", args)
         self.latest_args = ["__webrtc_value__"] + list(args)
@@ -299,7 +308,7 @@ StreamHandlerImpl = StreamHandler | AsyncStreamHandler
 
 class AudioVideoStreamHandler(StreamHandlerBase):
     @abstractmethod
-    def video_receive(self, frame: npt.NDArray[np.float32]) -> None:
+    def video_receive(self, frame: VideoFrame) -> None:
         pass
 
     @abstractmethod

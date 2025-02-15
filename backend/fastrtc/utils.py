@@ -32,7 +32,14 @@ class DataChannel(Protocol):
 
 
 def create_message(
-    type: Literal["send_input", "fetch_output", "stopword", "error", "warning", "log"],
+    type: Literal[
+        "send_input",
+        "fetch_output",
+        "stopword",
+        "error",
+        "warning",
+        "log",
+    ],
     data: list[Any] | str,
 ) -> str:
     return json.dumps({"type": type, "data": data})
