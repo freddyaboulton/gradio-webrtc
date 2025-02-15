@@ -531,8 +531,21 @@ class Stream(FastAPI, WebRTCConnectionMixin):
         handler = cast(StreamHandlerImpl, self.event_handler.copy())
         handler.phone_mode = False
 
-        def set_handler(s, a):
-            self.connections[s] = [a]
+        async def set_handler(s: str, a: WebSocketHandler):
+            if len(self.connections) >= self.concurrency_limit:
+                await cast(WebSocket, a.websocket).send_json(
+                    {
+                        "status": "failed",
+                        "meta": {
+                            "error": "concurrency_limit_reached",
+                            "limit": self.concurrency_limit,
+                        },
+                    }
+                )
+                await websocket.close()
+                return
+
+            self.connections[s] = [a]  # type: ignore
 
         def clean_up(s):
             self.clean_up(s)
