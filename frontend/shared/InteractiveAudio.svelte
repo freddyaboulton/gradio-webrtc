@@ -29,6 +29,7 @@
     export let track_constraints: MediaTrackConstraints = {};
     export let rtp_params: RTCRtpParameters = {} as RTCRtpParameters;
     export let on_change_cb: (mg: "tick" | "change") => void;
+    export let reject_cb: (msg: object) => void;
     export let icon: string | undefined = undefined;
     export let icon_button_color: string = "var(--color-accent)";
     export let pulse_color: string = "var(--color-accent)";
@@ -50,7 +51,6 @@
     let _on_change_cb = (msg: "change" | "tick" | "stopword") => {
         console.log("msg", msg);
         if (msg === "stopword") {
-            console.log("stopword recognized");
             stopword_recognized = true;
             setTimeout(() => {
                 stopword_recognized = false;
@@ -198,16 +198,14 @@
             _on_change_cb,
             rtp_params,
             additional_message_cb,
+            reject_cb,
         )
             .then((connection) => {
                 pc = connection;
             })
             .catch(() => {
                 console.info("catching");
-                dispatch(
-                    "error",
-                    "Too many concurrent users. Come back later!",
-                );
+                stream_state = "closed";
             });
     }
 

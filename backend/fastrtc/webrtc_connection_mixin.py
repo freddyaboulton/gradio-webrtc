@@ -123,7 +123,13 @@ class WebRTCConnectionMixin:
         logger.debug("Starting to handle offer")
         logger.debug("Offer body %s", body)
         if len(self.connections) >= cast(int, self.concurrency_limit):
-            return {"status": "failed"}
+            return {
+                "status": "failed",
+                "meta": {
+                    "error": "concurrency_limit_reached",
+                    "limit": self.concurrency_limit,
+                },
+            }
 
         offer = RTCSessionDescription(sdp=body["sdp"], type=body["type"])
 
