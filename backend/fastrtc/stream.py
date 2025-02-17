@@ -9,7 +9,6 @@ from gradio import Blocks
 from gradio.components.base import Component
 from jinja2 import Template as JinjaTemplate
 from pydantic import BaseModel
-from starlette.routing import Route
 
 from .tracks import StreamHandlerImpl, VideoEventHandler
 from .webrtc import WebRTC
@@ -27,7 +26,7 @@ class Body(BaseModel):
     webrtc_id: str
 
 
-class Stream(FastAPI, WebRTCConnectionMixin):
+class Stream(WebRTCConnectionMixin):
     def __init__(
         self,
         handler: VideoEventHandler | StreamHandlerImpl,
@@ -41,81 +40,8 @@ class Stream(FastAPI, WebRTCConnectionMixin):
         rtc_configuration: dict[str, Any] | None = None,
         additional_inputs: list[Component] | None = None,
         additional_outputs: list[Component] | None = None,
-        generate_docs: bool = True,
-        debug=False,
-        routes=None,
-        title="FastAPI",
-        summary=None,
-        description="",
-        version="0.1.0",
-        openapi_url="/openapi.json",
-        openapi_tags=None,
-        servers=None,
-        dependencies=None,
-        redirect_slashes=True,
-        docs_url="/docs",
-        redoc_url="/redoc",
-        swagger_ui_oauth2_redirect_url="/docs/oauth2-redirect",
-        swagger_ui_init_oauth=None,
-        middleware=None,
-        exception_handlers=None,
-        on_startup=None,
-        on_shutdown=None,
         lifespan=None,
-        terms_of_service=None,
-        contact=None,
-        license_info=None,
-        openapi_prefix="",
-        root_path="",
-        root_path_in_servers=True,
-        responses=None,
-        callbacks=None,
-        webhooks=None,
-        deprecated=None,
-        include_in_schema=True,
-        swagger_ui_parameters=None,
-        separate_input_output_schemas=True,
-        **extra,
     ):
-        lifespan = self.inject_startup_message(lifespan)
-        super().__init__(
-            debug=debug,
-            routes=routes,
-            title=title,
-            summary=summary,
-            description=description,
-            version=version,
-            openapi_url=openapi_url,
-            openapi_tags=openapi_tags,
-            servers=servers,
-            dependencies=dependencies,
-            # default_response_class=default_response_class,  # type: ignore
-            redirect_slashes=redirect_slashes,
-            docs_url=docs_url,
-            redoc_url=redoc_url,
-            swagger_ui_oauth2_redirect_url=swagger_ui_oauth2_redirect_url,
-            swagger_ui_init_oauth=swagger_ui_init_oauth,
-            middleware=middleware,
-            exception_handlers=exception_handlers,
-            on_startup=on_startup,
-            on_shutdown=on_shutdown,
-            lifespan=lifespan,
-            terms_of_service=terms_of_service,
-            contact=contact,
-            license_info=license_info,
-            openapi_prefix=openapi_prefix,
-            root_path=root_path,
-            root_path_in_servers=root_path_in_servers,
-            responses=responses,
-            callbacks=callbacks,
-            webhooks=webhooks,
-            deprecated=deprecated,
-            include_in_schema=include_in_schema,
-            swagger_ui_parameters=swagger_ui_parameters,
-            # generate_unique_id_function=generate_unique_id_function,  # type: ignore
-            separate_input_output_schemas=separate_input_output_schemas,
-            **extra,
-        )
         self.mode = mode
         self.modality = modality
         self.rtp_params = rtp_params
@@ -129,17 +55,16 @@ class Stream(FastAPI, WebRTCConnectionMixin):
         self.additional_input_components = additional_inputs
         self.additional_outputs_handler = additional_outputs_handler
         self.rtc_configuration = rtc_configuration
-        self.router.post("/webrtc/offer")(self.offer)
-        self.router.websocket("/telephone/handler")(self.telephone_handler)
-        self.router.get("/telephone/docs")(self.coming_soon)
-        self.router.post("/telephone/incoming")(self.handle_incoming_call)
-        self.router.websocket("/websocket/offer")(self.websocket_offer)
-        self._ui = self.generate_default_ui()
-        if generate_docs:
-            gr.mount_gradio_app(self, self._ui, "/ui")
-            gr.mount_gradio_app(self, self._webrtc_docs_gradio(), "/webrtc/docs")
-            gr.mount_gradio_app(self, self._websocket_docs(), "/websocket/docs")
-        self.generate_docs = generate_docs
+        self._ui = self._generate_default_ui()
+
+    def mount(self, app: FastAPI):
+        app.router.post("/webrtc/offer")(self.offer)
+        app.router.websocket("/telephone/handler")(self.telephone_handler)
+        app.router.get("/telephone/docs")(self.coming_soon)
+        app.router.post("/telephone/incoming")(self.handle_incoming_call)
+        app.router.websocket("/websocket/offer")(self.websocket_offer)
+        lifespan = self._inject_startup_message(app.router.lifespan_context)
+        app.router.lifespan_context = lifespan
 
     def _websocket_docs(self):
         with gr.Blocks() as demo:
@@ -178,7 +103,7 @@ class Stream(FastAPI, WebRTCConnectionMixin):
             status_code=200,
         )
 
-    def inject_startup_message(
+    def _inject_startup_message(
         self, lifespan: Callable[[FastAPI], AsyncContextManager] | None = None
     ):
         import contextlib
@@ -189,29 +114,29 @@ class Stream(FastAPI, WebRTCConnectionMixin):
             print(
                 click.style("INFO", fg="green")
                 + ":\t  Visit "
-                + click.style("/webrtc/docs", fg="cyan")
-                + " to test the stream and access WebRTC docs."
+                + click.style("<Insert URL>", fg="cyan")
+                + " for docs on using the WebRTC or Websocket API."
             )
-            print(
-                click.style("INFO", fg="green")
-                + ":\t  Visit "
-                + click.style("/ui", fg="cyan")
-                + " to access a sample UI for the stream."
-            )
-            if self.modality == "audio":
-                print(
-                    click.style("INFO", fg="green")
-                    + ":\t  Visit "
-                    + click.style("/websocket/docs", fg="cyan")
-                    + " for websocket docs."
-                )
-            if self.modality == "audio" and self.mode == "send-receive":
-                print(
-                    click.style("INFO", fg="green")
-                    + ":\t  Visit "
-                    + click.style("/telephone/docs", fg="cyan")
-                    + " for docs on connecting with a telephone."
-                )
+            # print(
+            #     click.style("INFO", fg="green")
+            #     + ":\t  Visit "
+            #     + click.style("/ui", fg="cyan")
+            #     + " to access a sample UI for the stream."
+            # )
+            # if self.modality == "audio":
+            #     print(
+            #         click.style("INFO", fg="green")
+            #         + ":\t  Visit "
+            #         + click.style("/websocket/docs", fg="cyan")
+            #         + " for websocket docs."
+            #     )
+            # if self.modality == "audio" and self.mode == "send-receive":
+            #     print(
+            #         click.style("INFO", fg="green")
+            #         + ":\t  Visit "
+            #         + click.style("<Insert URL>", fg="cyan")
+            #         + " for docs on connecting with a telephone."
+            #     )
 
         @contextlib.asynccontextmanager
         async def new_lifespan(app: FastAPI):
@@ -225,7 +150,7 @@ class Stream(FastAPI, WebRTCConnectionMixin):
 
         return new_lifespan
 
-    def generate_default_ui(
+    def _generate_default_ui(
         self,
     ):
         same_components = []
@@ -247,9 +172,9 @@ class Stream(FastAPI, WebRTCConnectionMixin):
         if self.modality == "video" and self.mode == "receive":
             with gr.Blocks() as demo:
                 gr.HTML(
-                    f"""
+                    """
                 <h1 style='text-align: center'>
-                {self.title if self.title != "FastAPI" else "Video Streaming"} (Powered by WebRTC ⚡️)
+                Video Streaming" (Powered by WebRTC ⚡️)
                 </h1>
                 """
                 )
@@ -286,9 +211,9 @@ class Stream(FastAPI, WebRTCConnectionMixin):
         elif self.modality == "video" and self.mode == "send":
             with gr.Blocks() as demo:
                 gr.HTML(
-                    f"""
+                    """
                 <h1 style='text-align: center'>
-                {self.title if self.title != "FastAPI" else "Video Streaming"} (Powered by WebRTC ⚡️)
+                Video Streaming (Powered by WebRTC ⚡️)
                 </h1>
                 """
                 )
@@ -326,9 +251,9 @@ class Stream(FastAPI, WebRTCConnectionMixin):
 
             with gr.Blocks(css=css) as demo:
                 gr.HTML(
-                    f"""
+                    """
                 <h1 style='text-align: center'>
-                {self.title if self.title != "FastAPI" else "Video Streaming"} (Powered by WebRTC ⚡️)
+                Video Streaming (Powered by WebRTC ⚡️)
                 </h1>
                 """
                 )
@@ -365,9 +290,9 @@ class Stream(FastAPI, WebRTCConnectionMixin):
         elif self.modality == "audio" and self.mode == "receive":
             with gr.Blocks() as demo:
                 gr.HTML(
-                    f"""
+                    """
                 <h1 style='text-align: center'>
-                {self.title if self.title != "FastAPI" else "Audio Streaming"} (Powered by WebRTC ⚡️)
+                FastAPI (Powered by WebRTC ⚡️)
                 </h1>
                 """
                 )
@@ -405,9 +330,9 @@ class Stream(FastAPI, WebRTCConnectionMixin):
         elif self.modality == "audio" and self.mode == "send":
             with gr.Blocks() as demo:
                 gr.HTML(
-                    f"""
+                    """
                 <h1 style='text-align: center'>
-                {self.title if self.title != "FastAPI" else "Audio Streaming"} (Powered by WebRTC ⚡️)
+                Audio Streaming (Powered by WebRTC ⚡️)
                 </h1>
                 """
                 )
@@ -443,9 +368,9 @@ class Stream(FastAPI, WebRTCConnectionMixin):
         elif self.modality == "audio" and self.mode == "send-receive":
             with gr.Blocks() as demo:
                 gr.HTML(
-                    f"""
+                    """
                 <h1 style='text-align: center'>
-                {self.title if self.title != "FastAPI" else "Audio Streaming"} (Powered by WebRTC ⚡️)
+                Audio Streaming (Powered by WebRTC ⚡️)
                 </h1>
                 """
                 )
@@ -489,19 +414,6 @@ class Stream(FastAPI, WebRTCConnectionMixin):
     @ui.setter
     def ui(self, blocks: Blocks):
         self._ui = blocks
-        if self.generate_docs:
-            docs_index = next(
-                i
-                for i, r in enumerate(self.routes)
-                if cast(Route, r).path == "/webrtc/docs"
-            )
-            self.routes.pop(docs_index)
-            ui_index = next(
-                i for i, r in enumerate(self.routes) if cast(Route, r).path == "/ui"
-            )
-            self.routes.pop(ui_index)
-            gr.mount_gradio_app(self, self._ui, "/ui")
-            gr.mount_gradio_app(self, self._webrtc_docs_gradio(), "/webrtc/docs")
 
     async def offer(self, body: Body):
         return await self.handle_offer(
@@ -522,8 +434,23 @@ class Stream(FastAPI, WebRTCConnectionMixin):
     async def telephone_handler(self, websocket: WebSocket):
         handler = cast(StreamHandlerImpl, self.event_handler.copy())
         handler.phone_mode = True
+
+        async def set_handler(s: str, a: WebSocketHandler):
+            if len(self.connections) >= self.concurrency_limit:
+                await cast(WebSocket, a.websocket).send_json(
+                    {
+                        "status": "failed",
+                        "meta": {
+                            "error": "concurrency_limit_reached",
+                            "limit": self.concurrency_limit,
+                        },
+                    }
+                )
+                await websocket.close()
+                return
+
         ws = WebSocketHandler(
-            handler, lambda s, a: None, lambda s: None, lambda s: lambda a: None
+            handler, set_handler, lambda s: None, lambda s: lambda a: None
         )
         await ws.handle_websocket(websocket)
 
@@ -574,9 +501,13 @@ class Stream(FastAPI, WebRTCConnectionMixin):
         from gradio.tunneling import CURRENT_TUNNELS
         from huggingface_hub import get_token
 
+        app = FastAPI()
+
+        self.mount(app)
+
         t = threading.Thread(
             target=uvicorn.run,
-            args=(self,),
+            args=(app,),
             kwargs={"host": host, "port": port, **kwargs},
         )
         t.start()

@@ -7,6 +7,7 @@ import gradio as gr
 import numpy as np
 from dotenv import load_dotenv
 from elevenlabs import ElevenLabs
+from fastapi import FastAPI
 from fastapi.responses import HTMLResponse, StreamingResponse
 from fastrtc import (
     AdditionalOutputs,
@@ -92,7 +93,11 @@ class InputData(BaseModel):
     chatbot: list[Message]
 
 
-@stream.get("/")
+app = FastAPI()
+stream.mount(app)
+
+
+@app.get("/")
 async def _():
     rtc_config = get_twilio_turn_credentials() if get_space() else None
     html_content = (curr_dir / "index.html").read_text()
@@ -100,19 +105,20 @@ async def _():
     return HTMLResponse(content=html_content, status_code=200)
 
 
-@stream.post("/input_hook")
+@app.post("/input_hook")
 async def _(body: InputData):
     stream.set_input(body.webrtc_id, body.model_dump()["chatbot"])
     return {"status": "ok"}
 
 
-@stream.get("/outputs")
+@app.get("/outputs")
 def _(webrtc_id: str):
     async def output_stream():
         async for output in stream.output_stream(webrtc_id):
             chatbot = output.args[0]
-            yield f"event: output\ndata: {json.dumps(chatbot[-2])}\n\n"
-            yield f"event: output\ndata: {json.dumps(chatbot[-1])}\n\n"
+            if len(chatbot) > 1:
+                yield f"event: output\ndata: {json.dumps(chatbot[-2])}\n\n"
+                yield f"event: output\ndata: {json.dumps(chatbot[-1])}\n\n"
 
     return StreamingResponse(output_stream(), media_type="text/event-stream")
 
@@ -121,8 +127,6 @@ if __name__ == "__main__":
     import os
 
     if not os.getenv("PHONE"):
-        import uvicorn
-
-        s = uvicorn.run(stream, host="0.0.0.0", port=7860)
+        stream.ui.launch(server_port=7860)
     else:
         stream.fastphone(host="0.0.0.0", port=7860)

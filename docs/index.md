@@ -31,14 +31,11 @@ pip install fastrtc[vad, tts]
 ## Quickstart
 
 Import the [Stream](userguide/streams) class and pass in a [handler](userguide/streams/#handlers).
-The `Stream` is a [FastAPI](https://fastapi.tiangolo.com/) app that comes with the following routes:
+The `Stream` has three main methods:
 
-- `/ui`: A Gradio UI for testing your stream.
-- `/webrtc/docs`: Documentation and Gradio UI for WebRTC connections.
-- `/websocket/docs`: Documentation for WebSocket connections.
-- `/telephone/docs`: Documentation for telephone integration.
-
-Launch the stream how you would any FastAPI app. Or use the `fastphone()` method to launch the stream and get a free temporary phone number!
+- `.ui.launch()`: Launch a built-in UI for easily testing and sharing your stream. Built with [Gradio](https://www.gradio.app/).
+- `.fastphone()`: Get a free temporary phone number to call into your stream. Hugging Face token required.
+- `.mount(app)`: Mount the stream on a [FastAPI](https://fastapi.tiangolo.com/) app. Perfect for integrating with your already existing production system.
 
 
 === "Echo Audio"
@@ -60,15 +57,22 @@ Launch the stream how you would any FastAPI app. Or use the `fastphone()` method
         mode="send-receive",
     )
 
-    # Optional: Add any routes
-    @stream.get("/")
+    # Launch the built-in UI
+    stream.ui.launch()
+
+    # OR use fastphone to get a free phone number! (HF token required)
+    stream.fastphone()
+
+    # Or mount the stream on a FastAPI app
+    app = FastAPI()
+    stream.mount(app)
+
+    @app.get("/")
     async def _():
         return HTMLResponse(content=open("index.html").read())
 
     # launch the stream
-    # uvicorn app:stream --host 0.0.0.0 --port 8000
-    # OR use fastphone to get a free phone number! (HF token required)
-    stream.fastphone()
+    # uvicorn app:app --host 0.0.0.0 --port 8000
     ```
 
 === "Object Detection"
@@ -89,14 +93,23 @@ Launch the stream how you would any FastAPI app. Or use the `fastphone()` method
             gr.Slider(minimum=0, maximum=1, step=0.01, value=0.3)
         ]
     )
+    
+    # Launch the built-in UI
+    stream.ui.launch()
+
+    # OR use fastphone to get a free phone number! (HF token required)
+    stream.fastphone()
+
+    # Or mount the stream on a FastAPI app
+    app = FastAPI()
+    stream.mount(app)
 
     # Optional: Add routes
-    @stream.get("/")
+    @app.get("/")
     async def _():
         return HTMLResponse(content=open("index.html").read())
 
-    # launch the stream
-    # uvicorn app:stream --host 0.0.0.0 --port 8000
+    # uvicorn app:app --host 0.0.0.0 --port 8000
     ```
 
 === "LLM Voice Chat"
@@ -162,8 +175,18 @@ Launch the stream how you would any FastAPI app. Or use the `fastphone()` method
 
     )
 
+    # Launch the built-in UI
+    stream.ui.launch()
+
+    # OR use fastphone to get a free phone number! (HF token required)
+    stream.fastphone()
+
+    # Or mount the stream on a FastAPI app
+    app = FastAPI()
+    stream.mount(app)
+
     # launch the stream
-    # uvicorn app:stream --host 0.0.0.0 --port 8000
+    # uvicorn app:app --host 0.0.0.0 --port 8000
     ```
 
     1. The python generator will receive the **entire** audio up until the user stopped. It will be a tuple of the form (sampling_rate, numpy array of audio). The array will have a shape of (1, num_samples).
@@ -185,11 +208,13 @@ Learn more about the [Stream](userguide/streams) in the user guide.
 
 :speaking_head:{ .lg } Automatic Voice Detection and Turn Taking built-in, only worry about the logic for responding to the user.
 
-:material-lightning-bolt:{ .lg } Automatic Gradio UI and API Docs - Go to `http://localhost:8080/webrtc/docs` to try your app with a Gradio UI. The page will also display docs on how to connect with your own javascript frontend over WebRTC.
+:material-laptop:{ .lg } Automatic UI - Use the `.ui.launch()` method to launch the webRTC-enabled built-in Gradio UI.
 
-:simple-webstorm:{ .lg } Automatic WebSocket API - Go to `http://localhost:8080/websocket/docs` to see the docs on how to connect to the server over websockets with your own javascript frontend.
+:material-lightning-bolt:{ .lg } Automatic WebRTC Support - Use the `.mount(app)` method to mount the stream on a FastAPI app and get a webRTC endpoint for your own frontend! 
 
-:telephone:{ .lg } Automatic Telephone Support - Us the `fastphone()` method of the stream to launch the application and get a free temporary phone number! Go to `http://localhost:8080/telephone/docs` to see the docs on how to call into the server with your own phone.
+:simple-webstorm:{ .lg } Websocket Support - Use the `.mount(app)` method to mount the stream on a FastAPI app and get a websocket endpoint for your own frontend! 
+
+:telephone:{ .lg } Automatic Telephone Support - Us the `fastphone()` method of the stream to launch the application and get a free temporary phone number!
 
 :robot:{ .lg } Completely customizable backend - A `Stream` is just a FastAPI app so you can easily extend it to fit your production application. See the [Talk To Claude](https://huggingface.co/spaces/fastrtc/talk-to-claude) demo for an example on how to serve a custom JS frontend.
 
