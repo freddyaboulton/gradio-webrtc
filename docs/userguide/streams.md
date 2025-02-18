@@ -95,13 +95,13 @@ You can add additional inputs to your stream using the `additional_inputs` argum
 !!! tip
     For audio `StreamHandlers`, please read the special [note](../audio#requesting-inputs) on requesting inputs.
 
-In the automatic gradio UI, these inputs will be the same python type corresponding to the Gradio component. In the our case, we used a `gr.Slider` as the additional input, so it will be passed as a float. See the [Gradio documentation](https://www.gradio.app/docs/gradio) for a complete list of components and their corresponding types.
+In the automatic gradio UI, these inputs will be the same python type corresponding to the Gradio component. In our case, we used a `gr.Slider` as the additional input, so it will be passed as a float. See the [Gradio documentation](https://www.gradio.app/docs/gradio) for a complete list of components and their corresponding types.
 
 ### Input Hooks
 
-Outside of the gradio UI, you are free to update the inputs however you like by by using the `set_input` method of the `Stream` object.
+Outside of the gradio UI, you are free to update the inputs however you like by using the `set_input` method of the `Stream` object.
 
-A common pattern in to use a `POST` request to send the updated data.
+A common pattern is to use a `POST` request to send the updated data.
 
 ```python
 from pydantic import BaseModel, Field
@@ -155,7 +155,7 @@ The `additional_outputs_handler` is **only** needed for the gradio UI. It is a f
 
 Outside of the gradio UI, you are free to access the output data however you like by calling the `output_stream` method of the `Stream` object.
 
-A common pattern in to use a `GET` request to get a stream of the output data.
+A common pattern is to use a `GET` request to get a stream of the output data.
 
 ```python
 from fastapi.responses import StreamingResponse

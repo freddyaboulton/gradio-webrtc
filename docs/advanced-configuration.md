@@ -42,7 +42,7 @@ You can configure how the connection is created on the client by passing an `rtc
 See the list of available arguments [here](https://developer.mozilla.org/en-US/docs/Web/API/RTCPeerConnection/RTCPeerConnection#configuration).
 
 !!! warning
-When deploying on a remote server, an `rtc_configuration` parameter must be passed in. See [Deployment](../deployment).
+When deploying on a remote server, the `rtc_configuration` parameter must be passed in. See [Deployment](../deployment).
 
 ## Reply on Pause Voice-Activity-Detection
 
