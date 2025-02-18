@@ -14,6 +14,7 @@ theme:
   favicon: fastrtc_logo.png
 extra_css:
     - stylesheets/extra.css
+    - https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css
 nav:
   - Home: index.md
   - User Guide:
@@ -22,11 +23,15 @@ nav:
     - Video Streaming: userguide/video.md
     - Audio-Video Streaming: userguide/audio-video.md
     - Gradio: userguide/gradio.md
+    - API: userguide/api.md
   - Cookbook: cookbook.md
   - Deployment: deployment.md
   - Advanced Configuration: advanced-configuration.md
   - Utils: utils.md
   - Frequently Asked Questions: faq.md
+extra_javascript:
+  - https://cdn.jsdelivr.net/npm/marked/marked.min.js
+  - https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js
 markdown_extensions:
   - pymdownx.highlight:
       anchor_linenums: true

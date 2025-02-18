@@ -178,7 +178,6 @@
         if (stream == null) return;
 
         const additional_message_cb = (msg: object) => {
-            console.log("additional_message_cb", msg);
             // @ts-ignore
             if (msg.type === "log" && msg.data === "pause_detected") {
                 pending = true;

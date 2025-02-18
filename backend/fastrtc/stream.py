@@ -7,7 +7,6 @@ from fastapi import FastAPI, Request, WebSocket
 from fastapi.responses import HTMLResponse
 from gradio import Blocks
 from gradio.components.base import Component
-from jinja2 import Template as JinjaTemplate
 from pydantic import BaseModel
 
 from .tracks import StreamHandlerImpl, VideoEventHandler
@@ -60,48 +59,10 @@ class Stream(WebRTCConnectionMixin):
     def mount(self, app: FastAPI):
         app.router.post("/webrtc/offer")(self.offer)
         app.router.websocket("/telephone/handler")(self.telephone_handler)
-        app.router.get("/telephone/docs")(self.coming_soon)
         app.router.post("/telephone/incoming")(self.handle_incoming_call)
         app.router.websocket("/websocket/offer")(self.websocket_offer)
         lifespan = self._inject_startup_message(app.router.lifespan_context)
         app.router.lifespan_context = lifespan
-
-    def _websocket_docs(self):
-        with gr.Blocks() as demo:
-            template = Path(__file__).parent / "assets" / "websocket_docs.md"
-            contents = JinjaTemplate(template.read_text()).render(
-                modality=self.modality,
-                mode=self.mode,
-            )
-            gr.Markdown(contents)
-        return demo
-
-    def _webrtc_docs_gradio(self):
-        with gr.Blocks(css=self._ui.css or None) as demo:
-            template = Path(__file__).parent / "assets" / "webrtc_docs.md"
-            contents = JinjaTemplate(template.read_text()).render(
-                modality=self.modality,
-                mode=self.mode,
-                additional_inputs=bool(self.additional_input_components),
-                additional_outputs=bool(self.additional_output_components),
-            )
-            if hasattr(gr, "Sidebar"):
-                with gr.Sidebar(label="Docs", width="50%", open=False):
-                    gr.Markdown(contents)
-                self.ui.render()
-            else:
-                with gr.Tabs():
-                    with gr.Tab(label="Docs"):
-                        gr.Markdown(contents)
-                    with gr.Tab("UI"):
-                        self._ui.render()
-        return demo
-
-    def coming_soon(self):
-        return HTMLResponse(
-            content=(curr_dir / "assets" / "coming_soon.html").read_text(),
-            status_code=200,
-        )
 
     def _inject_startup_message(
         self, lifespan: Callable[[FastAPI], AsyncContextManager] | None = None
@@ -117,26 +78,6 @@ class Stream(WebRTCConnectionMixin):
                 + click.style("<Insert URL>", fg="cyan")
                 + " for docs on using the WebRTC or Websocket API."
             )
-            # print(
-            #     click.style("INFO", fg="green")
-            #     + ":\t  Visit "
-            #     + click.style("/ui", fg="cyan")
-            #     + " to access a sample UI for the stream."
-            # )
-            # if self.modality == "audio":
-            #     print(
-            #         click.style("INFO", fg="green")
-            #         + ":\t  Visit "
-            #         + click.style("/websocket/docs", fg="cyan")
-            #         + " for websocket docs."
-            #     )
-            # if self.modality == "audio" and self.mode == "send-receive":
-            #     print(
-            #         click.style("INFO", fg="green")
-            #         + ":\t  Visit "
-            #         + click.style("<Insert URL>", fg="cyan")
-            #         + " for docs on connecting with a telephone."
-            #     )
 
         @contextlib.asynccontextmanager
         async def new_lifespan(app: FastAPI):

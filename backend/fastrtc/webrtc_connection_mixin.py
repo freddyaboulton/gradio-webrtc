@@ -21,6 +21,7 @@ from aiortc import (
     RTCSessionDescription,
 )
 from aiortc.contrib.media import MediaRelay  # type: ignore
+from fastapi.responses import JSONResponse
 
 from fastrtc.tracks import (
     AudioCallback,
@@ -111,6 +112,10 @@ class WebRTCConnectionMixin:
             except (asyncio.TimeoutError, TimeoutError):
                 logger.debug("Timeout waiting for output")
 
+    async def fetch_latest_output(self, webrtc_id: str) -> AdditionalOutputs:
+        outputs = self.additional_outputs[webrtc_id]
+        return await asyncio.wait_for(outputs.queue.get(), 10)
+
     def set_additional_outputs(
         self, webrtc_id: str
     ) -> Callable[[AdditionalOutputs], None]:
@@ -123,13 +128,16 @@ class WebRTCConnectionMixin:
         logger.debug("Starting to handle offer")
         logger.debug("Offer body %s", body)
         if len(self.connections) >= cast(int, self.concurrency_limit):
-            return {
-                "status": "failed",
-                "meta": {
-                    "error": "concurrency_limit_reached",
-                    "limit": self.concurrency_limit,
+            return JSONResponse(
+                status_code=429,
+                content={
+                    "status": "failed",
+                    "meta": {
+                        "error": "concurrency_limit_reached",
+                        "limit": self.concurrency_limit,
+                    },
                 },
-            }
+            )
 
         offer = RTCSessionDescription(sdp=body["sdp"], type=body["type"])
 
