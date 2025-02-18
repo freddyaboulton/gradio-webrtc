@@ -66,7 +66,7 @@ Stream(
 )
 ```
 
-!!! tip "Automatic Login"
+!!! tip "Automatic login"
 
     You can log in automatically with the `get_twilio_turn_credentials` helper
 

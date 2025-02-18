@@ -6,7 +6,7 @@ Make sure you are using a TURN server. See [deployment](../deployment).
 
 By default, the microphone is [configured](https://github.com/freddyaboulton/gradio-webrtc/blob/903f1f70bd586f638ad3b5a3940c7a8ec70ad1f5/backend/gradio_webrtc/webrtc.py#L575) to do echo cancellation.
 This is what's causing the recorded audio to sound muffled when the streamed audio starts playing.
-You can disable this via the `track_constraints` (see [advanced configuration](../advanced-configuration])) with the following code:
+You can disable this via the `track_constraints` (see [Advanced Configuration](../advanced-configuration)) with the following code:
 
 ```python
 stream = Stream(

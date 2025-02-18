@@ -24,19 +24,19 @@ stream = Stream(
     additional_outputs_handler=None # (6)
 )
 
-# Optional: Add routes
-@stream.get("/") # (7)
+stream.ui.launch()
+
+# OR: Mount to a larger FastAPI app and add custom routes
+
+app = FastAPI()
+stream.mount(app)
+
+@app.get("/") # (7)
 async def _():
     return HTMLResponse(content=open("index.html").read())
 
 # launch the stream
-# uvicorn app:stream --host 0.0.0.0 --port 8000
-
-# Will print out:
-# INFO:	  Visit /webrtc/docs to test the stream and access WebRTC docs. # (8)
-# INFO:	  Visit /ui to access a sample UI for the stream.
-# INFO:	  Visit /websocket/docs for websocket docs.
-# INFO:	  Visit /telephone/docs for docs on connecting with a telephone
+# uvicorn app:app --host 0.0.0.0 --port 8000
 ```
 
 1. See [Handlers](#handlers) for more information.
@@ -71,7 +71,7 @@ The `handler` argument is the main component of the `Stream` object. A handler s
 
 | Modality | send-receive | send | receive |
 |----------|--------------|------|----------|
-| video | Function that takes a video frame and returns modified frame | Function that takes a video frame and returns modified frame | Function that takes a video frame and returns modified frame |
+| video | Function that takes a video frame and returns a new video frame | Function that takes a video frame and returns a new frame | Function that takes a video frame and returns a new frame |
 | audio | `StreamHandler` or `AsyncStreamHandler` subclass | `StreamHandler` or `AsyncStreamHandler` subclass | Generator yielding audio frames |
 | audio-video | `AudioVideoStreamHandler` or `AsyncAudioVideoStreamHandler` subclass | Not Supported Yet | Not Supported Yet |
 

@@ -24,9 +24,8 @@ webrtc = Stream(
 
 !!! warning
 
-    WebRTC may not enforce your constaints. For example, it may rescale your video
-    (while keeping the same resolution) in order to maintain the desired (or reach a better) frame rate. If you
-    really want to enforce height, width and resolution constraints, use the `rtp_params` parameter as set `"degradationPreference": "maintain-resolution"`. 
+    WebRTC may not enforce your constraints. For example, it may rescale your video
+    (while keeping the same resolution) in order to maintain the desired frame rate (or reach a better one). If you really want to enforce height, width and resolution constraints, use the `rtp_params` parameter as set `"degradationPreference": "maintain-resolution"`. 
 
     ```python
     image = Stream(

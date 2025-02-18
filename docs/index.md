@@ -214,7 +214,7 @@ Learn more about the [Stream](userguide/streams) in the user guide.
 
 :simple-webstorm:{ .lg } Websocket Support - Use the `.mount(app)` method to mount the stream on a FastAPI app and get a websocket endpoint for your own frontend! 
 
-:telephone:{ .lg } Automatic Telephone Support - Us the `fastphone()` method of the stream to launch the application and get a free temporary phone number!
+:telephone:{ .lg } Automatic Telephone Support - Use the `fastphone()` method of the stream to launch the application and get a free temporary phone number!
 
 :robot:{ .lg } Completely customizable backend - A `Stream` is just a FastAPI app so you can easily extend it to fit your production application. See the [Talk To Claude](https://huggingface.co/spaces/fastrtc/talk-to-claude) demo for an example on how to serve a custom JS frontend.
 

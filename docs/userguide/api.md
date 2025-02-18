@@ -64,9 +64,9 @@ The `ReplyOnPause` handler can also send the following `log` messages.
 
 ### Additional Inputs
 
-When the `send_input` message is received, update the inputs of your handler however you like by by using the `set_input` method of the `Stream` object.
+When the `send_input` message is received, update the inputs of your handler however you like by using the `set_input` method of the `Stream` object.
 
-A common pattern in to use a `POST` request to send the updated data. The first argument to the `set_input` method is the `webrtc_id` of the handler.
+A common pattern is to use a `POST` request to send the updated data. The first argument to the `set_input` method is the `webrtc_id` of the handler.
 
 ```python
 from pydantic import BaseModel, Field
@@ -87,7 +87,7 @@ The updated data will be passed to the handler on the **next** call.
 
 The `fetch_output` message is sent to the client whenever an instance of [`AdditionalOutputs`](../streams/#additional-outputs) is available. You can access the latest output data by calling the `fetch_latest_output` method of the `Stream` object. 
 
-However, rather than fetching each output manually, a common pattern is to fetch the entire stream of output data by calling `
+However, rather than fetching each output manually, a common pattern is to fetch the entire stream of output data by calling the `output_stream` method.
 
 Here is an example:
 ```python
