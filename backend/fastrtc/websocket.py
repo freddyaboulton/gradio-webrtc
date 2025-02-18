@@ -2,7 +2,7 @@ import asyncio
 import audioop
 import base64
 import logging
-from typing import Any, Callable, Optional, cast
+from typing import Any, Awaitable, Callable, Optional, cast
 
 import anyio
 import librosa
@@ -48,7 +48,7 @@ class WebSocketHandler:
     def __init__(
         self,
         stream_handler: StreamHandlerImpl,
-        set_handler: Callable[[str, "WebSocketHandler"], None],
+        set_handler: Callable[[str, "WebSocketHandler"], Awaitable[None]],
         clean_up: Callable[[str], None],
         additional_outputs_factory: Callable[
             [str], Callable[[AdditionalOutputs], None]
@@ -114,7 +114,7 @@ class WebSocketHandler:
                     self.set_additional_outputs = self.set_additional_outputs_factory(
                         self.stream_id
                     )
-                    self.set_handler(self.stream_id, self)
+                    await self.set_handler(self.stream_id, self)
                 elif message["event"] == "stop":
                     self.quit.set()
                     self.clean_up(cast(str, self.stream_id))

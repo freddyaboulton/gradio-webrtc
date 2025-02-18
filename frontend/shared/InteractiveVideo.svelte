@@ -25,6 +25,7 @@
 	export let track_constraints: MediaTrackConstraints = {};
 	export let mode: "send" | "send-receive";
 	export let on_change_cb: (msg: "change" | "tick") => void;
+	export let reject_cb: (msg: object) => void;
 	export let rtp_params: RTCRtpParameters = {} as RTCRtpParameters;
 	export let icon: string | undefined | ComponentType = undefined;
 	export let icon_button_color: string = "var(--color-accent)";
@@ -72,6 +73,7 @@
 		stream_every={0.5}
 		{server}
 		bind:webrtc_id={value}
+		{reject_cb}
 	/>
 
 	<!-- <SelectSource {sources} bind:active_source /> -->

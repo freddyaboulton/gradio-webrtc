@@ -11,7 +11,11 @@ upload-all:
 
 # Run a demo with uvicorn
 run name:
-    uvicorn demo.{{name}}.app:stream --port 8000
+    uvicorn demo.{{name}}.app:app --port 8000
+
+# Run the gradio ui for a demo
+gradio name:
+    python demo/{{name}}/app.py
 
 # Run a demo with phone mode
 phone name:
