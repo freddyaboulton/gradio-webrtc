@@ -8,6 +8,7 @@ from typing import AsyncGenerator, Literal
 import gradio as gr
 import numpy as np
 from dotenv import load_dotenv
+from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 from fastrtc import (
     AsyncStreamHandler,
@@ -149,13 +150,18 @@ class InputData(BaseModel):
     api_key: str
 
 
-@stream.post("/input_hook")
+app = FastAPI()
+
+stream.mount(app)
+
+
+@app.post("/input_hook")
 async def _(body: InputData):
     stream.set_input(body.webrtc_id, body.api_key, body.voice_name)
     return {"status": "ok"}
 
 
-@stream.get("/")
+@app.get("/")
 async def index():
     rtc_config = get_twilio_turn_credentials() if get_space() else None
     html_content = (current_dir / "index.html").read_text()
@@ -166,9 +172,11 @@ async def index():
 if __name__ == "__main__":
     import os
 
-    import uvicorn
-
-    if os.getenv("FASTPHONE"):
+    if (mode := os.getenv("MODE")) == "UI":
+        stream.ui.launch(server_port=7860, server_name="0.0.0.0")
+    elif mode == "PHONE":
         stream.fastphone(host="0.0.0.0", port=7860)
     else:
-        uvicorn.run(stream, host="0.0.0.0", port=7860)
+        import uvicorn
+
+        uvicorn.run(app, host="0.0.0.0", port=7860)

@@ -8,6 +8,7 @@ import gradio as gr
 import numpy as np
 from dotenv import load_dotenv
 from elevenlabs import ElevenLabs
+from fastapi import FastAPI
 from fastapi.responses import HTMLResponse, StreamingResponse
 from fastrtc import AdditionalOutputs, ReplyOnPause, Stream, get_twilio_turn_credentials
 from fastrtc.utils import aggregate_bytes_to_16bit, audio_to_bytes
@@ -101,7 +102,12 @@ class InputData(BaseModel):
     chatbot: list[Message]
 
 
-@stream.get("/")
+app = FastAPI()
+
+stream.mount(app)
+
+
+@app.get("/")
 async def _():
     rtc_config = get_twilio_turn_credentials() if get_space() else None
     html_content = (curr_dir / "index.html").read_text()
@@ -109,13 +115,13 @@ async def _():
     return HTMLResponse(content=html_content, status_code=200)
 
 
-@stream.post("/input_hook")
+@app.post("/input_hook")
 async def _(body: InputData):
     stream.set_input(body.webrtc_id, body.model_dump()["chatbot"])
     return {"status": "ok"}
 
 
-@stream.get("/outputs")
+@app.get("/outputs")
 def _(webrtc_id: str):
     print("outputs", webrtc_id)
 
@@ -129,6 +135,13 @@ def _(webrtc_id: str):
 
 
 if __name__ == "__main__":
-    import uvicorn
+    import os
 
-    s = uvicorn.run(stream, port=7860, host="0.0.0.0")
+    if (mode := os.getenv("MODE")) == "UI":
+        stream.ui.launch(server_port=7860, server_name="0.0.0.0")
+    elif mode == "PHONE":
+        stream.fastphone(host="0.0.0.0", port=7860)
+    else:
+        import uvicorn
+
+        uvicorn.run(app, host="0.0.0.0", port=7860)

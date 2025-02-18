@@ -1,4 +1,5 @@
 import numpy as np
+from fastapi import FastAPI
 from fastapi.responses import RedirectResponse
 from fastrtc import ReplyOnPause, Stream, get_twilio_turn_credentials
 from gradio.utils import get_space
@@ -18,8 +19,12 @@ stream = Stream(
     concurrency_limit=20 if get_space() else None,
 )
 
+app = FastAPI()
 
-@stream.get("/")
+stream.mount(app)
+
+
+@app.get("/")
 async def index():
     return RedirectResponse(
         url="/ui" if not get_space() else "https://fastrtc-echo-audio.hf.space/ui/"
@@ -27,6 +32,13 @@ async def index():
 
 
 if __name__ == "__main__":
-    import uvicorn
+    import os
 
-    uvicorn.run(stream, host="0.0.0.0", port=7860)
+    if (mode := os.getenv("MODE")) == "UI":
+        stream.ui.launch(server_port=7860, server_name="0.0.0.0")
+    elif mode == "PHONE":
+        stream.fastphone(host="0.0.0.0", port=7860)
+    else:
+        import uvicorn
+
+        uvicorn.run(app, host="0.0.0.0", port=7860)

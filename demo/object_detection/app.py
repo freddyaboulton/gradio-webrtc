@@ -3,6 +3,7 @@ from pathlib import Path
 
 import cv2
 import gradio as gr
+from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
 from fastrtc import Stream, get_twilio_turn_credentials
 from gradio.utils import get_space
@@ -40,8 +41,12 @@ stream = Stream(
     concurrency_limit=20 if get_space() else None,
 )
 
+app = FastAPI()
 
-@stream.get("/")
+stream.mount(app)
+
+
+@app.get("/")
 async def _():
     rtc_config = get_twilio_turn_credentials() if get_space() else None
     html_content = open(cur_dir / "index.html").read()
@@ -54,12 +59,19 @@ class InputData(BaseModel):
     conf_threshold: float = Field(ge=0, le=1)
 
 
-@stream.post("/input_hook")
+@app.post("/input_hook")
 async def _(data: InputData):
     stream.set_input(data.webrtc_id, data.conf_threshold)
 
 
 if __name__ == "__main__":
-    import uvicorn
+    import os
 
-    uvicorn.run(stream, host="0.0.0.0", port=7860)
+    if (mode := os.getenv("MODE")) == "UI":
+        stream.ui.launch(server_port=7860, server_name="0.0.0.0")
+    elif mode == "PHONE":
+        stream.fastphone(host="0.0.0.0", port=7860)
+    else:
+        import uvicorn
+
+        uvicorn.run(app, host="0.0.0.0", port=7860)

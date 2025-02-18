@@ -4,6 +4,7 @@ from pathlib import Path
 import gradio as gr
 import numpy as np
 from dotenv import load_dotenv
+from fastapi import FastAPI
 from fastapi.responses import HTMLResponse, StreamingResponse
 from fastrtc import (
     AdditionalOutputs,
@@ -44,8 +45,12 @@ stream = Stream(
     concurrency_limit=20 if get_space() else None,
 )
 
+app = FastAPI()
 
-@stream.get("/transcript")
+stream.mount(app)
+
+
+@app.get("/transcript")
 def _(webrtc_id: str):
     async def output_stream():
         async for output in stream.output_stream(webrtc_id):
@@ -55,7 +60,7 @@ def _(webrtc_id: str):
     return StreamingResponse(output_stream(), media_type="text/event-stream")
 
 
-@stream.get("/")
+@app.get("/")
 def index():
     rtc_config = get_twilio_turn_credentials() if get_space() else None
     html_content = (cur_dir / "index.html").read_text()
@@ -64,6 +69,13 @@ def index():
 
 
 if __name__ == "__main__":
-    import uvicorn
+    import os
 
-    uvicorn.run(stream, host="0.0.0.0", port=7860)
+    if (mode := os.getenv("MODE")) == "UI":
+        stream.ui.launch(server_port=7860, server_name="0.0.0.0")
+    elif mode == "PHONE":
+        stream.fastphone(host="0.0.0.0", port=7860)
+    else:
+        import uvicorn
+
+        uvicorn.run(app, host="0.0.0.0", port=7860)

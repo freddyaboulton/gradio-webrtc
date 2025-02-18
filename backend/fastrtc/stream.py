@@ -459,7 +459,7 @@ class Stream(WebRTCConnectionMixin):
         host = urllib.parse.urlparse(url).netloc
 
         r = httpx.post(
-            "https://freddyaboulton-test-phone.hf.space/register",
+            "https://api.fastphone.org/register",
             json={"url": host},
             headers={"Authorization": token or get_token() or ""},
         )
@@ -485,7 +485,7 @@ class Stream(WebRTCConnectionMixin):
                 + ":\t  Keyboard interruption in main thread... closing server."
             )
             r = httpx.post(
-                "https://freddyaboulton-test-phone.hf.space/unregister",
+                "https://api.fastphone.org/unregister",
                 json={"url": host, "code": code},
                 headers={"Authorization": token or get_token() or ""},
             )

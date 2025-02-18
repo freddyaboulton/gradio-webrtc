@@ -356,7 +356,7 @@ class VideoStreamHandler(VideoCallback):
                 if inspect.iscoroutinefunction(handler.video_receive):
                     await handler.video_receive(frame_array)
                 else:
-                    handler.video_receive(frame_array)
+                    handler.video_receive(frame_array)  # type: ignore
             except MediaStreamError:
                 self.stop()
 
@@ -441,7 +441,7 @@ class AudioCallback(AudioStreamTrack):
                     numpy_array = frame.to_ndarray()
                     if isinstance(self.event_handler, AsyncHandler):
                         await self.event_handler.receive(
-                            (frame.sample_rate, numpy_array)
+                            (frame.sample_rate, numpy_array)  # type: ignore
                         )
                     else:
                         await anyio.to_thread.run_sync(

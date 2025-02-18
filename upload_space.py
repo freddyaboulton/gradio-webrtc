@@ -36,6 +36,8 @@ def parse_readme_secrets(readme_path: Path) -> list[str]:
 
 
 def upload_space(dir_path: str):
+    NO_GRADIO_SPACE = ["webrtc_vs_websocket", "llama_code_editor"]
+
     path: Path = Path(dir_path)
     if not path.exists():
         raise ValueError(f"Path {path} does not exist")
@@ -62,6 +64,13 @@ def upload_space(dir_path: str):
         api.create_repo(
             repo_id=repo_id, repo_type="space", space_sdk="gradio", exist_ok=True
         )
+        if path.name not in NO_GRADIO_SPACE:
+            api.create_repo(
+                repo_id=f"{repo_id}-gradio",
+                repo_type="space",
+                space_sdk="gradio",
+                exist_ok=True,
+            )
     except Exception as e:
         print(f"Error creating repo: {e}")
         return
@@ -72,16 +81,47 @@ def upload_space(dir_path: str):
         repo_id=repo_id,
         repo_type="space",
         folder_path=str(path),
-        ignore_patterns=["__pycache__", "*.pyc", ".env"],
+        ignore_patterns=["__pycache__", "*.pyc", ".env", "README_gradio.md"],
         create_pr=False,
         path_in_repo="",
     )
+    api.restart_space(repo_id=repo_id, factory_reboot=True)
 
-    # if api.space_info(repo_id=repo_id).runtime.hardware != SpaceHardware.CPU_UPGRADE:  # type: ignore
-    #     api.request_space_hardware(repo_id=repo_id, hardware="cpu-upgrade")  # type: ignore
-
-    # Handle secrets
     readme_path = path / "README.md"
+
+    if path.name not in NO_GRADIO_SPACE:
+        try:
+            # Upload Gradio version with modified README
+            api.upload_folder(
+                repo_id=f"{repo_id}-gradio",
+                repo_type="space",
+                folder_path=str(path),
+                ignore_patterns=["__pycache__", "*.pyc", ".env", "README.md"],
+                create_pr=False,
+                path_in_repo="",
+            )
+            api.upload_file(
+                repo_id=f"{repo_id}-gradio",
+                repo_type="space",
+                path_or_fileobj=str(path / "README_gradio.md"),
+                path_in_repo="README.md",
+            )
+
+            api.add_space_secret(
+                repo_id=f"{repo_id}-gradio",
+                key="MODE",
+                value="UI",
+            )
+
+            api.add_space_secret(
+                repo_id=f"{repo_id}-gradio",
+                key="MODE",
+                value="UI",
+            )
+            api.restart_space(repo_id=f"{repo_id}-gradio", factory_reboot=True)
+        except Exception as e:
+            print(f"Error uploading Gradio version: {e}")
+
     secret_names = parse_readme_secrets(readme_path)
 
     if secret_names:
@@ -93,6 +133,12 @@ def upload_space(dir_path: str):
                     api.add_space_secret(
                         repo_id=repo_id, key=secret_name, value=secret_value
                     )
+                    if path.name not in NO_GRADIO_SPACE:
+                        api.add_space_secret(
+                            repo_id=f"{repo_id}-gradio",
+                            key=secret_name,
+                            value=secret_value,
+                        )
                     print(f"Added secret: {secret_name}")
                 except Exception as e:
                     print(f"Error adding secret {secret_name}: {e}")

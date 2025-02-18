@@ -1,3 +1,4 @@
+from fastapi import FastAPI
 from fastapi.responses import RedirectResponse
 from fastrtc import Stream
 from gradio.utils import get_space
@@ -22,14 +23,23 @@ stream = Stream(
 
 stream.ui = ui
 
+app = FastAPI()
 
-@stream.get("/")
+
+@app.get("/")
 async def _():
     url = "/ui" if not get_space() else "https://fastrtc-llama-code-editor.hf.space/ui/"
     return RedirectResponse(url)
 
 
 if __name__ == "__main__":
-    import uvicorn
+    import os
 
-    uvicorn.run(stream, host="0.0.0.0", port=7860)
+    if (mode := os.getenv("MODE")) == "UI":
+        stream.ui.launch(server_port=7860, server_name="0.0.0.0")
+    elif mode == "PHONE":
+        stream.fastphone(host="0.0.0.0", port=7860)
+    else:
+        import uvicorn
+
+        uvicorn.run(app, host="0.0.0.0", port=7860)
