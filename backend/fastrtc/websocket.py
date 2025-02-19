@@ -81,7 +81,7 @@ class WebSocketHandler:
         else:
             start_up = anyio.to_thread.run_sync(self.stream_handler.start_up)  # type: ignore
 
-        asyncio.create_task(start_up)
+        self.start_up_task = asyncio.create_task(start_up)
         try:
             while not self.quit.is_set():
                 message = await websocket.receive_json()
@@ -136,6 +136,8 @@ class WebSocketHandler:
         finally:
             if self._emit_task:
                 self._emit_task.cancel()
+            if self.start_up_task:
+                self.start_up_task.cancel()
             await websocket.close()
 
     async def _emit_loop(self):

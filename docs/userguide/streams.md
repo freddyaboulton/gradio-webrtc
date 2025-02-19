@@ -1,7 +1,7 @@
 # Core Concepts
 
 
-The core of FastRTC is the `Stream` object. It is a [FastAPI](https://fastapi.tiangolo.com/) app that can be used to stream audio, video, or both.
+The core of FastRTC is the `Stream` object. It can be used to stream audio, video, or both.
 
 Here's a simple example of creating a video object detection stream. We'll use it to explain the core concepts of the `Stream` object. Click on the plus icons to get a link to the relevant section.
 
@@ -45,7 +45,7 @@ async def _():
 4. See [Additional Inputs](#additional-inputs) for more information.
 5. See [Additional Outputs](#additional-outputs) for more information.
 6. See [Additional Outputs Handler](#additional-outputs) for more information.
-7. The `Stream` object is a FastAPI app, so you can add custom routes to it. See [Custom Routes and Frontend Integration](#custom-routes-and-frontend-integration) for more information.
+7. Mount the `Stream` on a `FastAPI` app with `stream.mount(app)` and you can add custom routes to it. See [Custom Routes and Frontend Integration](#custom-routes-and-frontend-integration) for more information.
 8. See [Built-in Routes](#built-in-routes) for more information.
 
 ### Stream Modes

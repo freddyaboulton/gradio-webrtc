@@ -116,19 +116,17 @@ The `Stream` has three main methods:
 
     ```python
     from fastrtc import Stream
-    import gradio as gr
+    import numpy as np
 
-    def detection(image, conf_threshold=0.3):
-        processed_frame = process_frame(image, conf_threshold)
-        return processed_frame
+
+    def flip_vertically(image):
+        return np.flip(image, axis=0)
+
 
     stream = Stream(
-        handler=detection,
-        modality="video", 
+        handler=flip_vertically,
+        modality="video",
         mode="send-receive",
-        additional_inputs=[
-            gr.Slider(minimum=0, maximum=1, step=0.01, value=0.3)
-        ]
     )
     ```
 
@@ -137,10 +135,22 @@ The `Stream` has three main methods:
     ```python
     from fastrtc import Stream
     import gradio as gr
+    import cv2
+    from huggingface_hub import hf_hub_download
+    from .inference import YOLOv10
+
+    model_file = hf_hub_download(
+        repo_id="onnx-community/yolov10n", filename="onnx/model.onnx"
+    )
+    
+    # git clone https://huggingface.co/spaces/fastrtc/object-detection
+    # for YOLOv10 implementation
+    model = YOLOv10(model_file)
 
     def detection(image, conf_threshold=0.3):
-        processed_frame = process_frame(image, conf_threshold)
-        return processed_frame
+        image = cv2.resize(image, (model.input_width, model.input_height))
+        new_image = model.detect_objects(image, conf_threshold)
+        return cv2.resize(new_image, (500, 500))
 
     stream = Stream(
         handler=detection,
@@ -192,7 +202,7 @@ Learn more about the [Stream](userguide/streams) in the user guide.
 
 :telephone:{ .lg } Automatic Telephone Support - Use the `fastphone()` method of the stream to launch the application and get a free temporary phone number!
 
-:robot:{ .lg } Completely customizable backend - A `Stream` is just a FastAPI app so you can easily extend it to fit your production application. See the [Talk To Claude](https://huggingface.co/spaces/fastrtc/talk-to-claude) demo for an example on how to serve a custom JS frontend.
+:robot:{ .lg } Completely customizable backend - A `Stream` can easily be mounted on a FastAPI app so you can easily extend it to fit your production application. See the [Talk To Claude](https://huggingface.co/spaces/fastrtc/talk-to-claude) demo for an example on how to serve a custom JS frontend.
 
 
 ## Examples
