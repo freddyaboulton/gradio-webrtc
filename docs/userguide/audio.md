@@ -89,6 +89,9 @@ The API is similar to `ReplyOnPause` with the addition of a `stop_words` paramet
 === "Notes"
     1. The `stop_words` can be single words or pairs of words. Be sure to include common misspellings of your word for more robust detection, e.g. "llama", "lamma". In my experience, it's best to use two very distinct words like "ok computer" or "hello iris". 
 
+!!! tip "Extra Dependencies"
+    The `ReplyOnStopWords` class requires the the `stopword` extra. Run `pip install fastrtc[stopword]` to install it.
+
 ## Stream Handler
 
 `ReplyOnPause` and `ReplyOnStopWords` are implementations of a `StreamHandler`. The `StreamHandler` is a low-level abstraction that gives you arbitrary control over how the input audio stream and output audio stream are created. The following example echos back the user audio.

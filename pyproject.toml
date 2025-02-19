@@ -70,7 +70,7 @@ Documentation = "https://freddyaboulton.github.io/gradio-webrtc/cookbook/"
 dev = ["build", "twine"]
 vad = ["onnxruntime>=1.20.1"]
 tts = ["kokoro-onnx"]
-stopword = ["silero", "onnxruntime"]
+stopword = ["silero", "onnxruntime>=1.20.1"]
 
 [tool.hatch.build]
 artifacts = ["/backend/fastrtc/templates", "*.pyi"]

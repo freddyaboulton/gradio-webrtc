@@ -3,15 +3,15 @@
 
 The core of FastRTC is the `Stream` object. It can be used to stream audio, video, or both.
 
-Here's a simple example of creating a video object detection stream. We'll use it to explain the core concepts of the `Stream` object. Click on the plus icons to get a link to the relevant section.
+Here's a simple example of creating a video stream that flips the video vertically. We'll use it to explain the core concepts of the `Stream` object. Click on the plus icons to get a link to the relevant section.
 
 ```python
 from fastrtc import Stream
 import gradio as gr
+import numpy as np
 
-def detection(image, conf_threshold=0.3):
-    processed_frame = process_frame(image, conf_threshold)
-    return processed_frame
+def detection(image):
+    return np.flip(image, axis=0)
 
 stream = Stream(
     handler=detection, # (1)
@@ -23,20 +23,6 @@ stream = Stream(
     additional_outputs=None, # (5)
     additional_outputs_handler=None # (6)
 )
-
-stream.ui.launch()
-
-# OR: Mount to a larger FastAPI app and add custom routes
-
-app = FastAPI()
-stream.mount(app)
-
-@app.get("/") # (7)
-async def _():
-    return HTMLResponse(content=open("index.html").read())
-
-# launch the stream
-# uvicorn app:app --host 0.0.0.0 --port 8000
 ```
 
 1. See [Handlers](#handlers) for more information.
@@ -47,6 +33,21 @@ async def _():
 6. See [Additional Outputs Handler](#additional-outputs) for more information.
 7. Mount the `Stream` on a `FastAPI` app with `stream.mount(app)` and you can add custom routes to it. See [Custom Routes and Frontend Integration](#custom-routes-and-frontend-integration) for more information.
 8. See [Built-in Routes](#built-in-routes) for more information.
+
+Run:
+=== "UI"
+
+    ```py
+    stream.ui.launch()
+    ```
+=== "FastAPI"
+
+    ```py
+    app = FastAPI()
+    stream.mount(app)
+
+    # uvicorn app:app --host 0.0.0.0 --port 8000
+    ```
 
 ### Stream Modes
 
@@ -66,7 +67,7 @@ FastRTC supports three modalities:
 
 ### Handlers
 
-The `handler` argument is the main component of the `Stream` object. A handler should be a function or a class that inherits from `StreamHandler` or `AsyncStreamHandler` depending on the modality and mode.
+The `handler` argument is the main argument of the `Stream` object. A handler should be a function or a class that inherits from `StreamHandler` or `AsyncStreamHandler` depending on the modality and mode.
 
 
 | Modality | send-receive | send | receive |

@@ -461,7 +461,6 @@ class Stream(WebRTCConnectionMixin):
         host = urllib.parse.urlparse(url).netloc
 
         URL = "https://api.fastrtc.org"
-
         r = httpx.post(
             URL + "/register",
             json={"url": host},
@@ -469,8 +468,9 @@ class Stream(WebRTCConnectionMixin):
         )
         r.raise_for_status()
         data = r.json()
-        code = data["code"]
+        code = f"{data['code']}"
         phone_number = data["phone"]
+        reset_date = data["reset_date"]
         print(
             click.style("INFO", fg="green")
             + ":\t  Your FastPhone is now live! Call "
@@ -485,7 +485,9 @@ class Stream(WebRTCConnectionMixin):
             click.style("INFO", fg="green")
             + ":\t  You have "
             + click.style(f"{minutes}:{seconds}", fg="cyan")
-            + " minutes remaining in your quota."
+            + " minutes remaining in your quota (Resetting on "
+            + click.style(f"{reset_date}", fg="cyan")
+            + ")"
         )
         print(
             click.style("INFO", fg="green")
