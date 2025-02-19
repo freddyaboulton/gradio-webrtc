@@ -42,10 +42,9 @@ The `Stream` has three main methods:
 
     ```python
     from fastrtc import Stream, ReplyOnPause
-    from fastapi.responses import HTMLResponse
     import numpy as np
 
-    def detection(audio: tuple[int, np.ndarray]):
+    def echo(audio: tuple[int, np.ndarray]):
         # The function will be passed the audio until the user pauses
         # Implement any iterator that yields audio
         # See "LLM Voice Chat" for a more complete example
@@ -56,23 +55,81 @@ The `Stream` has three main methods:
         modality="audio", 
         mode="send-receive",
     )
+    ```
 
-    # Launch the built-in UI
-    stream.ui.launch()
+=== "LLM Voice Chat"
 
-    # OR use fastphone to get a free phone number! (HF token required)
-    stream.fastphone()
+    ```py
+    from fastrtc import (
+        ReplyOnPause, AdditionalOutputs, Stream,
+        audio_to_bytes, aggregate_bytes_to_16bit
+    )
+    import gradio as gr
+    from groq import Groq
+    import anthropic
+    from elevenlabs import ElevenLabs
 
-    # Or mount the stream on a FastAPI app
-    app = FastAPI()
-    stream.mount(app)
+    groq_client = Groq()
+    claude_client = anthropic.Anthropic()
+    tts_client = ElevenLabs()
 
-    @app.get("/")
-    async def _():
-        return HTMLResponse(content=open("index.html").read())
+    
+    # See "Talk to Claude" in Cookbook for an example of how to keep 
+    # track of the chat history.
+    def response(
+        audio: tuple[int, np.ndarray],
+    ):
+        prompt = groq_client.audio.transcriptions.create(
+            file=("audio-file.mp3", audio_to_bytes(audio)),
+            model="whisper-large-v3-turbo",
+            response_format="verbose_json",
+        ).text
+        response = claude_client.messages.create(
+            model="claude-3-5-haiku-20241022",
+            max_tokens=512,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        response_text = " ".join(
+            block.text
+            for block in response.content
+            if getattr(block, "type", None) == "text"
+        )
+        iterator = tts_client.text_to_speech.convert_as_stream(
+            text=response_text,
+            voice_id="JBFqnCBsd6RMkjVDRZzb",
+            model_id="eleven_multilingual_v2",
+            output_format="pcm_24000"
+            
+        )
+        for chunk in aggregate_bytes_to_16bit(iterator):
+            audio_array = np.frombuffer(chunk, dtype=np.int16).reshape(1, -1)
+            yield (24000, audio_array)
 
-    # launch the stream
-    # uvicorn app:app --host 0.0.0.0 --port 8000
+    stream = Stream(
+        modality="audio",
+        mode="send-receive",
+        handler=ReplyOnPause(response),
+    )
+    ```
+
+=== "Webcam Stream"
+
+    ```python
+    from fastrtc import Stream
+    import gradio as gr
+
+    def detection(image, conf_threshold=0.3):
+        processed_frame = process_frame(image, conf_threshold)
+        return processed_frame
+
+    stream = Stream(
+        handler=detection,
+        modality="video", 
+        mode="send-receive",
+        additional_inputs=[
+            gr.Slider(minimum=0, maximum=1, step=0.01, value=0.3)
+        ]
+    )
     ```
 
 === "Object Detection"
@@ -93,14 +150,24 @@ The `Stream` has three main methods:
             gr.Slider(minimum=0, maximum=1, step=0.01, value=0.3)
         ]
     )
-    
-    # Launch the built-in UI
+    ```
+
+Run:
+=== "UI"
+
+    ```py
     stream.ui.launch()
+    ```
 
-    # OR use fastphone to get a free phone number! (HF token required)
+=== "Telephone"
+
+    ```py
     stream.fastphone()
+    ```
 
-    # Or mount the stream on a FastAPI app
+=== "FastAPI"
+
+    ```py
     app = FastAPI()
     stream.mount(app)
 
@@ -111,97 +178,6 @@ The `Stream` has three main methods:
 
     # uvicorn app:app --host 0.0.0.0 --port 8000
     ```
-
-=== "LLM Voice Chat"
-
-    ```py
-    from fastrtc import (
-        ReplyOnPause, AdditionalOutputs, Stream,
-        audio_to_bytes, aggregate_bytes_to_16bit
-    )
-    import gradio as gr
-    from groq import Groq
-    import anthropic
-    from elevenlabs import ElevenLabs
-
-    groq_client = Groq()
-    claude_client = anthropic.Anthropic()
-    tts_client = ElevenLabs()
-
-    def response(
-        audio: tuple[int, np.ndarray], # (1)
-        chatbot: list[dict] | None = None, # (2)
-    ):
-        chatbot = chatbot or []
-        messages = [{"role": d["role"], "content": d["content"]} for d in chatbot]
-        prompt = groq_client.audio.transcriptions.create(
-            file=("audio-file.mp3", audio_to_bytes(audio)),
-            model="whisper-large-v3-turbo",
-            response_format="verbose_json",
-        ).text
-        chatbot.append({"role": "user", "content": prompt})
-        messages.append({"role": "user", "content": prompt})
-        response = claude_client.messages.create(
-            model="claude-3-5-haiku-20241022",
-            max_tokens=512,
-            messages=messages,
-        )
-        response_text = " ".join(
-            block.text
-            for block in response.content
-            if getattr(block, "type", None) == "text"
-        )
-        chatbot.append({"role": "assistant", "content": response_text})
-        yield AdditionalOutputs(chatbot) # (4)
-        iterator = tts_client.text_to_speech.convert_as_stream(
-            text=response_text,
-            voice_id="JBFqnCBsd6RMkjVDRZzb",
-            model_id="eleven_multilingual_v2",
-            output_format="pcm_24000"
-            
-        )
-        for chunk in aggregate_bytes_to_16bit(iterator):
-            audio_array = np.frombuffer(chunk, dtype=np.int16).reshape(1, -1)
-            yield (24000, audio_array) # (3)
-
-    chatbot = gr.Chatbot(type="messages")
-    stream = Stream(
-        modality="audio", # (5)
-        mode="send-receive",
-        handler=ReplyOnPause(response),
-        additional_inputs=[chatbot], # (6)
-        additional_outputs=[chatbot],
-        additional_outputs_handler=lambda a,b: b,
-
-    )
-
-    # Launch the built-in UI
-    stream.ui.launch()
-
-    # OR use fastphone to get a free phone number! (HF token required)
-    stream.fastphone()
-
-    # Or mount the stream on a FastAPI app
-    app = FastAPI()
-    stream.mount(app)
-
-    # launch the stream
-    # uvicorn app:app --host 0.0.0.0 --port 8000
-    ```
-
-    1. The python generator will receive the **entire** audio up until the user stopped. It will be a tuple of the form (sampling_rate, numpy array of audio). The array will have a shape of (1, num_samples).
-
-    2. You can also pass in additional input components. The arguments can be whatever you want but for the automatic Gradio UI to work, the data should match the type expected by a Gradio component.
-
-    3. The generator must yield audio chunks as a tuple of (sampling_rate, numpy audio array). Each numpy audio array must have a shape of (1, num_samples).
-
-    4. You can also yield any additional data as long as it is wrapped in an `AdditionalOutputs` object. Here we yield the latest `chatbot` data which will be displayed in the UI.
-
-    5. We create a `Stream` object with the `mode` and `modality` arguments set to `"send-receive"` and `"audio"`.
-
-    6. We pass in the `chatbot` component as an additional input and output for the automatic Gradio UI to work.
-
-    7. The `Stream` object is a [FastAPI](https://fastapi.tiangolo.com/) app. Run it however you like to run FastAPI apps. Here we use `uvicorn app:stream`.
 
 Learn more about the [Stream](userguide/streams) in the user guide.
 ## Key Features

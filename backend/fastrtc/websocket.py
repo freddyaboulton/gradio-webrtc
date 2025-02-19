@@ -76,7 +76,12 @@ class WebSocketHandler:
         self.stream_handler._loop = loop
         self.stream_handler.set_channel(self.data_channel)
         self._emit_task = asyncio.create_task(self._emit_loop())
+        if isinstance(self.stream_handler, AsyncStreamHandler):
+            start_up = self.stream_handler.start_up()
+        else:
+            start_up = anyio.to_thread.run_sync(self.stream_handler.start_up)  # type: ignore
 
+        asyncio.create_task(start_up)
         try:
             while not self.quit.is_set():
                 message = await websocket.receive_json()

@@ -14,6 +14,7 @@ from fastrtc import (
     AsyncStreamHandler,
     Stream,
     get_twilio_turn_credentials,
+    WebRTCError,
 )
 from gradio.utils import get_space
 from openai.types.beta.realtime import ResponseAudioTranscriptDoneEvent
@@ -46,25 +47,31 @@ class OpenAIHandler(AsyncStreamHandler):
     ):
         """Connect to realtime API. Run forever in separate thread to keep connection open."""
         self.client = openai.AsyncOpenAI()
-        async with self.client.beta.realtime.connect(
-            model="gpt-4o-mini-realtime-preview-2024-12-17"
-        ) as conn:
-            await conn.session.update(
-                session={"turn_detection": {"type": "server_vad"}}
-            )
-            self.connection = conn
-            async for event in self.connection:
-                if event.type == "response.audio_transcript.done":
-                    await self.output_queue.put(AdditionalOutputs(event))
-                if event.type == "response.audio.delta":
-                    await self.output_queue.put(
-                        (
-                            self.output_sample_rate,
-                            np.frombuffer(
-                                base64.b64decode(event.delta), dtype=np.int16
-                            ).reshape(1, -1),
-                        ),
-                    )
+        try:
+            async with self.client.beta.realtime.connect(
+                model="gpt-4o-mini-realtime-preview-2024-12-17"
+            ) as conn:
+                await conn.session.update(
+                    session={"turn_detection": {"type": "server_vad"}}
+                )
+                self.connection = conn
+                async for event in self.connection:
+                    if event.type == "response.audio_transcript.done":
+                        await self.output_queue.put(AdditionalOutputs(event))
+                    if event.type == "response.audio.delta":
+                        await self.output_queue.put(
+                            (
+                                self.output_sample_rate,
+                                np.frombuffer(
+                                    base64.b64decode(event.delta), dtype=np.int16
+                                ).reshape(1, -1),
+                            ),
+                        )
+        except Exception:
+            import traceback
+
+            traceback.print_exc()
+            raise WebRTCError(str(traceback.format_exc()))
 
     async def receive(self, frame: tuple[int, np.ndarray]) -> None:
         if not self.connection:
@@ -80,6 +87,7 @@ class OpenAIHandler(AsyncStreamHandler):
             import traceback
 
             traceback.print_exc()
+            raise WebRTCError(str(traceback.format_exc()))
 
     async def emit(self) -> tuple[int, np.ndarray] | AdditionalOutputs | None:
         return await self.output_queue.get()
@@ -142,7 +150,7 @@ if __name__ == "__main__":
     import os
 
     if (mode := os.getenv("MODE")) == "UI":
-        stream.ui.launch(server_port=7860, server_name="0.0.0.0")
+        stream.ui.launch(server_port=7860)
     elif mode == "PHONE":
         stream.fastphone(host="0.0.0.0", port=7860)
     else:
