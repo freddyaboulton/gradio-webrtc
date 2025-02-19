@@ -63,6 +63,8 @@ document.querySelectorAll('.tag-button').forEach(button => {
     <video width=98% src="https://github.com/user-attachments/assets/9636dc97-4fee-46bb-abb8-b92e69c08c71" controls style="text-align: center"></video>
 
     [:octicons-arrow-right-24: Demo](https://huggingface.co/spaces/freddyaboulton/gemini-audio-video-chat)
+
+    [:octicons-arrow-right-24: Gradio UI](https://huggingface.co/spaces/freddyaboulton/gemini-audio-video-chat-gradio)
     
     [:octicons-code-16: Code](https://huggingface.co/spaces/freddyaboulton/gemini-audio-video-chat/blob/main/app.py)
 
@@ -76,7 +78,9 @@ document.querySelectorAll('.tag-button').forEach(button => {
     <video width=98% src="https://github.com/user-attachments/assets/ea6d18cb-8589-422b-9bba-56332d9f61de" controls style="text-align: center"></video>
 
     [:octicons-arrow-right-24: Demo](https://huggingface.co/spaces/fastrtc/talk-to-gemini)
-    
+
+    [:octicons-arrow-right-24: Gradio UI](https://huggingface.co/spaces/fastrtc/talk-to-gemini-gradio)
+
     [:octicons-code-16: Code](https://huggingface.co/spaces/fastrtc/talk-to-gemini/blob/main/app.py)
 
 -   :speaking_head:{ .lg .middle } __OpenAI Real Time Voice API__
@@ -89,6 +93,8 @@ document.querySelectorAll('.tag-button').forEach(button => {
     <video width=98% src="https://github.com/user-attachments/assets/178bdadc-f17b-461a-8d26-e915c632ff80" controls style="text-align: center"></video>
 
     [:octicons-arrow-right-24: Demo](https://huggingface.co/spaces/fastrtc/talk-to-openai)
+
+    [:octicons-arrow-right-24: Gradio UI](https://huggingface.co/spaces/fastrtc/talk-to-openai-gradio)
     
     [:octicons-code-16: Code](https://huggingface.co/spaces/fastrtc/talk-to-openai/blob/main/app.py)
 
@@ -115,6 +121,8 @@ document.querySelectorAll('.tag-button').forEach(button => {
     <video width=98% src="https://github.com/user-attachments/assets/fb6ef07f-3ccd-444a-997b-9bc9bdc035d3" controls style="text-align: center"></video>
 
     [:octicons-arrow-right-24: Demo](https://huggingface.co/spaces/fastrtc/talk-to-claude)
+
+    [:octicons-arrow-right-24: Gradio UI](https://huggingface.co/spaces/fastrtc/talk-to-claude-gradio)
     
     [:octicons-code-16: Code](https://huggingface.co/spaces/fastrtc/talk-to-claude/blob/main/app.py)
 
@@ -128,6 +136,8 @@ document.querySelectorAll('.tag-button').forEach(button => {
     <video width=98% src="https://github.com/user-attachments/assets/87603053-acdc-4c8a-810f-f618c49caafb" controls style="text-align: center"></video>
 
     [:octicons-arrow-right-24: Demo](https://huggingface.co/spaces/fastrtc/whisper-realtime)
+
+    [:octicons-arrow-right-24: Gradio UI](https://huggingface.co/spaces/fastrtc/whisper-realtime-gradio)
     
     [:octicons-code-16: Code](https://huggingface.co/spaces/fastrtc/whisper-realtime/blob/main/app.py)
 

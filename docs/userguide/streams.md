@@ -76,14 +76,13 @@ The `handler` argument is the main component of the `Stream` object. A handler s
 | audio-video | `AudioVideoStreamHandler` or `AsyncAudioVideoStreamHandler` subclass | Not Supported Yet | Not Supported Yet |
 
 
-## Built-in Routes
+## Methods
 
-FastRTC automatically configures several documentation routes for your Stream:
+The `Stream` has three main methods:
 
-1. `/ui` - Auto-generated Gradio interface for testing your stream.
-2. `/webrtc/docs` - Documentation and Gradio UI for WebRTC connections.
-3. `/websocket/docs` - Documentation for WebSocket connections
-4. `/telephone/docs` - Documentation for telephone integration
+- `.ui.launch()`: Launch a built-in UI for easily testing and sharing your stream. Built with [Gradio](https://www.gradio.app/). You can change the UI by setting the `ui` property of the `Stream` object. Also see the [Gradio guide](../gradio.md) for building Gradio apss with fastrtc.
+- `.fastphone()`: Get a free temporary phone number to call into your stream. Hugging Face token required.
+- `.mount(app)`: Mount the stream on a [FastAPI](https://fastapi.tiangolo.com/) app. Perfect for integrating with your already existing production system or for building a custom UI.
 
 !!! warning
     Websocket docs are only available for audio streams. Telephone docs are only available for audio streams in `send-receive` mode.
@@ -105,13 +104,16 @@ A common pattern is to use a `POST` request to send the updated data.
 
 ```python
 from pydantic import BaseModel, Field
+from fastapi import FastAPI
 
 class InputData(BaseModel):
     webrtc_id: str
     conf_threshold: float = Field(ge=0, le=1)
 
+app = FastAPI()
+stream.mount(app)
 
-@stream.post("/input_hook")
+@app.post("/input_hook")
 async def _(data: InputData):
     stream.set_input(data.webrtc_id, data.conf_threshold)
 ```
@@ -160,7 +162,7 @@ A common pattern is to use a `GET` request to get a stream of the output data.
 ```python
 from fastapi.responses import StreamingResponse
 
-@stream.get("/updates")
+@app.get("/updates")
 async def stream_updates(webrtc_id: str):
     async def output_stream():
         async for output in stream.output_stream(webrtc_id):
@@ -176,20 +178,23 @@ async def stream_updates(webrtc_id: str):
 
 ## Custom Routes and Frontend Integration
 
-Since a Stream is just a FastAPI app, you can add custom routes for serving your frontend or handling additional functionality:
+You can add custom routes for serving your own frontend or handling additional functionality once you have mounted the stream on a FastAPI app.
 
 ```python
 from fastapi.responses import HTMLResponse
-from pydantic import BaseModel
+from fastapi import FastAPI
+from fastrtc import Stream
+
+stream = Stream(...)
+
+app = FastAPI()
+stream.mount(app)
 
 # Serve a custom frontend
-@stream.get("/")
+@app.get("/")
 async def serve_frontend():
     return HTMLResponse(content=open("index.html").read())
 
-# Or mount into a larger FastAPI app
-app = FastAPI()
-app.mount("/", stream)
 ```
 
 ## Telephone Integration

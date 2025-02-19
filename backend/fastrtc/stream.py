@@ -75,8 +75,10 @@ class Stream(WebRTCConnectionMixin):
             print(
                 click.style("INFO", fg="green")
                 + ":\t  Visit "
-                + click.style("<Insert URL>", fg="cyan")
-                + " for docs on using the WebRTC or Websocket API."
+                + click.style(
+                    "https://fastrtc.org/pr-preview/pr-60/userguide/api/", fg="cyan"
+                )
+                + " for WebRTC or Websocket API docs."
             )
 
         @contextlib.asynccontextmanager
@@ -484,6 +486,15 @@ class Stream(WebRTCConnectionMixin):
             + ":\t  You have "
             + click.style(f"{minutes}:{seconds}", fg="cyan")
             + " minutes remaining in your quota."
+        )
+        print(
+            click.style("INFO", fg="green")
+            + ":\t  Visit "
+            + click.style(
+                "https://fastrtc.org/pr-preview/pr-60/userguide/audio/#telephone-integration",
+                fg="cyan",
+            )
+            + " for information on making your handler compatible with phone usage."
         )
         try:
             while True:
