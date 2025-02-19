@@ -47,8 +47,6 @@
 
 	let dragging = false;
 	$: dispatch("drag", dragging);
-
-	$: console.log("value", value);
 </script>
 
 <BlockLabel {show_label} Icon={Video} label={label || "Video"} />

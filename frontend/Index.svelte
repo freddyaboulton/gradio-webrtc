@@ -45,7 +45,6 @@
 			msg?.type === "warning" ||
 			msg?.type === "error"
 		) {
-			console.log("dispatching info", msg.message);
 			gradio.dispatch(
 				msg?.type === "error" ? "error" : "warning",
 				msg.message,

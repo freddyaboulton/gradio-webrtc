@@ -13,7 +13,6 @@ from fastapi.responses import HTMLResponse
 from fastrtc import (
     AsyncStreamHandler,
     Stream,
-    async_aggregate_bytes_to_16bit,
     get_twilio_turn_credentials,
 )
 from google import genai
@@ -62,16 +61,9 @@ class GeminiHandler(AsyncStreamHandler):
             output_frame_size=self.output_frame_size,
         )
 
-    async def stream(self) -> AsyncGenerator[bytes, None]:
-        while not self.quit.is_set():
-            audio = await self.input_queue.get()
-            yield audio
-        return
-
-    async def connect(
-        self, api_key: str | None = None, voice_name: str | None = "Kore"
-    ) -> AsyncGenerator[bytes, None]:
-        """Connect to to genai server and start the stream"""
+    async def start_up(self):
+        await self.wait_for_args()
+        api_key, voice_name = self.latest_args[1:]
         client = genai.Client(
             api_key=api_key or os.getenv("GEMINI_API_KEY"),
             http_options={"api_version": "v1alpha"},
@@ -93,7 +85,16 @@ class GeminiHandler(AsyncStreamHandler):
                 stream=self.stream(), mime_type="audio/pcm"
             ):
                 if audio.data:
-                    yield audio.data
+                    array = np.frombuffer(audio.data, dtype=np.int16)
+                    self.output_queue.put_nowait(array)
+
+    async def stream(self) -> AsyncGenerator[bytes, None]:
+        while not self.quit.is_set():
+            try:
+                audio = await asyncio.wait_for(self.input_queue.get(), 0.1)
+                yield audio
+            except (asyncio.TimeoutError, TimeoutError):
+                pass
 
     async def receive(self, frame: tuple[int, np.ndarray]) -> None:
         _, array = frame
@@ -101,24 +102,13 @@ class GeminiHandler(AsyncStreamHandler):
         audio_message = encode_audio(array)
         self.input_queue.put_nowait(audio_message)
 
-    async def generator(self) -> None:
-        async for audio_response in async_aggregate_bytes_to_16bit(
-            self.connect(*self.latest_args[1:])
-        ):
-            self.output_queue.put_nowait(audio_response)
-
     async def emit(self) -> tuple[int, np.ndarray]:
-        if not self.args_set.is_set():
-            await self.wait_for_args()
-            asyncio.create_task(self.generator())
-
         array = await self.output_queue.get()
         return (self.output_sample_rate, array)
 
     def shutdown(self) -> None:
         self.quit.set()
         self.args_set.clear()
-        self.quit.clear()
 
 
 stream = Stream(
@@ -128,7 +118,11 @@ stream = Stream(
     rtc_configuration=get_twilio_turn_credentials() if get_space() else None,
     concurrency_limit=20 if get_space() else None,
     additional_inputs=[
-        gr.Textbox(label="API Key", type="password", value=os.getenv("GEMINI_API_KEY")),
+        gr.Textbox(
+            label="API Key",
+            type="password",
+            value=os.getenv("GEMINI_API_KEY") if not get_space() else "",
+        ),
         gr.Dropdown(
             label="Voice",
             choices=[
@@ -173,7 +167,7 @@ if __name__ == "__main__":
     import os
 
     if (mode := os.getenv("MODE")) == "UI":
-        stream.ui.launch(server_port=7860, server_name="0.0.0.0")
+        stream.ui.launch(server_port=7860)
     elif mode == "PHONE":
         stream.fastphone(host="0.0.0.0", port=7860)
     else:

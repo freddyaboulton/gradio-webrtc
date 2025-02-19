@@ -286,6 +286,9 @@ class StreamHandler(StreamHandlerBase):
     def copy(self) -> StreamHandler:
         pass
 
+    def start_up(self):
+        pass
+
 
 class AsyncStreamHandler(StreamHandlerBase):
     @abstractmethod
@@ -300,6 +303,9 @@ class AsyncStreamHandler(StreamHandlerBase):
 
     @abstractmethod
     def copy(self) -> AsyncStreamHandler:
+        pass
+
+    async def start_up(self):
         pass
 
 
@@ -456,12 +462,21 @@ class AudioCallback(AudioStreamTrack):
             loop = asyncio.get_running_loop()
             if isinstance(self.event_handler, AsyncHandler):
                 callable = self.event_handler.emit
+                start_up = self.event_handler.start_up()
             else:
                 callable = functools.partial(
                     loop.run_in_executor, None, self.event_handler.emit
                 )
-            asyncio.create_task(self.process_input_frames())
-            asyncio.create_task(
+                start_up = anyio.to_thread.run_sync(self.event_handler.start_up)
+            self.process_input_task = asyncio.create_task(self.process_input_frames())
+            self.process_input_task.add_done_callback(
+                lambda _: logger.debug("process_input_done")
+            )
+            self.start_up_task = asyncio.create_task(start_up)
+            self.start_up_task.add_done_callback(
+                lambda _: logger.debug("start_up_done")
+            )
+            self.decode_task = asyncio.create_task(
                 player_worker_decode(
                     callable,
                     self.queue,
@@ -473,6 +488,7 @@ class AudioCallback(AudioStreamTrack):
                     self.event_handler.output_frame_size,
                 )
             )
+            self.decode_task.add_done_callback(lambda _: logger.debug("decode_done"))
             self.has_started = True
 
     async def recv(self):  # type: ignore
@@ -514,9 +530,6 @@ class AudioCallback(AudioStreamTrack):
         logger.debug("audio callback stop")
         self.thread_quit.set()
         super().stop()
-
-    def shutdown(self):
-        self.event_handler.shutdown()
 
 
 class ServerToClientVideo(VideoStreamTrack):

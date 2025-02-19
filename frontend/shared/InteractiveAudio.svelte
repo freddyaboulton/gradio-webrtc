@@ -49,14 +49,13 @@
     });
 
     let _on_change_cb = (msg: "change" | "tick" | "stopword") => {
-        console.log("msg", msg);
         if (msg === "stopword") {
             stopword_recognized = true;
             setTimeout(() => {
                 stopword_recognized = false;
             }, 3000);
         } else {
-            console.log("calling on_change_cb with msg", msg);
+            console.debug("calling on_change_cb with msg", msg);
             on_change_cb(msg);
         }
     };
@@ -79,7 +78,6 @@
     let mic_accessed = false;
 
     const audio_source_callback = () => {
-        console.log("stream in callback", stream);
         if (mode === "send") return stream;
         else return audio_player.srcObject as MediaStream;
     };
@@ -252,7 +250,6 @@
         notification_sound.play();
     }
 
-    $: console.log("here!!!!");
 </script>
 
 <BlockLabel

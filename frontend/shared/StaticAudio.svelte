@@ -48,7 +48,6 @@
             stream_state = "waiting";
             _webrtc_id = Math.random().toString(36).substring(2);
             value = _webrtc_id;
-            console.log("set value to ", value);
             pc = new RTCPeerConnection(rtc_configuration);
             pc.addEventListener("connectionstatechange", async (event) => {
                 switch (pc.connectionState) {

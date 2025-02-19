@@ -48,11 +48,9 @@
 			async (event) => {
 				switch(pc.connectionState) {
 					case "connected":
-						console.log("connected");
 						stream_state = "open";
 						break;
 					case "disconnected":
-						console.log("closed");
 						stop(pc);
 						break;
 					default:
@@ -63,7 +61,6 @@
 	start(null, pc, video_element, server.offer, _webrtc_id, "video", on_change_cb).then((connection) => {
 			pc = connection;
 		}).catch(() => {
-			console.log("catching")
 			dispatch("error", "Too many concurrent users. Come back later!");
 		});
 	}

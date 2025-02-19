@@ -193,8 +193,8 @@ async def player_worker_decode(
             import traceback
 
             exec = traceback.format_exc()
-            logger.debug("traceback %s", exec)
-            logger.error("Error processing frame: %s", str(e))
+            print("traceback %s", exec)
+            print("Error processing frame: %s", str(e))
             continue
 
 

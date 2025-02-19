@@ -115,6 +115,9 @@ The API is similar to `ReplyOnPause` with the addition of a `stop_words` paramet
         
         def shutdown(self) -> None: # (3)
             pass
+        
+        def start_up(self) -> None: # (4)
+            pass
 
     stream = Stream(
         handler=EchoHandler(),
@@ -126,17 +129,19 @@ The API is similar to `ReplyOnPause` with the addition of a `stop_words` paramet
     1. The `StreamHandler` class implements three methods: `receive`, `emit` and `copy`. The `receive` method is called when a new frame is received from the client, and the `emit` method returns the next frame to send to the client. The `copy` method is called at the beginning of the stream to ensure each user has a unique stream handler.
     2. The `emit` method SHOULD NOT block. If a frame is not ready to be sent, the method should return `None`.
     3. The `shutdown` method is called when the stream is closed. It should be used to clean up any resources.
+    4. The `start_up` method is called when the stream is first created. It should be used to initialize any resources. See [Talk To OpenAI](https://huggingface.co/spaces/fastrtc/talk-to-openai-gradio) or [Talk To Gemini](https://huggingface.co/spaces/fastrtc/talk-to-gemini-gradio) for an example of a `StreamHandler` that uses the `start_up` method to connect to an API.    
 === "Notes"
     1. The `StreamHandler` class implements three methods: `receive`, `emit` and `copy`. The `receive` method is called when a new frame is received from the client, and the `emit` method returns the next frame to send to the client. The `copy` method is called at the beginning of the stream to ensure each user has a unique stream handler.
     2. The `emit` method SHOULD NOT block. If a frame is not ready to be sent, the method should return `None`.
     3. The `shutdown` method is called when the stream is closed. It should be used to clean up any resources.
+    4. The `start_up` method is called when the stream is first created. It should be used to initialize any resources. See [Talk To OpenAI](https://huggingface.co/spaces/fastrtc/talk-to-openai-gradio) or [Talk To Gemini](https://huggingface.co/spaces/fastrtc/talk-to-gemini-gradio) for an example of a `StreamHandler` that uses the `start_up` method to connect to an API.
 
 !!! tip
-    See this [demo](https://github.com/freddyaboulton/gradio-webrtc/blob/8a05c50005732400415ce185bf3e4b0ecbc40bb7/demo/talk_to_openai/app.py#L27) for a complete example of a more complex stream handler.
+    See this [Talk To Gemini](https://huggingface.co/spaces/fastrtc/talk-to-gemini-gradio) for a complete example of a more complex stream handler.
 
 ## Async Stream Handlers
 
-It is also possible to create asynchronous stream handlers. This is very convenient for accessing async APIs from major LLM developers, like Google and OpenAI. The main difference is that `receive` and `emit` are now defined with `async def`.
+It is also possible to create asynchronous stream handlers. This is very convenient for accessing async APIs from major LLM developers, like Google and OpenAI. The main difference is that `receive`, `emit`, and `start_up` are now defined with `async def`.
 
 Here is a complete example of using `AsyncStreamHandler` for using the Google Gemini real time API:
 
@@ -179,16 +184,9 @@ Here is a complete example of using `AsyncStreamHandler` for using the Google Ge
                 output_frame_size=self.output_frame_size,
             )
 
-        async def stream(self) -> AsyncGenerator[bytes, None]:
-            while not self.quit.is_set():
-                audio = await self.input_queue.get()
-                yield audio
-            return
-
-        async def connect(
-            self, api_key: str | None = None, voice_name: str | None = None
-        ) -> AsyncGenerator[bytes, None]:
-            """Connect to to genai server and start the stream"""
+        async def start_up(self):
+            await self.wait_for_args()
+            api_key, voice_name = self.latest_args[1:]
             client = genai.Client(
                 api_key=api_key or os.getenv("GEMINI_API_KEY"),
                 http_options={"api_version": "v1alpha"},
@@ -210,32 +208,30 @@ Here is a complete example of using `AsyncStreamHandler` for using the Google Ge
                     stream=self.stream(), mime_type="audio/pcm"
                 ):
                     if audio.data:
-                        yield audio.data
+                        array = np.frombuffer(audio.data, dtype=np.int16)
+                        self.output_queue.put_nowait(array)
+
+        async def stream(self) -> AsyncGenerator[bytes, None]:
+            while not self.quit.is_set():
+                try:
+                    audio = await asyncio.wait_for(self.input_queue.get(), 0.1)
+                    yield audio
+                except (asyncio.TimeoutError, TimeoutError):
+                    pass
 
         async def receive(self, frame: tuple[int, np.ndarray]) -> None:
             _, array = frame
             array = array.squeeze()
-            audio_message = base64.b64encode(array.tobytes()).decode("UTF-8")
+            audio_message = encode_audio(array)
             self.input_queue.put_nowait(audio_message)
 
-        async def generator(self) -> None:
-            async for audio_response in async_aggregate_bytes_to_16bit(
-                self.connect(*self.latest_args[1:])
-            ):
-                self.output_queue.put_nowait(audio_response)
-
         async def emit(self) -> tuple[int, np.ndarray]:
-            if not self.args_set.is_set():
-                await self.wait_for_args()
-                asyncio.create_task(self.generator())
-
             array = await self.output_queue.get()
             return (self.output_sample_rate, array)
 
         def shutdown(self) -> None:
             self.quit.set()
             self.args_set.clear()
-            self.quit.clear()
     ```
 
 ## Text To Speech

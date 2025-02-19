@@ -36,13 +36,12 @@ class OpenAIHandler(AsyncStreamHandler):
             input_sample_rate=SAMPLE_RATE,
         )
         self.connection = None
-        self.connected = asyncio.Event()
         self.output_queue = asyncio.Queue()
 
     def copy(self):
         return OpenAIHandler()
 
-    async def _initialize_connection(
+    async def start_up(
         self,
     ):
         """Connect to realtime API. Run forever in separate thread to keep connection open."""
@@ -54,7 +53,6 @@ class OpenAIHandler(AsyncStreamHandler):
                 session={"turn_detection": {"type": "server_vad"}}
             )
             self.connection = conn
-            self.connected.set()
             async for event in self.connection:
                 if event.type == "response.audio_transcript.done":
                     await self.output_queue.put(AdditionalOutputs(event))
@@ -70,9 +68,7 @@ class OpenAIHandler(AsyncStreamHandler):
 
     async def receive(self, frame: tuple[int, np.ndarray]) -> None:
         if not self.connection:
-            await self.fetch_args()
-            asyncio.create_task(self._initialize_connection())
-            await self.connected.wait()
+            return
         try:
             _, array = frame
             array = array.squeeze()
@@ -86,15 +82,12 @@ class OpenAIHandler(AsyncStreamHandler):
             traceback.print_exc()
 
     async def emit(self) -> tuple[int, np.ndarray] | AdditionalOutputs | None:
-        if not self.connection:
-            return None
         return await self.output_queue.get()
 
     def reset_state(self):
         """Reset connection state for new recording session"""
         self.connection = None
         self.args_set.clear()
-        self.connected.clear()
 
     async def shutdown(self) -> None:
         if self.connection:
