@@ -33,6 +33,10 @@ Typically, you want to run a python function whenever a user has stopped speakin
 
 The `ReplyOnPause` class will handle the voice detection and turn taking logic automatically!
 
+!!! warning "Argument Order"
+
+    The first argument to the function must be the audio
+
 !!! tip "Parameters"
     You can customize the voice detection parameters by passing in `algo_options` and `model_options` to the `ReplyOnPause` class.
     ```python
@@ -287,3 +291,28 @@ You can do this by calling `await self.wait_for_args()` (for `AsyncStreamHandler
 
 
 We can access the value of this component via the `latest_args` property of the `StreamHandler`. The `latest_args` is a list storing each of the values. The 0th index is the dummy string `__webrtc_value__`.
+
+## Telephone Integration
+
+In order for your handler to work over the phone, you must make sure that your handler is not expecting any additional input data besides the audio.
+
+If you call `await self.wait_for_args()` your stream will wait forever for the additional input data.
+
+The stream handlers have a `phone_mode` property that is set to `True` if the stream is running over the phone. You can use this property to determine if you should wait for additional input data.
+
+```python
+def emit(self):
+    if self.phone_mode:
+        self.latest_args = [None]
+    else:
+        await self.wait_for_args()
+```
+
+### `ReplyOnPause`
+
+The generator you pass to `ReplyOnPause` must have default arguments for all arguments except audio.
+
+If you yield `AdditionalOutputs`, they will be passed in as the input arguments to the generator the next time it is called.
+
+!!! tip
+    See [Talk To Claude](https://huggingface.co/spaces/fastrtc/talk-to-claude) for an example of a `ReplyOnPause` handler that is compatible with telephone usage. Notice how the input chatbot history is yielded as an `AdditionalOutput` on each invocation.

@@ -206,7 +206,11 @@ stream.fastphone(
 )
 ```
 
-This will print out a phone number along with your temporary code you can use to connect to the stream. You are limited to **5 minutes** of calls per calendar month.
+This will print out a phone number along with your temporary code you can use to connect to the stream. You are limited to **10 minutes** of calls per calendar month.
+
+!!! warning
+
+    See this [section](../audio#telephone-integration) on making sure your stream handler is compatible for telephone usage.
 
 !!! tip
 
@@ -223,3 +227,4 @@ stream = Stream(
     concurrency_limit=10,
     time_limit=3600
 )
+```
