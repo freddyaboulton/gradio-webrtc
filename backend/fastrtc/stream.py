@@ -458,8 +458,10 @@ class Stream(WebRTCConnectionMixin):
         )
         host = urllib.parse.urlparse(url).netloc
 
+        URL = "https://api.fastrtc.org"
+
         r = httpx.post(
-            "https://api.fastphone.org/register",
+            URL + "/register",
             json={"url": host},
             headers={"Authorization": token or get_token() or ""},
         )
@@ -475,7 +477,14 @@ class Stream(WebRTCConnectionMixin):
             + click.style(code, fg="cyan")
             + " to connect to your stream."
         )
-
+        minutes = str(int(data["time_remaining"] // 60)).zfill(2)
+        seconds = str(int(data["time_remaining"] % 60)).zfill(2)
+        print(
+            click.style("INFO", fg="green")
+            + ":\t  You have "
+            + click.style(f"{minutes}:{seconds}", fg="cyan")
+            + " minutes remaining in your quota."
+        )
         try:
             while True:
                 time.sleep(0.1)
@@ -485,7 +494,7 @@ class Stream(WebRTCConnectionMixin):
                 + ":\t  Keyboard interruption in main thread... closing server."
             )
             r = httpx.post(
-                "https://api.fastphone.org/unregister",
+                URL + "/unregister",
                 json={"url": host, "code": code},
                 headers={"Authorization": token or get_token() or ""},
             )

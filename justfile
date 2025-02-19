@@ -15,11 +15,11 @@ run name:
 
 # Run the gradio ui for a demo
 gradio name:
-    python demo/{{name}}/app.py
+    MODE=UI python demo/{{name}}/app.py
 
 # Run a demo with phone mode
 phone name:
-    PHONE=1 python demo/{{name}}/app.py
+    MODE=PHONE python demo/{{name}}/app.py
 
 # Upload the latest wheel file to PyPI using twine
 publish:
