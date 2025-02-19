@@ -104,6 +104,49 @@
             opacity: 0.9;
             transform: translateY(-1px);
         }
+
+        .icon-with-spinner {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            min-width: 180px;
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid white;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            flex-shrink: 0;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .pulse-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            min-width: 180px;
+        }
+
+        .pulse-circle {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background-color: white;
+            opacity: 0.2;
+            flex-shrink: 0;
+            transform: translateX(-0%) scale(var(--audio-level, 1));
+            transition: transform 0.1s ease;
+        }
     </style>
 </head>
 
@@ -166,6 +209,26 @@
             boxContainer.appendChild(box);
         }
 
+        function updateButtonState() {
+            if (peerConnection && (peerConnection.connectionState === 'connecting' || peerConnection.connectionState === 'new')) {
+                startButton.innerHTML = `
+                    <div class="icon-with-spinner">
+                        <div class="spinner"></div>
+                        <span>Connecting...</span>
+                    </div>
+                `;
+            } else if (peerConnection && peerConnection.connectionState === 'connected') {
+                startButton.innerHTML = `
+                    <div class="pulse-container">
+                        <div class="pulse-circle"></div>
+                        <span>Stop Recording</span>
+                    </div>
+                `;
+            } else {
+                startButton.innerHTML = 'Start Recording';
+            }
+        }
+
         async function setupWebRTC() {
             const config = __RTC_CONFIGURATION__;
             peerConnection = new RTCPeerConnection(config);
@@ -175,11 +238,34 @@
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                 stream.getTracks().forEach(track => peerConnection.addTrack(track, stream));
 
+                // Update audio visualization setup
                 audioContext = new AudioContext();
-                analyser = audioContext.createAnalyser();
-                analyser.fftSize = 64;
-                analyser.smoothingTimeConstant = 0.8;
-                dataArray = new Uint8Array(analyser.frequencyBinCount);
+                analyser_input = audioContext.createAnalyser();
+                const source = audioContext.createMediaStreamSource(stream);
+                source.connect(analyser_input);
+                analyser_input.fftSize = 64;
+                dataArray_input = new Uint8Array(analyser_input.frequencyBinCount);
+
+                function updateAudioLevel() {
+                    analyser_input.getByteFrequencyData(dataArray_input);
+                    const average = Array.from(dataArray_input).reduce((a, b) => a + b, 0) / dataArray_input.length;
+                    const audioLevel = average / 255;
+
+                    const pulseCircle = document.querySelector('.pulse-circle');
+                    if (pulseCircle) {
+                        console.log("audioLevel", audioLevel);
+                        pulseCircle.style.setProperty('--audio-level', 1 + audioLevel);
+                    }
+
+                    animationId = requestAnimationFrame(updateAudioLevel);
+                }
+                updateAudioLevel();
+
+                // Add connection state change listener
+                peerConnection.addEventListener('connectionstatechange', () => {
+                    console.log('connectionstatechange', peerConnection.connectionState);
+                    updateButtonState();
+                });
 
                 // Handle incoming audio
                 peerConnection.addEventListener('track', (evt) => {
@@ -283,11 +369,9 @@
         startButton.addEventListener('click', () => {
             if (!isRecording) {
                 setupWebRTC();
-                startButton.textContent = 'Stop Recording';
                 startButton.classList.add('recording');
             } else {
                 stopWebRTC();
-                startButton.textContent = 'Start Recording';
                 startButton.classList.remove('recording');
             }
             isRecording = !isRecording;

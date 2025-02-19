@@ -80,12 +80,56 @@
         }
 
         button:hover {
-            background-color: #ffffff;
-            color: #0a0a0a;
+            border-width: 2px;
+            transform: scale(1.02);
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
         }
 
         #audio-output {
             display: none;
+        }
+
+        .icon-with-spinner {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            min-width: 180px;
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #ffffff;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            flex-shrink: 0;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .pulse-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            min-width: 180px;
+        }
+
+        .pulse-circle {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background-color: #ffffff;
+            opacity: 0.2;
+            flex-shrink: 0;
+            transform: translateX(-0%) scale(var(--audio-level, 1));
+            transition: transform 0.1s ease;
         }
     </style>
 </head>
@@ -111,7 +155,57 @@
         const startButton = document.getElementById('start-button');
         const chatMessages = document.getElementById('chat-messages');
 
+        let audioLevel = 0;
+        let animationFrame;
+        let audioContext, analyser, audioSource;
+
+        function updateButtonState() {
+            const button = document.getElementById('start-button');
+            if (peerConnection && (peerConnection.connectionState === 'connecting' || peerConnection.connectionState === 'new')) {
+                button.innerHTML = `
+                    <div class="icon-with-spinner">
+                        <div class="spinner"></div>
+                        <span>Connecting...</span>
+                    </div>
+                `;
+            } else if (peerConnection && peerConnection.connectionState === 'connected') {
+                button.innerHTML = `
+                    <div class="pulse-container">
+                        <div class="pulse-circle"></div>
+                        <span>Stop Conversation</span>
+                    </div>
+                `;
+            } else {
+                button.innerHTML = 'Start Conversation';
+            }
+        }
+
+        function setupAudioVisualization(stream) {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            analyser = audioContext.createAnalyser();
+            audioSource = audioContext.createMediaStreamSource(stream);
+            audioSource.connect(analyser);
+            analyser.fftSize = 64;
+            const dataArray = new Uint8Array(analyser.frequencyBinCount);
+
+            function updateAudioLevel() {
+                analyser.getByteFrequencyData(dataArray);
+                const average = Array.from(dataArray).reduce((a, b) => a + b, 0) / dataArray.length;
+                audioLevel = average / 255;
+
+                // Update CSS variable instead of rebuilding the button
+                const pulseCircle = document.querySelector('.pulse-circle');
+                if (pulseCircle) {
+                    pulseCircle.style.setProperty('--audio-level', 1 + audioLevel);
+                }
+
+                animationFrame = requestAnimationFrame(updateAudioLevel);
+            }
+            updateAudioLevel();
+        }
+
         async function setupWebRTC() {
+            isConnecting = true;
             const config = __RTC_CONFIGURATION__;
 
             peerConnection = new RTCPeerConnection(config);
@@ -120,6 +214,8 @@
                 const stream = await navigator.mediaDevices.getUserMedia({
                     audio: true
                 });
+
+                setupAudioVisualization(stream);
 
                 stream.getTracks().forEach(track => {
                     peerConnection.addTrack(track, stream);
@@ -149,6 +245,11 @@
                         };
                         peerConnection.addEventListener("icegatheringstatechange", checkState);
                     }
+                });
+
+                peerConnection.addEventListener('connectionstatechange', () => {
+                    console.log('connectionstatechange', peerConnection.connectionState);
+                    updateButtonState();
                 });
 
                 webrtc_id = Math.random().toString(36).substring(7);
@@ -186,6 +287,15 @@
         }
 
         function stop() {
+            if (animationFrame) {
+                cancelAnimationFrame(animationFrame);
+            }
+            if (audioContext) {
+                audioContext.close();
+                audioContext = null;
+                analyser = null;
+                audioSource = null;
+            }
             if (peerConnection) {
                 if (peerConnection.getTransceivers) {
                     peerConnection.getTransceivers().forEach(transceiver => {
@@ -200,20 +310,21 @@
                         if (sender.track && sender.track.stop) sender.track.stop();
                     });
                 }
-
-                setTimeout(() => {
-                    peerConnection.close();
-                }, 500);
+                console.log('closing');
+                peerConnection.close();
             }
+            updateButtonState();
+            audioLevel = 0;
         }
 
         startButton.addEventListener('click', () => {
-            if (startButton.textContent === 'Start Conversation') {
+            console.log('clicked');
+            console.log(peerConnection, peerConnection?.connectionState);
+            if (!peerConnection || peerConnection.connectionState !== 'connected') {
                 setupWebRTC();
-                startButton.textContent = 'Stop Conversation';
             } else {
+                console.log('stopping');
                 stop();
-                startButton.textContent = 'Start Conversation';
             }
         });
     </script>

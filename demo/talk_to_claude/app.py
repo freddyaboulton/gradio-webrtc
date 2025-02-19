@@ -116,9 +116,7 @@ def _(webrtc_id: str):
     async def output_stream():
         async for output in stream.output_stream(webrtc_id):
             chatbot = output.args[0]
-            if len(chatbot) > 1:
-                yield f"event: output\ndata: {json.dumps(chatbot[-2])}\n\n"
-                yield f"event: output\ndata: {json.dumps(chatbot[-1])}\n\n"
+            yield f"event: output\ndata: {json.dumps(chatbot[-1])}\n\n"
 
     return StreamingResponse(output_stream(), media_type="text/event-stream")
 

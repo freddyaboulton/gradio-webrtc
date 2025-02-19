@@ -17,26 +17,11 @@
         }
 
         .container {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
+            display: flex;
+            flex-direction: column;
             gap: 20px;
             height: calc(100% - 100px);
             margin-bottom: 20px;
-        }
-
-        .visualization-container {
-            border: 2px solid #00ff00;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            position: relative;
-        }
-
-        #visualizer {
-            width: 100%;
-            height: 100%;
-            background-color: #000;
         }
 
         .chat-container {
@@ -44,8 +29,39 @@
             padding: 20px;
             display: flex;
             flex-direction: column;
-            height: 100%;
+            flex-grow: 1;
             box-sizing: border-box;
+        }
+
+        .controls-container {
+            border: 2px solid #00ff00;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            height: 128px;
+            box-sizing: border-box;
+        }
+
+        .visualization-container {
+            flex-grow: 1;
+            display: flex;
+            align-items: center;
+        }
+
+        .box-container {
+            display: flex;
+            justify-content: space-between;
+            height: 64px;
+            width: 100%;
+        }
+
+        .box {
+            height: 100%;
+            width: 8px;
+            background: #00ff00;
+            border-radius: 8px;
+            transition: transform 0.05s ease;
         }
 
         .chat-messages {
@@ -70,11 +86,9 @@
             background-color: #002200;
         }
 
-        .controls {
-            text-align: center;
-        }
-
         button {
+            height: 64px;
+            min-width: 120px;
             background-color: #000;
             color: #00ff00;
             border: 2px solid #00ff00;
@@ -86,8 +100,7 @@
         }
 
         button:hover {
-            background-color: #00ff00;
-            color: #000;
+            border-width: 3px;
         }
 
         #audio-output {
@@ -108,49 +121,155 @@
                     transparent 2px);
             pointer-events: none;
         }
+
+        /* Add these new styles */
+        .icon-with-spinner {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            min-width: 180px;
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #00ff00;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            flex-shrink: 0;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .pulse-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            min-width: 180px;
+        }
+
+        .pulse-circle {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background-color: #00ff00;
+            opacity: 0.2;
+            flex-shrink: 0;
+            transform: translateX(-0%) scale(var(--audio-level, 1));
+            transition: transform 0.1s ease;
+        }
+
+        /* Add styles for typing indicator */
+        .typing-indicator {
+            padding: 8px;
+            background-color: #002200;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            display: none;
+        }
+
+        .dots {
+            display: inline-flex;
+            gap: 4px;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            background-color: #00ff00;
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+            opacity: 0.5;
+        }
+
+        .dot:nth-child(2) {
+            animation-delay: 0.5s;
+        }
+
+        .dot:nth-child(3) {
+            animation-delay: 1s;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 0.5;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 1;
+                transform: scale(1.2);
+            }
+        }
     </style>
 </head>
 
 <body>
     <div class="container">
-        <div class="visualization-container">
-            <canvas id="visualizer"></canvas>
-            <div class="crt-overlay"></div>
-        </div>
         <div class="chat-container">
             <div class="chat-messages" id="chat-messages"></div>
+            <!-- Move typing indicator outside the chat messages -->
+            <div class="typing-indicator" id="typing-indicator">
+                <div class="dots">
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                </div>
+            </div>
         </div>
-    </div>
-    <div class="controls">
-        <button id="start-button">Start</button>
+        <div class="controls-container">
+            <div class="visualization-container">
+                <div class="box-container">
+                    <!-- Boxes will be dynamically added here -->
+                </div>
+            </div>
+            <button id="start-button">Start</button>
+        </div>
     </div>
     <audio id="audio-output"></audio>
 
     <script>
         let audioContext;
-        let analyser;
-        let dataArray;
-        let animationId;
+        let analyser_input, analyser_output;
+        let dataArray_input, dataArray_output;
+        let animationId_input, animationId_output;
         let chatHistory = [];
         let peerConnection;
         let webrtc_id;
 
-        const visualizer = document.getElementById('visualizer');
-        const ctx = visualizer.getContext('2d');
         const audioOutput = document.getElementById('audio-output');
         const startButton = document.getElementById('start-button');
         const chatMessages = document.getElementById('chat-messages');
 
-        // Set canvas size
-        function resizeCanvas() {
-            visualizer.width = visualizer.offsetWidth;
-            visualizer.height = visualizer.offsetHeight;
+        function updateButtonState() {
+            if (peerConnection && (peerConnection.connectionState === 'connecting' || peerConnection.connectionState === 'new')) {
+                startButton.innerHTML = `
+                    <div class="icon-with-spinner">
+                        <div class="spinner"></div>
+                        <span>Connecting...</span>
+                    </div>
+                `;
+            } else if (peerConnection && peerConnection.connectionState === 'connected') {
+                startButton.innerHTML = `
+                    <div class="pulse-container">
+                        <div class="pulse-circle"></div>
+                        <span>Stop</span>
+                    </div>
+                `;
+            } else {
+                startButton.innerHTML = 'Start';
+            }
         }
 
-        window.addEventListener('resize', resizeCanvas);
-        resizeCanvas();
-
-        // Initialize WebRTC
         async function setupWebRTC() {
             const config = __RTC_CONFIGURATION__;
             peerConnection = new RTCPeerConnection(config);
@@ -160,25 +279,51 @@
                     audio: true
                 });
 
+                // Set up input visualization
+                audioContext = new AudioContext();
+                analyser_input = audioContext.createAnalyser();
+                const inputSource = audioContext.createMediaStreamSource(stream);
+                inputSource.connect(analyser_input);
+                analyser_input.fftSize = 64;
+                dataArray_input = new Uint8Array(analyser_input.frequencyBinCount);
+
+                function updateAudioLevel() {
+                    analyser_input.getByteFrequencyData(dataArray_input);
+                    const average = Array.from(dataArray_input).reduce((a, b) => a + b, 0) / dataArray_input.length;
+                    const audioLevel = average / 255;
+
+                    const pulseCircle = document.querySelector('.pulse-circle');
+                    if (pulseCircle) {
+                        pulseCircle.style.setProperty('--audio-level', 1 + audioLevel);
+                    }
+
+                    animationId_input = requestAnimationFrame(updateAudioLevel);
+                }
+                updateAudioLevel();
+
                 stream.getTracks().forEach(track => {
                     peerConnection.addTrack(track, stream);
                 });
 
-                // Audio visualization will be set up when we receive the output stream
+                // Add connection state change listener
+                peerConnection.addEventListener('connectionstatechange', () => {
+                    console.log('Connection state:', peerConnection.connectionState);
+                    updateButtonState();
+                });
 
                 // Handle incoming audio
                 peerConnection.addEventListener('track', (evt) => {
-                    if (audioOutput && audioOutput.srcObject !== evt.streams[0]) {
+                    if (audioOutput.srcObject !== evt.streams[0]) {
                         audioOutput.srcObject = evt.streams[0];
                         audioOutput.play();
 
-                        // Set up audio visualization on the output stream
-                        audioContext = new AudioContext();
-                        analyser = audioContext.createAnalyser();
-                        const source = audioContext.createMediaStreamSource(evt.streams[0]);
-                        source.connect(analyser);
-                        analyser.fftSize = 2048;
-                        dataArray = new Uint8Array(analyser.frequencyBinCount);
+                        // Set up output visualization
+                        analyser_output = audioContext.createAnalyser();
+                        const outputSource = audioContext.createMediaStreamSource(evt.streams[0]);
+                        outputSource.connect(analyser_output);
+                        analyser_output.fftSize = 2048;
+                        dataArray_output = new Uint8Array(analyser_output.frequencyBinCount);
+                        updateVisualization();
                     }
                 });
 
@@ -220,7 +365,7 @@
                 await peerConnection.setRemoteDescription(serverResponse);
 
                 // Start visualization
-                draw();
+                updateVisualization();
 
                 // create event stream to receive messages from /output
                 const eventSource = new EventSource('/outputs?webrtc_id=' + webrtc_id);
@@ -235,6 +380,8 @@
 
         function handleMessage(event) {
             const eventJson = JSON.parse(event.data);
+            const typingIndicator = document.getElementById('typing-indicator');
+
             if (eventJson.type === "send_input") {
                 fetch('/input_hook', {
                     method: 'POST',
@@ -246,6 +393,13 @@
                         chatbot: chatHistory
                     })
                 });
+            } else if (eventJson.type === "log") {
+                if (eventJson.data === "pause_detected") {
+                    typingIndicator.style.display = 'block';
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                } else if (eventJson.data === "response_starting") {
+                    typingIndicator.style.display = 'none';
+                }
             }
         }
 
@@ -258,36 +412,26 @@
             chatHistory.push({ role, content });
         }
 
-        function draw() {
-            animationId = requestAnimationFrame(draw);
+        // Add this after other const declarations
+        const boxContainer = document.querySelector('.box-container');
+        const numBars = 32;
+        for (let i = 0; i < numBars; i++) {
+            const box = document.createElement('div');
+            box.className = 'box';
+            boxContainer.appendChild(box);
+        }
 
-            analyser.getByteTimeDomainData(dataArray);
+        // Replace the draw function with updateVisualization
+        function updateVisualization() {
+            animationId_output = requestAnimationFrame(updateVisualization);
 
-            ctx.fillStyle = 'rgb(0, 0, 0)';
-            ctx.fillRect(0, 0, visualizer.width, visualizer.height);
+            analyser_output.getByteFrequencyData(dataArray_output);
+            const bars = document.querySelectorAll('.box');
 
-            ctx.lineWidth = 2;
-            ctx.strokeStyle = 'rgb(0, 255, 0)';
-            ctx.beginPath();
-
-            const sliceWidth = visualizer.width / dataArray.length;
-            let x = 0;
-
-            for (let i = 0; i < dataArray.length; i++) {
-                const v = dataArray[i] / 128.0;
-                const y = v * visualizer.height / 2;
-
-                if (i === 0) {
-                    ctx.moveTo(x, y);
-                } else {
-                    ctx.lineTo(x, y);
-                }
-
-                x += sliceWidth;
+            for (let i = 0; i < bars.length; i++) {
+                const barHeight = (dataArray_output[i] / 255) * 2;
+                bars[i].style.transform = `scaleY(${Math.max(0.1, barHeight)})`;
             }
-
-            ctx.lineTo(visualizer.width, visualizer.height / 2);
-            ctx.stroke();
         }
 
         function stop() {
@@ -306,27 +450,27 @@
                     });
                 }
 
-                setTimeout(() => {
-                    peerConnection.close();
-                }, 500);
+                peerConnection.close();
             }
 
-            if (animationId) {
-                cancelAnimationFrame(animationId);
+            if (animationId_input) {
+                cancelAnimationFrame(animationId_input);
             }
-
+            if (animationId_output) {
+                cancelAnimationFrame(animationId_output);
+            }
             if (audioContext) {
                 audioContext.close();
             }
+
+            updateButtonState();
         }
 
         startButton.addEventListener('click', () => {
             if (startButton.textContent === 'Start') {
                 setupWebRTC();
-                startButton.textContent = 'Stop';
             } else {
                 stop();
-                startButton.textContent = 'Start';
             }
         });
     </script>
