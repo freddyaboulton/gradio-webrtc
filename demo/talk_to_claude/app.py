@@ -1,5 +1,6 @@
 import json
 import os
+import time
 from pathlib import Path
 
 import anthropic
@@ -13,6 +14,7 @@ from fastrtc import (
     AdditionalOutputs,
     ReplyOnPause,
     Stream,
+    WebRTCError,
     get_tts_model,
     get_twilio_turn_credentials,
 )
@@ -36,38 +38,41 @@ def response(
     audio: tuple[int, np.ndarray],
     chatbot: list[dict] | None = None,
 ):
-    chatbot = chatbot or []
-    messages = [{"role": d["role"], "content": d["content"]} for d in chatbot]
-    prompt = groq_client.audio.transcriptions.create(
-        file=("audio-file.mp3", audio_to_bytes(audio)),
-        model="whisper-large-v3-turbo",
-        response_format="verbose_json",
-    ).text
-    print("prompt", prompt)
-    chatbot.append({"role": "user", "content": prompt})
-    yield AdditionalOutputs(chatbot)
-    messages.append({"role": "user", "content": prompt})
-    response = claude_client.messages.create(
-        model="claude-3-5-haiku-20241022",
-        max_tokens=512,
-        messages=messages,  # type: ignore
-    )
-    response_text = " ".join(
-        block.text  # type: ignore
-        for block in response.content
-        if getattr(block, "type", None) == "text"
-    )
-    chatbot.append({"role": "assistant", "content": response_text})
-    import time
+    try:
+        chatbot = chatbot or []
+        messages = [{"role": d["role"], "content": d["content"]} for d in chatbot]
+        prompt = groq_client.audio.transcriptions.create(
+            file=("audio-file.mp3", audio_to_bytes(audio)),
+            model="whisper-large-v3-turbo",
+            response_format="verbose_json",
+        ).text
 
-    start = time.time()
+        print("prompt", prompt)
+        chatbot.append({"role": "user", "content": prompt})
+        yield AdditionalOutputs(chatbot)
+        messages.append({"role": "user", "content": prompt})
+        response = claude_client.messages.create(
+            model="claude-3-5-haiku-20241022",
+            max_tokens=512,
+            messages=messages,  # type: ignore
+        )
+        response_text = " ".join(
+            block.text  # type: ignore
+            for block in response.content
+            if getattr(block, "type", None) == "text"
+        )
+        chatbot.append({"role": "assistant", "content": response_text})
 
-    print("starting tts", start)
-    for i, chunk in enumerate(tts_model.stream_tts_sync(response_text)):
-        print("chunk", i, time.time() - start)
-        yield chunk
-    print("finished tts", time.time() - start)
-    yield AdditionalOutputs(chatbot)
+        start = time.time()
+
+        print("starting tts", start)
+        for i, chunk in enumerate(tts_model.stream_tts_sync(response_text)):
+            print("chunk", i, time.time() - start)
+            yield chunk
+            print("finished tts", time.time() - start)
+            yield AdditionalOutputs(chatbot)
+    except Exception as e:
+        raise WebRTCError(str(e))
 
 
 chatbot = gr.Chatbot(type="messages")

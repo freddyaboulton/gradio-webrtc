@@ -72,6 +72,7 @@
             cursor: pointer;
             transition: all 0.2s ease;
             font-weight: 500;
+            min-width: 180px;
         }
 
         button:hover {
@@ -112,10 +113,72 @@
         .transcript-container::-webkit-scrollbar-thumb:hover {
             background: #f9a45c;
         }
+
+        /* Add styles for toast notifications */
+        .toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #f44336;
+            color: white;
+            padding: 16px 24px;
+            border-radius: 4px;
+            font-size: 14px;
+            z-index: 1000;
+            display: none;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Add styles for audio visualization */
+        .icon-with-spinner {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            min-width: 180px;
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid white;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            flex-shrink: 0;
+        }
+
+        .pulse-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            min-width: 180px;
+        }
+
+        .pulse-circle {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background-color: white;
+            opacity: 0.2;
+            flex-shrink: 0;
+            transform: translateX(-0%) scale(var(--audio-level, 1));
+            transition: transform 0.1s ease;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
     </style>
 </head>
 
 <body>
+    <!-- Add toast element after body opening tag -->
+    <div id="error-toast" class="toast"></div>
     <div class="hero">
         <h1>Real-time Transcription</h1>
         <p>Powered by Groq and FastRTC</p>
@@ -131,9 +194,75 @@
     <script>
         let peerConnection;
         let webrtc_id;
+        let audioContext, analyser, audioSource;
+        let audioLevel = 0;
+        let animationFrame;
 
         const startButton = document.getElementById('start-button');
         const transcriptDiv = document.getElementById('transcript');
+
+        function showError(message) {
+            const toast = document.getElementById('error-toast');
+            toast.textContent = message;
+            toast.style.display = 'block';
+
+            // Hide toast after 5 seconds
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 5000);
+        }
+
+        function handleMessage(event) {
+            // Handle any WebRTC data channel messages if needed
+            const eventJson = JSON.parse(event.data);
+            if (eventJson.type === "error") {
+                showError(eventJson.message);
+            }
+            console.log('Received message:', event.data);
+        }
+
+        function updateButtonState() {
+            if (peerConnection && (peerConnection.connectionState === 'connecting' || peerConnection.connectionState === 'new')) {
+                startButton.innerHTML = `
+                    <div class="icon-with-spinner">
+                        <div class="spinner"></div>
+                        <span>Connecting...</span>
+                    </div>
+                `;
+            } else if (peerConnection && peerConnection.connectionState === 'connected') {
+                startButton.innerHTML = `
+                    <div class="pulse-container">
+                        <div class="pulse-circle"></div>
+                        <span>Stop Recording</span>
+                    </div>
+                `;
+            } else {
+                startButton.innerHTML = 'Start Recording';
+            }
+        }
+
+        function setupAudioVisualization(stream) {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            analyser = audioContext.createAnalyser();
+            audioSource = audioContext.createMediaStreamSource(stream);
+            audioSource.connect(analyser);
+            analyser.fftSize = 64;
+            const dataArray = new Uint8Array(analyser.frequencyBinCount);
+
+            function updateAudioLevel() {
+                analyser.getByteFrequencyData(dataArray);
+                const average = Array.from(dataArray).reduce((a, b) => a + b, 0) / dataArray.length;
+                audioLevel = average / 255;
+
+                const pulseCircle = document.querySelector('.pulse-circle');
+                if (pulseCircle) {
+                    pulseCircle.style.setProperty('--audio-level', 1 + audioLevel);
+                }
+
+                animationFrame = requestAnimationFrame(updateAudioLevel);
+            }
+            updateAudioLevel();
+        }
 
         async function setupWebRTC() {
             const config = __RTC_CONFIGURATION__;
@@ -144,8 +273,16 @@
                     audio: true
                 });
 
+                setupAudioVisualization(stream);
+
                 stream.getTracks().forEach(track => {
                     peerConnection.addTrack(track, stream);
+                });
+
+                // Add connection state change listener
+                peerConnection.addEventListener('connectionstatechange', () => {
+                    console.log('connectionstatechange', peerConnection.connectionState);
+                    updateButtonState();
                 });
 
                 // Create data channel for messages
@@ -183,6 +320,16 @@
                 });
 
                 const serverResponse = await response.json();
+
+                if (serverResponse.status === 'failed') {
+                    showError(serverResponse.meta.error === 'concurrency_limit_reached'
+                        ? `Too many connections. Maximum limit is ${serverResponse.meta.limit}`
+                        : serverResponse.meta.error);
+                    stop();
+                    startButton.textContent = 'Start Recording';
+                    return;
+                }
+
                 await peerConnection.setRemoteDescription(serverResponse);
 
                 // Create event stream to receive transcripts
@@ -192,12 +339,10 @@
                 });
             } catch (err) {
                 console.error('Error setting up WebRTC:', err);
+                showError('Failed to establish connection. Please try again.');
+                stop();
+                startButton.textContent = 'Start Recording';
             }
-        }
-
-        function handleMessage(event) {
-            // Handle any WebRTC data channel messages if needed
-            console.log('Received message:', event.data);
         }
 
         function appendTranscript(text) {
@@ -208,6 +353,15 @@
         }
 
         function stop() {
+            if (animationFrame) {
+                cancelAnimationFrame(animationFrame);
+            }
+            if (audioContext) {
+                audioContext.close();
+                audioContext = null;
+                analyser = null;
+                audioSource = null;
+            }
             if (peerConnection) {
                 if (peerConnection.getTransceivers) {
                     peerConnection.getTransceivers().forEach(transceiver => {
@@ -227,15 +381,15 @@
                     peerConnection.close();
                 }, 500);
             }
+            audioLevel = 0;
+            updateButtonState();
         }
 
         startButton.addEventListener('click', () => {
             if (startButton.textContent === 'Start Recording') {
                 setupWebRTC();
-                startButton.textContent = 'Stop Recording';
             } else {
                 stop();
-                startButton.textContent = 'Start Recording';
             }
         });
     </script>

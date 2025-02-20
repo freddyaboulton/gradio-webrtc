@@ -13,6 +13,7 @@ from fastapi.responses import HTMLResponse
 from fastrtc import (
     AsyncStreamHandler,
     Stream,
+    WebRTCError,
     get_twilio_turn_credentials,
 )
 from google import genai
@@ -67,10 +68,13 @@ class GeminiHandler(AsyncStreamHandler):
             api_key, voice_name = self.latest_args[1:]
         else:
             api_key, voice_name = None, "Puck"
-        client = genai.Client(
-            api_key=api_key or os.getenv("GEMINI_API_KEY"),
-            http_options={"api_version": "v1alpha"},
-        )
+        try:
+            client = genai.Client(
+                api_key=api_key or os.getenv("GEMINI_API_KEY"),
+                http_options={"api_version": "v1alpha"},
+            )
+        except Exception as e:
+            raise WebRTCError(str(e))
         config = LiveConnectConfig(
             response_modalities=["AUDIO"],  # type: ignore
             speech_config=SpeechConfig(
@@ -81,15 +85,18 @@ class GeminiHandler(AsyncStreamHandler):
                 )
             ),
         )
-        async with client.aio.live.connect(
-            model="gemini-2.0-flash-exp", config=config
-        ) as session:
-            async for audio in session.start_stream(
-                stream=self.stream(), mime_type="audio/pcm"
-            ):
-                if audio.data:
-                    array = np.frombuffer(audio.data, dtype=np.int16)
-                    self.output_queue.put_nowait(array)
+        try:
+            async with client.aio.live.connect(
+                model="gemini-2.0-flash-exp", config=config
+            ) as session:
+                async for audio in session.start_stream(
+                    stream=self.stream(), mime_type="audio/pcm"
+                ):
+                    if audio.data:
+                        array = np.frombuffer(audio.data, dtype=np.int16)
+                        self.output_queue.put_nowait(array)
+        except Exception as e:
+            raise WebRTCError(str(e))
 
     async def stream(self) -> AsyncGenerator[bytes, None]:
         while not self.quit.is_set():

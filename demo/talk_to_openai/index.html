@@ -131,10 +131,28 @@
             transform: translateX(-0%) scale(var(--audio-level, 1));
             transition: transform 0.1s ease;
         }
+
+        /* Add styles for toast notifications */
+        .toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #f44336;
+            color: white;
+            padding: 16px 24px;
+            border-radius: 4px;
+            font-size: 14px;
+            z-index: 1000;
+            display: none;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
     </style>
 </head>
 
 <body>
+    <!-- Add toast element after body opening tag -->
+    <div id="error-toast" class="toast"></div>
     <div class="container">
         <div class="logo">
             <h1>OpenAI Real-Time Chat</h1>
@@ -204,6 +222,17 @@
             updateAudioLevel();
         }
 
+        function showError(message) {
+            const toast = document.getElementById('error-toast');
+            toast.textContent = message;
+            toast.style.display = 'block';
+
+            // Hide toast after 5 seconds
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 5000);
+        }
+
         async function setupWebRTC() {
             isConnecting = true;
             const config = __RTC_CONFIGURATION__;
@@ -229,6 +258,12 @@
                 });
 
                 const dataChannel = peerConnection.createDataChannel('text');
+                dataChannel.onmessage = (event) => {
+                    const eventJson = JSON.parse(event.data);
+                    if (eventJson.type === "error") {
+                        showError(eventJson.message);
+                    }
+                };
 
                 const offer = await peerConnection.createOffer();
                 await peerConnection.setLocalDescription(offer);
@@ -265,6 +300,15 @@
                 });
 
                 const serverResponse = await response.json();
+
+                if (serverResponse.status === 'failed') {
+                    showError(serverResponse.meta.error === 'concurrency_limit_reached'
+                        ? `Too many connections. Maximum limit is ${serverResponse.meta.limit}`
+                        : serverResponse.meta.error);
+                    stop();
+                    return;
+                }
+
                 await peerConnection.setRemoteDescription(serverResponse);
 
                 const eventSource = new EventSource('/outputs?webrtc_id=' + webrtc_id);
@@ -275,6 +319,8 @@
                 });
             } catch (err) {
                 console.error('Error setting up WebRTC:', err);
+                showError('Failed to establish connection. Please try again.');
+                stop();
             }
         }
 

@@ -38,30 +38,29 @@ def response(
 ):
     gradio_chatbot = gradio_chatbot or []
     conversation_state = conversation_state or []
-
-    text = stt(audio)
-    sample_rate, array = audio
-    gradio_chatbot.append(
-        {"role": "user", "content": gr.Audio((sample_rate, array.squeeze()))}
-    )
-    yield AdditionalOutputs(gradio_chatbot, conversation_state)
-
-    conversation_state.append({"role": "user", "content": text})
-
     try:
+        text = stt(audio)
+        sample_rate, array = audio
+        gradio_chatbot.append(
+            {"role": "user", "content": gr.Audio((sample_rate, array.squeeze()))}
+        )
+        yield AdditionalOutputs(gradio_chatbot, conversation_state)
+
+        conversation_state.append({"role": "user", "content": text})
+
         request = client.chat.completions.create(
             model="Meta-Llama-3.2-3B-Instruct",
-            messages=conversation_state,
+            messages=conversation_state,  # type: ignore
             temperature=0.1,
             top_p=0.1,
         )
         response = {"role": "assistant", "content": request.choices[0].message.content}
 
-    except Exception:
+    except Exception as e:
         import traceback
 
         traceback.print_exc()
-        raise WebRTCError(traceback.format_exc())
+        raise WebRTCError(str(e) + "\n" + traceback.format_exc())
 
     conversation_state.append(response)
     gradio_chatbot.append(response)

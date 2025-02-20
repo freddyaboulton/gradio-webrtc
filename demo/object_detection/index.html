@@ -112,10 +112,28 @@
             border-radius: 50%;
             cursor: pointer;
         }
+
+        /* Add styles for toast notifications */
+        .toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #f44336;
+            color: white;
+            padding: 16px 24px;
+            border-radius: 4px;
+            font-size: 14px;
+            z-index: 1000;
+            display: none;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
     </style>
 </head>
 
 <body>
+    <!-- Add toast element after body opening tag -->
+    <div id="error-toast" class="toast"></div>
     <div class="container">
         <h1>Real-time Object Detection</h1>
         <p>Using YOLOv10 to detect objects in your webcam feed</p>
@@ -160,6 +178,17 @@
             });
         }
 
+        function showError(message) {
+            const toast = document.getElementById('error-toast');
+            toast.textContent = message;
+            toast.style.display = 'block';
+
+            // Hide toast after 5 seconds
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 5000);
+        }
+
         async function setupWebRTC() {
             const config = __RTC_CONFIGURATION__;
             peerConnection = new RTCPeerConnection(config);
@@ -182,7 +211,9 @@
                 const dataChannel = peerConnection.createDataChannel('text');
                 dataChannel.onmessage = (event) => {
                     const eventJson = JSON.parse(event.data);
-                    if (eventJson.type === "send_input") {
+                    if (eventJson.type === "error") {
+                        showError(eventJson.message);
+                    } else if (eventJson.type === "send_input") {
                         updateConfThreshold(confThreshold.value);
                     }
                 };
@@ -217,6 +248,16 @@
                 });
 
                 const serverResponse = await response.json();
+
+                if (serverResponse.status === 'failed') {
+                    showError(serverResponse.meta.error === 'concurrency_limit_reached'
+                        ? `Too many connections. Maximum limit is ${serverResponse.meta.limit}`
+                        : serverResponse.meta.error);
+                    stop();
+                    startButton.textContent = 'Start';
+                    return;
+                }
+
                 await peerConnection.setRemoteDescription(serverResponse);
 
                 // Send initial confidence threshold
@@ -224,6 +265,9 @@
 
             } catch (err) {
                 console.error('Error setting up WebRTC:', err);
+                showError('Failed to establish connection. Please try again.');
+                stop();
+                startButton.textContent = 'Start';
             }
         }
 

@@ -210,10 +210,28 @@
                 transform: scale(1.2);
             }
         }
+
+        /* Add styles for toast notifications */
+        .toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #f44336;
+            color: white;
+            padding: 16px 24px;
+            border-radius: 4px;
+            font-size: 14px;
+            z-index: 1000;
+            display: none;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
     </style>
 </head>
 
 <body>
+    <!-- Add toast element after body opening tag -->
+    <div id="error-toast" class="toast"></div>
     <div class="container">
         <div class="chat-container">
             <div class="chat-messages" id="chat-messages"></div>
@@ -268,6 +286,17 @@
             } else {
                 startButton.innerHTML = 'Start';
             }
+        }
+
+        function showError(message) {
+            const toast = document.getElementById('error-toast');
+            toast.textContent = message;
+            toast.style.display = 'block';
+
+            // Hide toast after 5 seconds
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 5000);
         }
 
         async function setupWebRTC() {
@@ -329,7 +358,32 @@
 
                 // Create data channel for messages
                 const dataChannel = peerConnection.createDataChannel('text');
-                dataChannel.onmessage = handleMessage;
+                dataChannel.onmessage = (event) => {
+                    const eventJson = JSON.parse(event.data);
+                    const typingIndicator = document.getElementById('typing-indicator');
+
+                    if (eventJson.type === "error") {
+                        showError(eventJson.message);
+                    } else if (eventJson.type === "send_input") {
+                        fetch('/input_hook', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                webrtc_id: webrtc_id,
+                                chatbot: chatHistory
+                            })
+                        });
+                    } else if (eventJson.type === "log") {
+                        if (eventJson.data === "pause_detected") {
+                            typingIndicator.style.display = 'block';
+                            chatMessages.scrollTop = chatMessages.scrollHeight;
+                        } else if (eventJson.data === "response_starting") {
+                            typingIndicator.style.display = 'none';
+                        }
+                    }
+                };
 
                 // Create and send offer
                 const offer = await peerConnection.createOffer();
@@ -362,6 +416,15 @@
                 });
 
                 const serverResponse = await response.json();
+
+                if (serverResponse.status === 'failed') {
+                    showError(serverResponse.meta.error === 'concurrency_limit_reached'
+                        ? `Too many connections. Maximum limit is ${serverResponse.meta.limit}`
+                        : serverResponse.meta.error);
+                    stop();
+                    return;
+                }
+
                 await peerConnection.setRemoteDescription(serverResponse);
 
                 // Start visualization
@@ -375,31 +438,8 @@
                 });
             } catch (err) {
                 console.error('Error setting up WebRTC:', err);
-            }
-        }
-
-        function handleMessage(event) {
-            const eventJson = JSON.parse(event.data);
-            const typingIndicator = document.getElementById('typing-indicator');
-
-            if (eventJson.type === "send_input") {
-                fetch('/input_hook', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        webrtc_id: webrtc_id,
-                        chatbot: chatHistory
-                    })
-                });
-            } else if (eventJson.type === "log") {
-                if (eventJson.data === "pause_detected") {
-                    typingIndicator.style.display = 'block';
-                    chatMessages.scrollTop = chatMessages.scrollHeight;
-                } else if (eventJson.data === "response_starting") {
-                    typingIndicator.style.display = 'none';
-                }
+                showError('Failed to establish connection. Please try again.');
+                stop();
             }
         }
 

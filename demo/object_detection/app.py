@@ -5,7 +5,7 @@ import cv2
 import gradio as gr
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
-from fastrtc import Stream, get_twilio_turn_credentials
+from fastrtc import Stream, WebRTCError, get_twilio_turn_credentials
 from gradio.utils import get_space
 from huggingface_hub import hf_hub_download
 from pydantic import BaseModel, Field
@@ -26,10 +26,16 @@ model = YOLOv10(model_file)
 
 
 def detection(image, conf_threshold=0.3):
-    image = cv2.resize(image, (model.input_width, model.input_height))
-    print("conf_threshold", conf_threshold)
-    new_image = model.detect_objects(image, conf_threshold)
-    return cv2.resize(new_image, (500, 500))
+    try:
+        image = cv2.resize(image, (model.input_width, model.input_height))
+        print("conf_threshold", conf_threshold)
+        new_image = model.detect_objects(image, conf_threshold)
+        return cv2.resize(new_image, (500, 500))
+    except Exception as e:
+        import traceback
+
+        traceback.print_exc()
+        raise WebRTCError(str(e))
 
 
 stream = Stream(
