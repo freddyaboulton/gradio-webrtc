@@ -1,0 +1,3 @@
+fastrtc[stopword]
+python-dotenv
+openai

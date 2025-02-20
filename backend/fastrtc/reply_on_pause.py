@@ -57,6 +57,7 @@ class AppState:
     responding: bool = False
     stopped: bool = False
     buffer: np.ndarray | None = None
+    responded_audio: bool = False
 
 
 ReplyFnGenerator = (
@@ -216,11 +217,14 @@ class ReplyOnPause(StreamHandler):
                 audio, additional_outputs = split_output(output)
                 if audio is not None:
                     self.send_message_sync(create_message("log", "response_starting"))
+                    self.state.responded_audio = True
                 if self.phone_mode:
                     if additional_outputs:
                         self.latest_args = [None] + list(additional_outputs.args)
                 return output
             except (StopIteration, StopAsyncIteration):
+                if not self.state.responded_audio:
+                    self.send_message_sync(create_message("log", "response_starting"))
                 self.reset()
             except Exception as e:
                 import traceback

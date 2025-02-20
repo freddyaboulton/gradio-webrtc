@@ -280,30 +280,31 @@ class Stream(WebRTCConnectionMixin):
                 """
                 )
                 with gr.Row():
-                    if additional_input_components:
-                        with gr.Column():
-                            for component in additional_input_components:
-                                component.render()
                     with gr.Column():
-                        output_video = WebRTC(
-                            label="Audio Stream",
-                            rtc_configuration=self.rtc_configuration,
-                            mode="send",
-                            modality="audio",
-                        )
-                        for component in additional_output_components:
-                            if component not in same_components:
+                        with gr.Group():
+                            image = WebRTC(
+                                label="Stream",
+                                rtc_configuration=self.rtc_configuration,
+                                mode="send-receive",
+                                modality="audio",
+                            )
+                            for component in additional_input_components:
+                                if component not in same_components:
+                                    component.render()
+                    if additional_output_components:
+                        with gr.Column():
+                            for component in additional_output_components:
                                 component.render()
-                output_video.stream(
+                image.stream(
                     fn=self.event_handler,
-                    inputs=[output_video] + additional_input_components,
-                    outputs=[output_video],
+                    inputs=[image] + additional_input_components,
+                    outputs=[image],
                     time_limit=self.time_limit,
                     concurrency_limit=self.concurrency_limit,  # type: ignore
                 )
                 if additional_output_components:
                     assert self.additional_outputs_handler
-                    output_video.on_additional_outputs(
+                    image.on_additional_outputs(
                         self.additional_outputs_handler,
                         inputs=additional_output_components,
                         outputs=additional_output_components,

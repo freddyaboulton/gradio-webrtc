@@ -439,6 +439,10 @@ class AudioCallback(AudioStreamTrack):
         current_channel.set(self.event_handler.channel)
         return cast(Callable, self.event_handler.receive)(frame)
 
+    def event_handler_emit(self) -> EmitType:
+        current_channel.set(self.event_handler.channel)
+        return cast(Callable, self.event_handler.emit)()
+
     async def process_input_frames(self) -> None:
         while not self.thread_quit.is_set():
             try:
@@ -465,7 +469,7 @@ class AudioCallback(AudioStreamTrack):
                 start_up = self.event_handler.start_up()
             else:
                 callable = functools.partial(
-                    loop.run_in_executor, None, self.event_handler.emit
+                    loop.run_in_executor, None, self.event_handler_emit
                 )
                 start_up = anyio.to_thread.run_sync(self.event_handler.start_up)
             self.process_input_task = asyncio.create_task(self.process_input_frames())
