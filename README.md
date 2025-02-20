@@ -22,42 +22,109 @@ Turn any python function into a real-time audio and video stream over WebRTC or 
 pip install fastrtc
 ```
 
-to use built-in pause detection (see [ReplyOnPause](https://freddyaboulton.github.io/gradio-webrtc//user-guide/#reply-on-pause)), install the `vad` extra:
+to use built-in pause detection (see [ReplyOnPause](userguide/audio/#reply-on-pause)), and text to speech (see [Text To Speech](userguide/audio/#text-to-speech)), install the `vad` and `tts` extras:
 
 ```bash
-pip install fastrtc[vad]
+pip install fastrtc[vad, tts]
 ```
 
-For stop word detection (see [ReplyOnStopWords](https://freddyaboulton.github.io/gradio-webrtc//user-guide/#reply-on-stopwords)), install the `stopword` extra:
+## Key Features
 
-```bash
-pip install fastrtc[stopword]
-```
+- 🗣️ Automatic Voice Detection and Turn Taking built-in, only worry about the logic for responding to the user.
+- 💻 Automatic UI - Use the `.ui.launch()` method to launch the webRTC-enabled built-in Gradio UI.
+- 🔌 Automatic WebRTC Support - Use the `.mount(app)` method to mount the stream on a FastAPI app and get a webRTC endpoint for your own frontend! 
+- ⚡️ Websocket Support - Use the `.mount(app)` method to mount the stream on a FastAPI app and get a websocket endpoint for your own frontend! 
+- 📞 Automatic Telephone Support - Use the `fastphone()` method of the stream to launch the application and get a free temporary phone number!
+- 🤖 Completely customizable backend - A `Stream` can easily be mounted on a FastAPI app so you can easily extend it to fit your production application. See the [Talk To Claude](https://huggingface.co/spaces/fastrtc/talk-to-claude) demo for an example on how to serve a custom JS frontend.
 
 ## Docs
 
-https://freddyaboulton.github.io/gradio-webrtc/
+https://fastrtc.org/pr-preview/pr-60/
 
 ## Examples
+See the [Cookbook](https://fastrtc.org/pr-preview/pr-60/cookbook/) for examples of how to use the library.
 
 <table>
 <tr>
 <td width="50%">
-<h3>🗣️ Audio Input/Output with mini-omni2</h3>
-<p>Build a GPT-4o like experience with mini-omni2, an audio-native LLM.</p>
-<video width="100%" src="https://github.com/user-attachments/assets/58c06523-fc38-4f5f-a4ba-a02a28e7fa9e" controls></video>
+<h3>🗣️👀 Gemini Audio Video Chat</h3>
+<p>Stream BOTH your webcam video and audio feeds to Google Gemini. You can also upload images to augment your conversation!</p>
+<video width="100%" src="https://github.com/user-attachments/assets/9636dc97-4fee-46bb-abb8-b92e69c08c71" controls></video>
 <p>
-<a href="https://huggingface.co/spaces/freddyaboulton/mini-omni2-webrtc">Demo</a> |
-<a href="https://huggingface.co/spaces/freddyaboulton/mini-omni2-webrtc/blob/main/app.py">Code</a>
+<a href="https://huggingface.co/spaces/freddyaboulton/gemini-audio-video-chat">Demo</a> |
+<a href="https://huggingface.co/spaces/freddyaboulton/gemini-audio-video-chat/blob/main/app.py">Code</a>
+</p>
+</td>
+<td width="50%">
+<h3>🗣️ Google Gemini Real Time Voice API</h3>
+<p>Talk to Gemini in real time using Google's voice API.</p>
+<video width="100%" src="https://github.com/user-attachments/assets/ea6d18cb-8589-422b-9bba-56332d9f61de" controls></video>
+<p>
+<a href="https://huggingface.co/spaces/fastrtc/talk-to-gemini">Demo</a> |
+<a href="https://huggingface.co/spaces/fastrtc/talk-to-gemini/blob/main/app.py">Code</a>
+</p>
+</td>
+</tr>
+
+<tr>
+<td width="50%">
+<h3>🗣️ OpenAI Real Time Voice API</h3>
+<p>Talk to ChatGPT in real time using OpenAI's voice API.</p>
+<video width="100%" src="https://github.com/user-attachments/assets/178bdadc-f17b-461a-8d26-e915c632ff80" controls></video>
+<p>
+<a href="https://huggingface.co/spaces/fastrtc/talk-to-openai">Demo</a> |
+<a href="https://huggingface.co/spaces/fastrtc/talk-to-openai/blob/main/app.py">Code</a>
+</p>
+</td>
+<td width="50%">
+<h3>🤖 Hello Computer</h3>
+<p>Say computer before asking your question!</p>
+<video width="100%" src="https://github.com/user-attachments/assets/afb2a3ef-c1ab-4cfb-872d-578f895a10d5" controls></video>
+<p>
+<a href="https://huggingface.co/spaces/fastrtc/hello-computer">Demo</a> |
+<a href="https://huggingface.co/spaces/fastrtc/hello-computer/blob/main/app.py">Code</a>
+</p>
+</td>
+</tr>
+
+<tr>
+<td width="50%">
+<h3>🤖 Llama Code Editor</h3>
+<p>Create and edit HTML pages with just your voice! Powered by SambaNova systems.</p>
+<video width="100%" src="https://github.com/user-attachments/assets/98523cf3-dac8-4127-9649-d91a997e3ef5" controls></video>
+<p>
+<a href="https://huggingface.co/spaces/fastrtc/llama-code-editor">Demo</a> |
+<a href="https://huggingface.co/spaces/fastrtc/llama-code-editor/blob/main/app.py">Code</a>
 </p>
 </td>
 <td width="50%">
 <h3>🗣️ Talk to Claude</h3>
 <p>Use the Anthropic and Play.Ht APIs to have an audio conversation with Claude.</p>
-<video width="100%" src="https://github.com/user-attachments/assets/650bc492-798e-4995-8cef-159e1cfc2185" controls></video>
+<video width="100%" src="https://github.com/user-attachments/assets/fb6ef07f-3ccd-444a-997b-9bc9bdc035d3" controls></video>
 <p>
-<a href="https://huggingface.co/spaces/freddyaboulton/talk-to-claude">Demo</a> |
-<a href="https://huggingface.co/spaces/freddyaboulton/talk-to-claude/blob/main/app.py">Code</a>
+<a href="https://huggingface.co/spaces/fastrtc/talk-to-claude">Demo</a> |
+<a href="https://huggingface.co/spaces/fastrtc/talk-to-claude/blob/main/app.py">Code</a>
+</p>
+</td>
+</tr>
+
+<tr>
+<td width="50%">
+<h3>🎵 Whisper Transcription</h3>
+<p>Have whisper transcribe your speech in real time!</p>
+<video width="100%" src="https://github.com/user-attachments/assets/87603053-acdc-4c8a-810f-f618c49caafb" controls></video>
+<p>
+<a href="https://huggingface.co/spaces/fastrtc/whisper-realtime">Demo</a> |
+<a href="https://huggingface.co/spaces/fastrtc/whisper-realtime/blob/main/app.py">Code</a>
+</p>
+</td>
+<td width="50%">
+<h3>📷 Yolov10 Object Detection</h3>
+<p>Run the Yolov10 model on a user webcam stream in real time!</p>
+<video width="100%" src="https://github.com/user-attachments/assets/f82feb74-a071-4e81-9110-a01989447ceb" controls></video>
+<p>
+<a href="https://huggingface.co/spaces/fastrtc/object-detection">Demo</a> |
+<a href="https://huggingface.co/spaces/fastrtc/object-detection/blob/main/app.py">Code</a>
 </p>
 </td>
 </tr>
@@ -82,366 +149,169 @@ https://freddyaboulton.github.io/gradio-webrtc/
 </p>
 </td>
 </tr>
-
-<tr>
-<td width="50%">
-<h3>🤖 Llama Code Editor</h3>
-<p>Create and edit HTML pages with just your voice! Powered by SambaNova systems.</p>
-<video width="100%" src="https://github.com/user-attachments/assets/a09647f1-33e1-4154-a5a3-ffefda8a736a" controls></video>
-<p>
-<a href="https://huggingface.co/spaces/freddyaboulton/llama-code-editor">Demo</a> |
-<a href="https://huggingface.co/spaces/freddyaboulton/llama-code-editor/blob/main/app.py">Code</a>
-</p>
-</td>
-<td width="50%">
-<h3>🗣️ Talk to Ultravox</h3>
-<p>Talk to Fixie.AI's audio-native Ultravox LLM with the transformers library.</p>
-<video width="100%" src="https://github.com/user-attachments/assets/e6e62482-518c-4021-9047-9da14cd82be1" controls></video>
-<p>
-<a href="https://huggingface.co/spaces/freddyaboulton/talk-to-ultravox">Demo</a> |
-<a href="https://huggingface.co/spaces/freddyaboulton/talk-to-ultravox/blob/main/app.py">Code</a>
-</p>
-</td>
-</tr>
-
-<tr>
-<td width="50%">
-<h3>🗣️ Talk to Llama 3.2 3b</h3>
-<p>Use the Lepton API to make Llama 3.2 talk back to you!</p>
-<video width="100%" src="https://github.com/user-attachments/assets/3ee37a6b-0892-45f5-b801-73188fdfad9a" controls></video>
-<p>
-<a href="https://huggingface.co/spaces/freddyaboulton/llama-3.2-3b-voice-webrtc">Demo</a> |
-<a href="https://huggingface.co/spaces/freddyaboulton/llama-3.2-3b-voice-webrtc/blob/main/app.py">Code</a>
-</p>
-</td>
-<td width="50%">
-<h3>🤖 Talk to Qwen2-Audio</h3>
-<p>Qwen2-Audio is a SOTA audio-to-text LLM developed by Alibaba.</p>
-<video width="100%" src="https://github.com/user-attachments/assets/c821ad86-44cc-4d0c-8dc4-8c02ad1e5dc8" controls></video>
-<p>
-<a href="https://huggingface.co/spaces/freddyaboulton/talk-to-qwen-webrtc">Demo</a> |
-<a href="https://huggingface.co/spaces/freddyaboulton/talk-to-qwen-webrtc/blob/main/app.py">Code</a>
-</p>
-</td>
-</tr>
-
-<tr>
-<td width="50%">
-<h3>📷 Yolov10 Object Detection</h3>
-<p>Run the Yolov10 model on a user webcam stream in real time!</p>
-<video width="100%" src="https://github.com/user-attachments/assets/c90d8c9d-d2d5-462e-9e9b-af969f2ea73c" controls></video>
-<p>
-<a href="https://huggingface.co/spaces/freddyaboulton/webrtc-yolov10n">Demo</a> |
-<a href="https://huggingface.co/spaces/freddyaboulton/webrtc-yolov10n/blob/main/app.py">Code</a>
-</p>
-</td>
-<td width="50%">
-<h3>📷 Video Object Detection with RT-DETR</h3>
-<p>Upload a video and stream out frames with detected objects (powered by RT-DETR) model.</p>
-<p>
-<a href="https://huggingface.co/spaces/freddyaboulton/rt-detr-object-detection-webrtc">Demo</a> |
-<a href="https://huggingface.co/spaces/freddyaboulton/rt-detr-object-detection-webrtc/blob/main/app.py">Code</a>
-</p>
-</td>
-</tr>
-
-<tr>
-<td width="50%">
-<h3>🔊 Text-to-Speech with Parler</h3>
-<p>Stream out audio generated by Parler TTS!</p>
-<p>
-<a href="https://huggingface.co/spaces/freddyaboulton/parler-tts-streaming-webrtc">Demo</a> |
-<a href="https://huggingface.co/spaces/freddyaboulton/parler-tts-streaming-webrtc/blob/main/app.py">Code</a>
-</p>
-</td>
-<td width="50%">
-</td>
-</tr>
 </table>
 
 ## Usage
 
 This is an shortened version of the official [usage guide](https://freddyaboulton.github.io/gradio-webrtc/user-guide/). 
 
-To get started with WebRTC streams, all that's needed is to import the `WebRTC` component from this package and implement its `stream` event. 
-
-### Reply on Pause
-
-Typically, you want to run an AI model that generates audio when the user has stopped speaking. This can be done by wrapping a python generator with the `ReplyOnPause` class
-and passing it to the `stream` event of the `WebRTC` component.
-
-```py 
-import gradio as gr
-from gradio_webrtc import WebRTC, ReplyOnPause
-
-def response(audio: tuple[int, np.ndarray]): # (1)
-    """This function must yield audio frames"""
-    ...
-    for numpy_array in generated_audio:
-        yield (sampling_rate, numpy_array, "mono") # (2)
+- `.ui.launch()`: Launch a built-in UI for easily testing and sharing your stream. Built with [Gradio](https://www.gradio.app/).
+- `.fastphone()`: Get a free temporary phone number to call into your stream. Hugging Face token required.
+- `.mount(app)`: Mount the stream on a [FastAPI](https://fastapi.tiangolo.com/) app. Perfect for integrating with your already existing production system.
 
 
-with gr.Blocks() as demo:
-    gr.HTML(
-    """
-    <h1 style='text-align: center'>
-    Chat (Powered by WebRTC ⚡️)
-    </h1>
-    """
-    )
-    with gr.Column():
-        with gr.Group():
-            audio = WebRTC(
-                mode="send-receive", # (3)
-                modality="audio",
-            )
-        audio.stream(fn=ReplyOnPause(response),
-                    inputs=[audio], outputs=[audio], # (4)
-                    time_limit=60) # (5)
+## Quickstart
 
-demo.launch()
-```
-
-1. The python generator will receive the **entire** audio up until the user stopped. It will be a tuple of the form (sampling_rate, numpy array of audio). The array will have a shape of (1, num_samples). You can also pass in additional input components.
-
-2. The generator must yield audio chunks as a tuple of (sampling_rate, numpy audio array). Each numpy audio array must have a shape of (1, num_samples).
-
-3. The `mode` and `modality` arguments must be set to `"send-receive"` and `"audio"`.
-
-4. The `WebRTC` component must be the first input and output component. 
-
-5. Set a `time_limit` to control how long a conversation will last. If the `concurrency_count` is 1 (default), only one conversation will be handled at a time.
-
-
-### Reply On Stopwords
-
-You can configure your AI model to run whenever a set of "stop words" are detected, like "Hey Siri" or "computer", with the `ReplyOnStopWords` class. 
-
-The API is similar to `ReplyOnPause` with the addition of a `stop_words` parameter.
-
-
-```py 
-import gradio as gr
-from gradio_webrtc import WebRTC, ReplyOnPause
-
-def response(audio: tuple[int, np.ndarray]):
-    """This function must yield audio frames"""
-    ...
-    for numpy_array in generated_audio:
-        yield (sampling_rate, numpy_array, "mono")
-
-
-with gr.Blocks() as demo:
-    gr.HTML(
-    """
-    <h1 style='text-align: center'>
-    Chat (Powered by WebRTC ⚡️)
-    </h1>
-    """
-    )
-    with gr.Column():
-        with gr.Group():
-            audio = WebRTC(
-                mode="send",
-                modality="audio",
-            )
-    webrtc.stream(ReplyOnStopWords(generate,
-                            input_sample_rate=16000,
-                            stop_words=["computer"]), # (1)
-                    inputs=[webrtc, history, code],
-                    outputs=[webrtc], time_limit=90,
-                    concurrency_limit=10)
-
-demo.launch()
-```
-
-1. The `stop_words` can be single words or pairs of words. Be sure to include common misspellings of your word for more robust detection, e.g. "llama", "lamma". In my experience, it's best to use two very distinct words like "ok computer" or "hello iris". 
-    
-
-### Audio Server-To-Clien
-
-To stream only from the server to the client, implement a python generator and pass it to the component's `stream` event. The stream event must also specify a `trigger` corresponding to a UI interaction that starts the stream. In this case, it's a button click.
-
-
-
-```py
-import gradio as gr
-from gradio_webrtc import WebRTC
-from pydub import AudioSegment
-
-def generation(num_steps):
-    for _ in range(num_steps):
-        segment = AudioSegment.from_file("audio_file.wav")
-        array = np.array(segment.get_array_of_samples()).reshape(1, -1)
-        yield (segment.frame_rate, array)
-
-with gr.Blocks() as demo:
-    audio = WebRTC(label="Stream", mode="receive",  # (1)
-                    modality="audio")
-    num_steps = gr.Slider(label="Number of Steps", minimum=1,
-                            maximum=10, step=1, value=5)
-    button = gr.Button("Generate")
-
-    audio.stream(
-        fn=generation, inputs=[num_steps], outputs=[audio],
-        trigger=button.click # (2)
-    )
-```
-
-1. Set `mode="receive"` to only receive audio from the server.
-2. The `stream` event must take a `trigger` that corresponds to the gradio event that starts the stream. In this case, it's the button click.
-
-
-### Video Input/Output Streaming
-Set up a video Input/Output stream to continuosly receive webcam frames from the user and run an arbitrary python function to return a modified frame.
-    
-```py
-import gradio as gr
-from gradio_webrtc import WebRTC
-
-
-def detection(image, conf_threshold=0.3): # (1)
-    ... your detection code here ...
-    return modified_frame # (2)
-
-
-with gr.Blocks() as demo:
-    image = WebRTC(label="Stream", mode="send-receive", modality="video") # (3)
-    conf_threshold = gr.Slider(
-        label="Confidence Threshold",
-        minimum=0.0,
-        maximum=1.0,
-        step=0.05,
-        value=0.30,
-    )
-    image.stream(
-        fn=detection,
-        inputs=[image, conf_threshold], # (4)
-        outputs=[image], time_limit=10
-    )
-
-if __name__ == "__main__":
-    demo.launch()
-```
-
-1. The webcam frame will be represented as a numpy array of shape (height, width, RGB).
-2. The function must return a numpy array. It can take arbitrary values from other components.
-3. Set the `modality="video"` and `mode="send-receive"`
-4. The `inputs` parameter should be a list where the first element is the WebRTC component. The only output allowed is the WebRTC component.
-
-### Server-to-Client Only
-
-Set up a server-to-client stream to stream video from an arbitrary user interaction.
-
-```py 
-import gradio as gr
-from gradio_webrtc import WebRTC
-import cv2
-
-def generation():
-    url = "https://download.tsi.telecom-paristech.fr/gpac/dataset/dash/uhd/mux_sources/hevcds_720p30_2M.mp4"
-    cap = cv2.VideoCapture(url)
-    iterating = True
-    while iterating:
-        iterating, frame = cap.read()
-        yield frame # (1)
-
-with gr.Blocks() as demo:
-    output_video = WebRTC(label="Video Stream", mode="receive", # (2)
-                            modality="video")
-    button = gr.Button("Start", variant="primary")
-    output_video.stream(
-        fn=generation, inputs=None, outputs=[output_video],
-        trigger=button.click # (3)
-    )
-    demo.launch()
-```
-
-1. The `stream` event's `fn` parameter is a generator function that yields the next frame from the video as a **numpy array**.
-2. Set `mode="receive"` to only receive audio from the server.
-3. The `trigger` parameter the gradio event that will trigger the stream. In this case, the button click event.
-
-
-### Additional Outputs
-
-In order to modify other components from within the WebRTC stream, you must yield an instance of `AdditionalOutputs` and add an `on_additional_outputs` event to the `WebRTC` component.
-
-This is common for displaying a multimodal text/audio conversation in a Chatbot UI.
-
-
-
-``` py title="Additional Outputs"
-from gradio_webrtc import AdditionalOutputs, WebRTC
-
-def transcribe(audio: tuple[int, np.ndarray],
-                transformers_convo: list[dict],
-                gradio_convo: list[dict]):
-    response = model.generate(**inputs, max_length=256)
-    transformers_convo.append({"role": "assistant", "content": response})
-    gradio_convo.append({"role": "assistant", "content": response})
-    yield AdditionalOutputs(transformers_convo, gradio_convo) # (1)
-
-
-with gr.Blocks() as demo:
-    gr.HTML(
-    """
-    <h1 style='text-align: center'>
-    Talk to Qwen2Audio (Powered by WebRTC ⚡️)
-    </h1>
-    """
-    )
-    transformers_convo = gr.State(value=[])
-    with gr.Row():
-        with gr.Column():
-            audio = WebRTC(
-                label="Stream",
-                mode="send", # (2)
-                modality="audio",
-            )
-        with gr.Column():
-            transcript = gr.Chatbot(label="transcript", type="messages")
-
-    audio.stream(ReplyOnPause(transcribe),
-                inputs=[audio, transformers_convo, transcript],
-                outputs=[audio], time_limit=90)
-    audio.on_additional_outputs(lambda s,a: (s,a), # (3)
-                                outputs=[transformers_convo, transcript],
-                                queue=False, show_progress="hidden")
-    demo.launch()
-```
-    
-    1. Pass your data to `AdditionalOutputs` and yield it.
-    2. In this case, no audio is being returned, so we set `mode="send"`. However, if we set `mode="send-receive"`, we could also yield generated audio and `AdditionalOutputs`.
-    3. The `on_additional_outputs` event does not take `inputs`. It's common practice to not run this event on the queue since it is just a quick UI update.
-=== "Notes"
-    1. Pass your data to `AdditionalOutputs` and yield it.
-    2. In this case, no audio is being returned, so we set `mode="send"`. However, if we set `mode="send-receive"`, we could also yield generated audio and `AdditionalOutputs`.
-    3. The `on_additional_outputs` event does not take `inputs`. It's common practice to not run this event on the queue since it is just a quick UI update.
-
-
-## Deployment
-
-When deploying in a cloud environment (like Hugging Face Spaces, EC2, etc), you need to set up a TURN server to relay the WebRTC traffic.
-The easiest way to do this is to use a service like Twilio.
+### Echo Audio
 
 ```python
-from twilio.rest import Client
-import os
+from fastrtc import Stream, ReplyOnPause
+import numpy as np
 
-account_sid = os.environ.get("TWILIO_ACCOUNT_SID")
-auth_token = os.environ.get("TWILIO_AUTH_TOKEN")
+def echo(audio: tuple[int, np.ndarray]):
+    # The function will be passed the audio until the user pauses
+    # Implement any iterator that yields audio
+    # See "LLM Voice Chat" for a more complete example
+    yield audio
 
-client = Client(account_sid, auth_token)
+stream = Stream(
+    handler=ReplyOnPause(detection),
+    modality="audio", 
+    mode="send-receive",
+)
+```
 
-token = client.tokens.create()
+### LLM Voice Chat
 
-rtc_configuration = {
-    "iceServers": token.ice_servers,
-    "iceTransportPolicy": "relay",
-}
+```py
+from fastrtc import (
+    ReplyOnPause, AdditionalOutputs, Stream,
+    audio_to_bytes, aggregate_bytes_to_16bit
+)
+import gradio as gr
+from groq import Groq
+import anthropic
+from elevenlabs import ElevenLabs
 
-with gr.Blocks() as demo:
-    ...
-    rtc = WebRTC(rtc_configuration=rtc_configuration, ...)
-    ...
+groq_client = Groq()
+claude_client = anthropic.Anthropic()
+tts_client = ElevenLabs()
+
+
+# See "Talk to Claude" in Cookbook for an example of how to keep 
+# track of the chat history.
+def response(
+    audio: tuple[int, np.ndarray],
+):
+    prompt = groq_client.audio.transcriptions.create(
+        file=("audio-file.mp3", audio_to_bytes(audio)),
+        model="whisper-large-v3-turbo",
+        response_format="verbose_json",
+    ).text
+    response = claude_client.messages.create(
+        model="claude-3-5-haiku-20241022",
+        max_tokens=512,
+        messages=[{"role": "user", "content": prompt}],
+    )
+    response_text = " ".join(
+        block.text
+        for block in response.content
+        if getattr(block, "type", None) == "text"
+    )
+    iterator = tts_client.text_to_speech.convert_as_stream(
+        text=response_text,
+        voice_id="JBFqnCBsd6RMkjVDRZzb",
+        model_id="eleven_multilingual_v2",
+        output_format="pcm_24000"
+        
+    )
+    for chunk in aggregate_bytes_to_16bit(iterator):
+        audio_array = np.frombuffer(chunk, dtype=np.int16).reshape(1, -1)
+        yield (24000, audio_array)
+
+stream = Stream(
+    modality="audio",
+    mode="send-receive",
+    handler=ReplyOnPause(response),
+)
+```
+
+### Webcam Stream
+
+```python
+from fastrtc import Stream
+import numpy as np
+
+
+def flip_vertically(image):
+    return np.flip(image, axis=0)
+
+
+stream = Stream(
+    handler=flip_vertically,
+    modality="video",
+    mode="send-receive",
+)
+```
+
+### Object Detection
+
+```python
+from fastrtc import Stream
+import gradio as gr
+import cv2
+from huggingface_hub import hf_hub_download
+from .inference import YOLOv10
+
+model_file = hf_hub_download(
+    repo_id="onnx-community/yolov10n", filename="onnx/model.onnx"
+)
+
+# git clone https://huggingface.co/spaces/fastrtc/object-detection
+# for YOLOv10 implementation
+model = YOLOv10(model_file)
+
+def detection(image, conf_threshold=0.3):
+    image = cv2.resize(image, (model.input_width, model.input_height))
+    new_image = model.detect_objects(image, conf_threshold)
+    return cv2.resize(new_image, (500, 500))
+
+stream = Stream(
+    handler=detection,
+    modality="video", 
+    mode="send-receive",
+    additional_inputs=[
+        gr.Slider(minimum=0, maximum=1, step=0.01, value=0.3)
+    ]
+)
+```
+
+## Running the Stream
+
+Run:
+
+### Gradio
+
+```py
+stream.ui.launch()
+```
+
+### Telephone (Audio Only)
+
+    ```py
+    stream.fastphone()
+    ```
+
+### FastAPI
+
+```py
+app = FastAPI()
+stream.mount(app)
+
+# Optional: Add routes
+@app.get("/")
+async def _():
+    return HTMLResponse(content=open("index.html").read())
+
+# uvicorn app:app --host 0.0.0.0 --port 8000
 ```

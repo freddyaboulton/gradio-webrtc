@@ -27,6 +27,7 @@ A collection of applications built with FastRTC. Click on the tags below to find
   <button class="tag-button" data-tag="real-time-api"><code>real-time-api</code></button>
   <button class="tag-button" data-tag="voice-chat"><code>voice chat</code></button>
   <button class="tag-button" data-tag="code-generation"><code>code generation</code></button>
+  <button class="tag-button" data-tag="stopword"><code>stopword</code></button>
   <button class="tag-button" data-tag="transcription"><code>transcription</code></button>
 </div>
 
@@ -98,6 +99,20 @@ document.querySelectorAll('.tag-button').forEach(button => {
     
     [:octicons-code-16: Code](https://huggingface.co/spaces/fastrtc/talk-to-openai/blob/main/app.py)
 
+-   :robot:{ .lg .middle } __Hello Computer__
+{: data-tags="llm,stopword"}
+
+    ---
+
+    Say computer before asking your question!
+    <video width=98% src="https://github.com/user-attachments/assets/afb2a3ef-c1ab-4cfb-872d-578f895a10d5" controls style="text-align: center"></video>
+
+    [:octicons-arrow-right-24: Demo](https://huggingface.co/spaces/fastrtc/hello-computer)
+
+    [:octicons-arrow-right-24: Gradio UI](https://huggingface.co/spaces/fastrtc/hello-computer-gradio)
+    
+    [:octicons-code-16: Code](https://huggingface.co/spaces/fastrtc/hello-computer/blob/main/app.py)
+
 -   :robot:{ .lg .middle } __Llama Code Editor__
 {: data-tags="audio,llm,code-generation"}
 
@@ -142,7 +157,7 @@ document.querySelectorAll('.tag-button').forEach(button => {
     [:octicons-code-16: Code](https://huggingface.co/spaces/fastrtc/whisper-realtime/blob/main/app.py)
 
 -   :speaking_head:{ .lg .middle } __Hello Llama: Stop Word Detection__
-{: data-tags="audio,llm,code-generation"}
+{: data-tags="audio,llm,code-generation,stopword"}
 
     ---
 
