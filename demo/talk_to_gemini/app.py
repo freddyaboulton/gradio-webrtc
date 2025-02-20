@@ -62,8 +62,11 @@ class GeminiHandler(AsyncStreamHandler):
         )
 
     async def start_up(self):
-        await self.wait_for_args()
-        api_key, voice_name = self.latest_args[1:]
+        if not self.phone_mode:
+            await self.wait_for_args()
+            api_key, voice_name = self.latest_args[1:]
+        else:
+            api_key, voice_name = None, "Puck"
         client = genai.Client(
             api_key=api_key or os.getenv("GEMINI_API_KEY"),
             http_options={"api_version": "v1alpha"},
