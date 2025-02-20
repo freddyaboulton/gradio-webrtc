@@ -31,6 +31,7 @@ A collection of applications built with FastRTC. Click on the tags below to find
   <button class="tag-button" data-tag="transcription"><code>transcription</code></button>
   <button class="tag-button" data-tag="sambanova"><code>SambaNova</code></button>
   <button class="tag-button" data-tag="groq"><code>Groq</code></button>
+  <button class="tag-button" data-tag="elevenlabs"><code>ElevenLabs</code></button>
 </div>
 
 <script>
@@ -142,6 +143,21 @@ document.querySelectorAll('.tag-button').forEach(button => {
     [:octicons-arrow-right-24: Gradio UI](https://huggingface.co/spaces/fastrtc/talk-to-claude-gradio)
     
     [:octicons-code-16: Code](https://huggingface.co/spaces/fastrtc/talk-to-claude/blob/main/app.py)
+
+-   :musical_note:{ .lg .middle } __LLM Voice Chat__
+{: data-tags="audio,llm,voice-chat,groq,elevenlabs"}
+
+    ---
+
+    Talk to an LLM with ElevenLabs!
+
+    <video width=98% src="https://github.com/user-attachments/assets/584e898b-91af-4816-bbb0-dd3216eb80b0" controls style="text-align: center"></video>
+
+    [:octicons-arrow-right-24: Demo](https://huggingface.co/spaces/fastrtc/llm-voice-chat)
+
+    [:octicons-arrow-right-24: Gradio UI](https://huggingface.co/spaces/fastrtc/llm-voice-chat-gradio)
+
+    [:octicons-code-16: Code](https://huggingface.co/spaces/fastrtc/llm-voice-chat/blob/main/app.py)
 
 -   :musical_note:{ .lg .middle } __Whisper Transcription__
 {: data-tags="audio,transcription,groq"}
