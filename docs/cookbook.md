@@ -120,7 +120,7 @@ document.querySelectorAll('.tag-button').forEach(button => {
 
     ---
 
-    Create and edit HTML pages with just your voice! Powered by SambaNova systems.
+    Create and edit HTML pages with just your voice! Powered by Groq!
 
     <video width=98% src="https://github.com/user-attachments/assets/98523cf3-dac8-4127-9649-d91a997e3ef5" controls style="text-align: center"></video>
 
