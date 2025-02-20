@@ -29,6 +29,8 @@ A collection of applications built with FastRTC. Click on the tags below to find
   <button class="tag-button" data-tag="code-generation"><code>code generation</code></button>
   <button class="tag-button" data-tag="stopword"><code>stopword</code></button>
   <button class="tag-button" data-tag="transcription"><code>transcription</code></button>
+  <button class="tag-button" data-tag="sambanova"><code>SambaNova</code></button>
+  <button class="tag-button" data-tag="groq"><code>Groq</code></button>
 </div>
 
 <script>
@@ -100,7 +102,7 @@ document.querySelectorAll('.tag-button').forEach(button => {
     [:octicons-code-16: Code](https://huggingface.co/spaces/fastrtc/talk-to-openai/blob/main/app.py)
 
 -   :robot:{ .lg .middle } __Hello Computer__
-{: data-tags="llm,stopword"}
+{: data-tags="llm,stopword,sambanova"}
 
     ---
 
@@ -114,7 +116,7 @@ document.querySelectorAll('.tag-button').forEach(button => {
     [:octicons-code-16: Code](https://huggingface.co/spaces/fastrtc/hello-computer/blob/main/app.py)
 
 -   :robot:{ .lg .middle } __Llama Code Editor__
-{: data-tags="audio,llm,code-generation"}
+{: data-tags="audio,llm,code-generation,groq,stopword"}
 
     ---
 
@@ -142,7 +144,7 @@ document.querySelectorAll('.tag-button').forEach(button => {
     [:octicons-code-16: Code](https://huggingface.co/spaces/fastrtc/talk-to-claude/blob/main/app.py)
 
 -   :musical_note:{ .lg .middle } __Whisper Transcription__
-{: data-tags="audio,transcription"}
+{: data-tags="audio,transcription,groq"}
 
     ---
 
@@ -156,8 +158,22 @@ document.querySelectorAll('.tag-button').forEach(button => {
     
     [:octicons-code-16: Code](https://huggingface.co/spaces/fastrtc/whisper-realtime/blob/main/app.py)
 
+-   :robot:{ .lg .middle } __Talk to Sambanova__
+{: data-tags="llm,stopword,sambanova"}
+
+    ---
+
+    Talk to Llama 3.2 with the SambaNova API.
+    <video width=98% src="https://github.com/user-attachments/assets/92e4a45a-b5e9-45cd-b7f4-9339ceb343e1" controls style="text-align: center"></video>
+
+    [:octicons-arrow-right-24: Demo](https://huggingface.co/spaces/fastrtc/talk-to-sambanova)
+
+    [:octicons-arrow-right-24: Gradio UI](https://huggingface.co/spaces/fastrtc/talk-to-sambanova-gradio)
+    
+    [:octicons-code-16: Code](https://huggingface.co/spaces/fastrtc/talk-to-sambanova/blob/main/app.py)
+
 -   :speaking_head:{ .lg .middle } __Hello Llama: Stop Word Detection__
-{: data-tags="audio,llm,code-generation,stopword"}
+{: data-tags="audio,llm,code-generation,stopword,sambanova"}
 
     ---
 
