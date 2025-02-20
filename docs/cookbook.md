@@ -32,6 +32,7 @@ A collection of applications built with FastRTC. Click on the tags below to find
   <button class="tag-button" data-tag="sambanova"><code>SambaNova</code></button>
   <button class="tag-button" data-tag="groq"><code>Groq</code></button>
   <button class="tag-button" data-tag="elevenlabs"><code>ElevenLabs</code></button>
+  <button class="tag-button" data-tag="elevenlabs"><code>Kyutai</code></button>
 </div>
 
 <script>
@@ -217,7 +218,7 @@ document.querySelectorAll('.tag-button').forEach(button => {
     [:octicons-code-16: Code](https://huggingface.co/spaces/freddyaboulton/mini-omni2-webrtc/blob/main/app.py)
 
 -   :speaking_head:{ .lg .middle } __Kyutai Moshi__
-{: data-tags="audio,llm,voice-chat"}
+{: data-tags="audio,llm,voice-chat,kyutai"}
 
     ---
 
