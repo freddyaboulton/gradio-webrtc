@@ -9,6 +9,7 @@ from typing import Any, Callable, Literal, Protocol, TypedDict, cast
 
 import av
 import numpy as np
+from numpy.typing import NDArray
 from pydub import AudioSegment
 
 logger = logging.getLogger(__name__)
@@ -198,7 +199,7 @@ async def player_worker_decode(
             continue
 
 
-def audio_to_bytes(audio: tuple[int, np.ndarray]) -> bytes:
+def audio_to_bytes(audio: tuple[int, NDArray[np.int16 | np.float32]]) -> bytes:
     """
     Convert an audio tuple containing sample rate and numpy array data into bytes.
 
@@ -232,7 +233,7 @@ def audio_to_bytes(audio: tuple[int, np.ndarray]) -> bytes:
     return audio_buffer.getvalue()
 
 
-def audio_to_file(audio: tuple[int, np.ndarray]) -> str:
+def audio_to_file(audio: tuple[int, NDArray[np.int16 | np.float32]]) -> str:
     """
     Save an audio tuple containing sample rate and numpy array data to a file.
 
@@ -262,7 +263,9 @@ def audio_to_file(audio: tuple[int, np.ndarray]) -> str:
     return f.name
 
 
-def audio_to_float32(audio: tuple[int, np.ndarray]) -> np.ndarray:
+def audio_to_float32(
+    audio: tuple[int, NDArray[np.int16 | np.float32]],
+) -> NDArray[np.float32]:
     """
     Convert an audio tuple containing sample rate (int16) and numpy array data to float32.
 
@@ -289,40 +292,64 @@ def audio_to_float32(audio: tuple[int, np.ndarray]) -> np.ndarray:
 
 
 def aggregate_bytes_to_16bit(chunks_iterator):
-    leftover = b""  # Store incomplete bytes between chunks
+    """
+    Aggregate bytes to 16-bit audio samples.
 
+    This function takes an iterator of chunks and aggregates them into 16-bit audio samples.
+    It handles incomplete samples and combines them with the next chunk.
+
+    Parameters
+    ----------
+    chunks_iterator : Iterator[bytes]
+        An iterator of byte chunks to aggregate
+
+    Returns
+    -------
+    Iterator[NDArray[np.int16]]
+    """
     for chunk in chunks_iterator:
-        # Combine with any leftover bytes from previous chunk
         current_bytes = leftover + chunk
 
         # Calculate complete samples
-        n_complete_samples = len(current_bytes) // 2  # int16 = 2 bytes
+        n_complete_samples = len(current_bytes) // 2
         bytes_to_process = n_complete_samples * 2
 
-        # Split into complete samples and leftover
         to_process = current_bytes[:bytes_to_process]
         leftover = current_bytes[bytes_to_process:]
 
-        if to_process:  # Only yield if we have complete samples
+        if to_process:
             audio_array = np.frombuffer(to_process, dtype=np.int16).reshape(1, -1)
             yield audio_array
 
 
 async def async_aggregate_bytes_to_16bit(chunks_iterator):
-    leftover = b""  # Store incomplete bytes between chunks
+    """
+    Aggregate bytes to 16-bit audio samples.
+
+    This function takes an iterator of chunks and aggregates them into 16-bit audio samples.
+    It handles incomplete samples and combines them with the next chunk.
+
+    Parameters
+    ----------
+    chunks_iterator : Iterator[bytes]
+        An iterator of byte chunks to aggregate
+
+    Returns
+    -------
+    Iterator[NDArray[np.int16]]
+        An iterator of 16-bit audio samples
+    """
+    leftover = b""
 
     async for chunk in chunks_iterator:
-        # Combine with any leftover bytes from previous chunk
         current_bytes = leftover + chunk
 
-        # Calculate complete samples
-        n_complete_samples = len(current_bytes) // 2  # int16 = 2 bytes
+        n_complete_samples = len(current_bytes) // 2
         bytes_to_process = n_complete_samples * 2
 
-        # Split into complete samples and leftover
         to_process = current_bytes[:bytes_to_process]
         leftover = current_bytes[bytes_to_process:]
 
-        if to_process:  # Only yield if we have complete samples
+        if to_process:
             audio_array = np.frombuffer(to_process, dtype=np.int16).reshape(1, -1)
             yield audio_array

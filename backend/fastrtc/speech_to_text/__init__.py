@@ -1,3 +1,3 @@
-from .stt_ import get_stt_model, stt, stt_for_chunks
+from .stt_ import MoonshineSTT, get_stt_model
 
-__all__ = ["stt", "stt_for_chunks", "get_stt_model"]
+__all__ = ["get_stt_model", "MoonshineSTT", "get_stt_model"]

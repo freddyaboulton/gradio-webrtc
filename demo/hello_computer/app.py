@@ -14,8 +14,8 @@ from fastrtc import (
     ReplyOnStopWords,
     Stream,
     WebRTCError,
+    get_stt_model,
     get_twilio_turn_credentials,
-    stt,
 )
 from gradio.utils import get_space
 from pydantic import BaseModel
@@ -29,6 +29,7 @@ client = openai.OpenAI(
     api_key=os.environ.get("SAMBANOVA_API_KEY"),
     base_url="https://api.sambanova.ai/v1",
 )
+model = get_stt_model()
 
 
 def response(
@@ -39,7 +40,8 @@ def response(
     gradio_chatbot = gradio_chatbot or []
     conversation_state = conversation_state or []
     try:
-        text = stt(audio)
+        text = model.stt(audio)
+        print("STT in handler", text)
         sample_rate, array = audio
         gradio_chatbot.append(
             {"role": "user", "content": gr.Audio((sample_rate, array.squeeze()))}

@@ -21,6 +21,9 @@ gradio name:
 phone name:
     MODE=PHONE python demo/{{name}}/app.py
 
+call name:
+    MODE=PHONE python demo/{{name}}/app.py
+
 # Upload the latest wheel file to PyPI using twine
 publish:
     #!/usr/bin/env python

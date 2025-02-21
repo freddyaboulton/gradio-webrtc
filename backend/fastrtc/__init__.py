@@ -5,7 +5,7 @@ from .credentials import (
 )
 from .reply_on_pause import AlgoOptions, ReplyOnPause, SileroVadOptions
 from .reply_on_stopwords import ReplyOnStopWords
-from .speech_to_text import stt, stt_for_chunks
+from .speech_to_text import MoonshineSTT, get_stt_model
 from .stream import Stream
 from .text_to_speech import KokoroTTSOptions, get_tts_model
 from .tracks import (
@@ -48,8 +48,8 @@ __all__ = [
     "ReplyOnPause",
     "ReplyOnStopWords",
     "SileroVadOptions",
-    "stt",
-    "stt_for_chunks",
+    "get_stt_model",
+    "MoonshineSTT",
     "StreamHandler",
     "Stream",
     "VideoEmitType",

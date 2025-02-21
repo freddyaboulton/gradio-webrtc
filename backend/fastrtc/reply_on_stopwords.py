@@ -12,7 +12,7 @@ from .reply_on_pause import (
     ReplyOnPause,
     SileroVadOptions,
 )
-from .speech_to_text import get_stt_model, stt_for_chunks
+from .speech_to_text import get_stt_model
 from .utils import audio_to_float32, create_message
 
 logger = logging.getLogger(__name__)
@@ -47,14 +47,16 @@ class ReplyOnStopWords(ReplyOnPause):
         )
         self.stop_words = stop_words
         self.state = ReplyOnStopWordsState()
-        # Download Model
-        get_stt_model()
+        self.stt_model = get_stt_model("moonshine/base")
 
     def stop_word_detected(self, text: str) -> bool:
         for stop_word in self.stop_words:
             stop_word = stop_word.lower().strip().split(" ")
             if bool(
-                re.search(r"\b" + r"\s+".join(map(re.escape, stop_word)) + r"\b", text)
+                re.search(
+                    r"\b" + r"\s+".join(map(re.escape, stop_word)) + r"[.,!?]*\b",
+                    text.lower(),
+                )
             ):
                 logger.debug("Stop word detected: %s", stop_word)
                 return True
@@ -97,7 +99,9 @@ class ReplyOnStopWords(ReplyOnPause):
                     self.model_options,
                     return_chunks=True,
                 )
-                text = stt_for_chunks((16000, state.post_stop_word_buffer), chunks)
+                text = self.stt_model.stt_for_chunks(
+                    (16000, state.post_stop_word_buffer), chunks
+                )
                 logger.debug(f"STT: {text}")
                 state.stop_word_detected = self.stop_word_detected(text)
                 if state.stop_word_detected:

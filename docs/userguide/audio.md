@@ -92,6 +92,9 @@ The API is similar to `ReplyOnPause` with the addition of a `stop_words` paramet
 !!! tip "Extra Dependencies"
     The `ReplyOnStopWords` class requires the the `stopword` extra. Run `pip install fastrtc[stopword]` to install it.
 
+!!! warning "English Only"
+    The `ReplyOnStopWords` class is currently only supported for English.
+
 ## Stream Handler
 
 `ReplyOnPause` and `ReplyOnStopWords` are implementations of a `StreamHandler`. The `StreamHandler` is a low-level abstraction that gives you arbitrary control over how the input audio stream and output audio stream are created. The following example echos back the user audio.
@@ -249,8 +252,6 @@ The `get_tts_model` function returns an object with three methods:
 - `stream_tts_sync`: Synchronous text to speech streaming.
 - `stream_tts`: Asynchronous text to speech streaming.
 
-
-
 ```python
 from fastrtc import get_tts_model
 
@@ -281,6 +282,31 @@ audio = model.tts("Hello, world!")
 
     audio = model.tts("Hello, world!", options=options)
     ```
+
+## Speech To Text
+
+You can use an on-device speech to text model if you have the `stt` or `stopword` extra installed.
+Import the `get_stt_model` function and call it with the model name you want to use.
+At the moment, the only models supported are `moonshine/base` and `moonshine/tiny`.
+
+The `get_stt_model` function returns an object with the following method:
+
+- `stt`: Synchronous speech to text.
+
+```python
+from fastrtc import get_stt_model
+
+model = get_stt_model(model="moonshine/base")
+
+audio = (16000, np.random.randint(-32768, 32768, size=(1, 16000)))
+text = model.stt(audio)
+```
+
+!!! tip "Example"
+    See [LLM Voice Chat](https://huggingface.co/spaces/fastrtc/llm-voice-chat) for an example of using the `stt` method in a `ReplyOnPause` handler.
+
+!!! warning "English Only"
+    The `stt` model is currently only supported for English.
 
 ## Requesting Inputs
 

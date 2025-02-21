@@ -8,7 +8,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "fastrtc"
-version = "0.0.3"
+version = "0.0.3.post1"
 description = "The realtime communication library for Python"
 readme = "README.md"
 license = "apache-2.0"
@@ -70,7 +70,8 @@ Documentation = "https://freddyaboulton.github.io/gradio-webrtc/cookbook/"
 dev = ["build", "twine"]
 vad = ["onnxruntime>=1.20.1"]
 tts = ["kokoro-onnx"]
-stopword = ["silero", "onnxruntime>=1.20.1"]
+stopword = ["fastrtc-moonshine-onnx", "onnxruntime>=1.20.1"]
+stt = ["fastrtc-moonshine-onnx", "onnxruntime>=1.20.1"]
 
 [tool.hatch.build]
 artifacts = ["/backend/fastrtc/templates", "*.pyi"]

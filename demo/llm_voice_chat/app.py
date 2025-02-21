@@ -3,6 +3,7 @@ import time
 
 import gradio as gr
 import numpy as np
+from numpy.typing import NDArray
 from dotenv import load_dotenv
 from elevenlabs import ElevenLabs
 from fastapi import FastAPI
@@ -12,8 +13,8 @@ from fastrtc import (
     Stream,
     WebRTCError,
     aggregate_bytes_to_16bit,
+    get_stt_model,
     get_twilio_turn_credentials,
-    stt,
 )
 from gradio.utils import get_space
 from groq import Groq
@@ -21,19 +22,20 @@ from groq import Groq
 load_dotenv()
 groq_client = Groq()
 tts_client = ElevenLabs(api_key=os.getenv("ELEVENLABS_API_KEY"))
+stt_model = get_stt_model()
 
 
 # See "Talk to Claude" in Cookbook for an example of how to keep
 # track of the chat history.
 def response(
-    audio: tuple[int, np.ndarray],
+    audio: tuple[int, NDArray[np.int16 | np.float32]],
     chatbot: list[dict] | None = None,
 ):
     try:
         chatbot = chatbot or []
         messages = [{"role": d["role"], "content": d["content"]} for d in chatbot]
         start = time.time()
-        text = stt(audio)
+        text = stt_model.stt(audio)
         print("transcription", time.time() - start)
         print("prompt", text)
         chatbot.append({"role": "user", "content": text})
