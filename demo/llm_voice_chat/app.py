@@ -12,7 +12,6 @@ from fastrtc import (
     ReplyOnPause,
     Stream,
     WebRTCError,
-    aggregate_bytes_to_16bit,
     get_stt_model,
     get_twilio_turn_credentials,
 )
@@ -53,13 +52,12 @@ def response(
 
         chatbot.append({"role": "assistant", "content": response_text})
 
-        iterator = tts_client.text_to_speech.convert_as_stream(
+        for chunk in tts_client.text_to_speech.convert_as_stream(
             text=response_text,  # type: ignore
             voice_id="JBFqnCBsd6RMkjVDRZzb",
             model_id="eleven_multilingual_v2",
             output_format="pcm_24000",
-        )
-        for chunk in aggregate_bytes_to_16bit(iterator):
+        ):
             audio_array = np.frombuffer(chunk, dtype=np.int16).reshape(1, -1)
             yield (24000, audio_array)
         yield AdditionalOutputs(chatbot)
@@ -80,16 +78,8 @@ stream = Stream(
     additional_outputs=[chatbot],
     rtc_configuration=get_twilio_turn_credentials() if get_space() else None,
     concurrency_limit=20 if get_space() else None,
+    ui_args={"title": "LLM Voice Chat (Powered by Groq, ElevenLabs, and WebRTC ⚡️)"},
 )
-for id, block in stream.ui.blocks.items():
-    if isinstance(block, gr.HTML):
-        stream.ui.blocks[id] = gr.HTML(
-            """
-                <h1 style='text-align: center'>
-                LLM Voice Chat (Powered by Groq, ElevenLabs, and WebRTC ⚡️)
-                </h1>
-                """
-        )
 
 # Mount the STREAM UI to the FastAPI app
 # Because I don't want to build the UI manually

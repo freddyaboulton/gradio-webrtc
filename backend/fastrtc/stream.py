@@ -1,6 +1,14 @@
 import logging
 from pathlib import Path
-from typing import Any, AsyncContextManager, Callable, Literal, cast
+from typing import (
+    Any,
+    AsyncContextManager,
+    Callable,
+    Literal,
+    cast,
+    TypedDict,
+)
+from typing_extensions import NotRequired
 
 import gradio as gr
 from fastapi import FastAPI, Request, WebSocket
@@ -25,6 +33,10 @@ class Body(BaseModel):
     webrtc_id: str
 
 
+class UIArgs(TypedDict):
+    title: NotRequired[str]
+
+
 class Stream(WebRTCConnectionMixin):
     def __init__(
         self,
@@ -39,7 +51,7 @@ class Stream(WebRTCConnectionMixin):
         rtc_configuration: dict[str, Any] | None = None,
         additional_inputs: list[Component] | None = None,
         additional_outputs: list[Component] | None = None,
-        lifespan=None,
+        ui_args: UIArgs | None = None,
     ):
         self.mode = mode
         self.modality = modality
@@ -54,7 +66,7 @@ class Stream(WebRTCConnectionMixin):
         self.additional_input_components = additional_inputs
         self.additional_outputs_handler = additional_outputs_handler
         self.rtc_configuration = rtc_configuration
-        self._ui = self._generate_default_ui()
+        self._ui = self._generate_default_ui(ui_args)
 
     def mount(self, app: FastAPI):
         app.router.post("/webrtc/offer")(self.offer)
@@ -95,7 +107,9 @@ class Stream(WebRTCConnectionMixin):
 
     def _generate_default_ui(
         self,
+        ui_args: UIArgs | None = None,
     ):
+        ui_args = ui_args or {}
         same_components = []
         additional_input_components = self.additional_input_components or []
         additional_output_components = self.additional_output_components or []
@@ -115,9 +129,9 @@ class Stream(WebRTCConnectionMixin):
         if self.modality == "video" and self.mode == "receive":
             with gr.Blocks() as demo:
                 gr.HTML(
-                    """
+                    f"""
                 <h1 style='text-align: center'>
-                Video Streaming" (Powered by WebRTC ⚡️)
+                {ui_args.get("title", "Video Streaming (Powered by WebRTC ⚡️)")}
                 </h1>
                 """
                 )
@@ -154,9 +168,9 @@ class Stream(WebRTCConnectionMixin):
         elif self.modality == "video" and self.mode == "send":
             with gr.Blocks() as demo:
                 gr.HTML(
-                    """
+                    f"""
                 <h1 style='text-align: center'>
-                Video Streaming (Powered by WebRTC ⚡️)
+                {ui_args.get("title", "Video Streaming (Powered by WebRTC ⚡️)")}
                 </h1>
                 """
                 )
@@ -194,9 +208,9 @@ class Stream(WebRTCConnectionMixin):
 
             with gr.Blocks(css=css) as demo:
                 gr.HTML(
-                    """
+                    f"""
                 <h1 style='text-align: center'>
-                Video Streaming (Powered by WebRTC ⚡️)
+                {ui_args.get("title", "Video Streaming (Powered by WebRTC ⚡️)")}
                 </h1>
                 """
                 )
@@ -273,9 +287,9 @@ class Stream(WebRTCConnectionMixin):
         elif self.modality == "audio" and self.mode == "send":
             with gr.Blocks() as demo:
                 gr.HTML(
-                    """
+                    f"""
                 <h1 style='text-align: center'>
-                Audio Streaming (Powered by WebRTC ⚡️)
+                {ui_args.get("title", "Audio Streaming (Powered by WebRTC ⚡️)")}
                 </h1>
                 """
                 )
@@ -312,9 +326,9 @@ class Stream(WebRTCConnectionMixin):
         elif self.modality == "audio" and self.mode == "send-receive":
             with gr.Blocks() as demo:
                 gr.HTML(
-                    """
+                    f"""
                 <h1 style='text-align: center'>
-                Audio Streaming (Powered by WebRTC ⚡️)
+                {ui_args.get("title", "Audio Streaming (Powered by WebRTC ⚡️)")}
                 </h1>
                 """
                 )
@@ -461,7 +475,8 @@ class Stream(WebRTCConnectionMixin):
         )
         host = urllib.parse.urlparse(url).netloc
 
-        URL = "https://api.fastrtc.org"
+        # URL = "https://api.fastrtc.org"
+        URL = "http://localhost:8082"
         r = httpx.post(
             URL + "/register",
             json={"url": host},

@@ -307,10 +307,10 @@ def aggregate_bytes_to_16bit(chunks_iterator):
     -------
     Iterator[NDArray[np.int16]]
     """
+    leftover = b""
     for chunk in chunks_iterator:
         current_bytes = leftover + chunk
 
-        # Calculate complete samples
         n_complete_samples = len(current_bytes) // 2
         bytes_to_process = n_complete_samples * 2
 
