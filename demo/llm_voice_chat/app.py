@@ -84,7 +84,7 @@ stream = Stream(
 # Mount the STREAM UI to the FastAPI app
 # Because I don't want to build the UI manually
 app = FastAPI()
-gr.mount_gradio_app(app, stream.ui, path="/")
+app = gr.mount_gradio_app(app, stream.ui, path="/")
 
 
 if __name__ == "__main__":
@@ -95,6 +95,4 @@ if __name__ == "__main__":
     elif mode == "PHONE":
         stream.fastphone(host="0.0.0.0", port=7860)
     else:
-        import uvicorn
-
-        uvicorn.run(app, host="0.0.0.0", port=7860)
+        stream.ui.launch(server_port=7860)
