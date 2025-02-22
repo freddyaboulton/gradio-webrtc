@@ -89,7 +89,8 @@ class Stream(WebRTCConnectionMixin):
             + " for more information."
         )
         raise RuntimeError(
-            f"Running in {env} is not possible without providing a valid rtc_configuration."
+            f"Running in {env} is not possible without providing a valid rtc_configuration. "
+            + "See https://fastrtc.org/deployment/ for more information."
         )
 
     def _check_colab_or_spaces(self):

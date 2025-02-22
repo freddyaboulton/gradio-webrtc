@@ -84,8 +84,8 @@ stream = Stream(
     additional_outputs=[chatbot, state],
     additional_outputs_handler=lambda *a: (a[2], a[3]),
     concurrency_limit=20 if get_space() else None,
+    rtc_configuration=get_twilio_turn_credentials() if get_space() else None,
 )
-
 app = FastAPI()
 stream.mount(app)
 
