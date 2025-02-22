@@ -185,6 +185,11 @@
             }
         };
 
+        const timeoutId = setTimeout(() => {
+            // @ts-ignore
+            _on_change_cb({ type: "connection_timeout" });
+        }, 5000);
+
         start(
             stream,
             pc,
@@ -198,6 +203,7 @@
             reject_cb,
         )
             .then((connection) => {
+                clearTimeout(timeoutId);
                 pc = connection;
             })
             .catch(() => {
@@ -249,7 +255,6 @@
     $: if (stopword_recognized) {
         notification_sound.play();
     }
-
 </script>
 
 <BlockLabel

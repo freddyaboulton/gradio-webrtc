@@ -64,6 +64,10 @@
                 }
             });
             let stream = null;
+            const timeoutId = setTimeout(() => {
+                on_change_cb({ type: "connection_timeout" });
+            }, 5000);
+
             start(
                 stream,
                 pc,
@@ -74,9 +78,11 @@
                 on_change_cb,
             )
                 .then((connection) => {
+                    clearTimeout(timeoutId);
                     pc = connection;
                 })
                 .catch(() => {
+                    clearTimeout(timeoutId);
                     console.info("catching");
                     dispatch(
                         "error",

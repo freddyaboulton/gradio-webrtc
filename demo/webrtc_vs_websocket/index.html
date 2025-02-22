@@ -140,6 +140,30 @@
         .nav-button:hover {
             background-color: #1565c0;
         }
+
+        /* Add styles for toast notifications */
+        .toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 16px 24px;
+            border-radius: 4px;
+            font-size: 14px;
+            z-index: 1000;
+            display: none;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .toast.error {
+            background-color: #f44336;
+            color: white;
+        }
+
+        .toast.warning {
+            background-color: #ffd700;
+            color: black;
+        }
     </style>
 </head>
 
@@ -182,6 +206,8 @@
 
     <audio id="webrtc-audio" style="display: none;"></audio>
     <audio id="ws-audio" style="display: none;"></audio>
+
+    <div id="error-toast" class="toast"></div>
 
     <script>
         // Shared utilities
@@ -249,6 +275,18 @@
             webrtcPeerConnection = new RTCPeerConnection(config);
             const webrtcId = generateId();
 
+            const timeoutId = setTimeout(() => {
+                const toast = document.getElementById('error-toast');
+                toast.textContent = "Connection is taking longer than usual. Are you on a VPN?";
+                toast.className = 'toast warning';
+                toast.style.display = 'block';
+
+                // Hide warning after 5 seconds
+                setTimeout(() => {
+                    toast.style.display = 'none';
+                }, 5000);
+            }, 5000);
+
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                 stream.getTracks().forEach(track => {
@@ -309,7 +347,16 @@
                 // Store the interval ID on the connection
                 webrtcPeerConnection.statsInterval = statsInterval;
 
+                webrtcPeerConnection.addEventListener('connectionstatechange', () => {
+                    if (webrtcPeerConnection.connectionState === 'connected') {
+                        clearTimeout(timeoutId);
+                        const toast = document.getElementById('error-toast');
+                        toast.style.display = 'none';
+                    }
+                });
+
             } catch (err) {
+                clearTimeout(timeoutId);
                 console.error('WebRTC setup error:', err);
             }
         }

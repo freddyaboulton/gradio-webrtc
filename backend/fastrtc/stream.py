@@ -5,10 +5,9 @@ from typing import (
     AsyncContextManager,
     Callable,
     Literal,
-    cast,
     TypedDict,
+    cast,
 )
-from typing_extensions import NotRequired
 
 import gradio as gr
 from fastapi import FastAPI, Request, WebSocket
@@ -16,6 +15,7 @@ from fastapi.responses import HTMLResponse
 from gradio import Blocks
 from gradio.components.base import Component
 from pydantic import BaseModel
+from typing_extensions import NotRequired
 
 from .tracks import StreamHandlerImpl, VideoEventHandler
 from .webrtc import WebRTC
@@ -67,6 +67,7 @@ class Stream(WebRTCConnectionMixin):
         self.additional_outputs_handler = additional_outputs_handler
         self.rtc_configuration = rtc_configuration
         self._ui = self._generate_default_ui(ui_args)
+        self._ui.launch = self._wrap_gradio_launch(self._ui.launch)
 
     def mount(self, app: FastAPI):
         app.router.post("/webrtc/offer")(self.offer)
@@ -76,6 +77,52 @@ class Stream(WebRTCConnectionMixin):
         lifespan = self._inject_startup_message(app.router.lifespan_context)
         app.router.lifespan_context = lifespan
 
+    @staticmethod
+    def print_error(env: Literal["colab", "spaces"]):
+        import click
+
+        print(
+            click.style("ERROR", fg="red")
+            + f":\t  Running in {env} is not possible without providing a valid rtc_configuration. "
+            + "See "
+            + click.style("https://fastrtc.org/deployment/", fg="cyan")
+            + " for more information."
+        )
+        raise RuntimeError(
+            f"Running in {env} is not possible without providing a valid rtc_configuration."
+        )
+
+    def _check_colab_or_spaces(self):
+        from gradio.utils import colab_check, get_space
+
+        if colab_check() and not self.rtc_configuration:
+            self.print_error("colab")
+        if get_space() and not self.rtc_configuration:
+            self.print_error("spaces")
+
+    def _wrap_gradio_launch(self, callable):
+        import contextlib
+
+        def wrapper(*args, **kwargs):
+            lifespan = kwargs.get("app_kwargs", {}).get("lifespan", None)
+
+            @contextlib.asynccontextmanager
+            async def new_lifespan(app: FastAPI):
+                if lifespan is None:
+                    self._check_colab_or_spaces()
+                    yield
+                else:
+                    async with lifespan(app):
+                        self._check_colab_or_spaces()
+                        yield
+
+            if "app_kwargs" not in kwargs:
+                kwargs["app_kwargs"] = {}
+            kwargs["app_kwargs"]["lifespan"] = new_lifespan
+            return callable(*args, **kwargs)
+
+        return wrapper
+
     def _inject_startup_message(
         self, lifespan: Callable[[FastAPI], AsyncContextManager] | None = None
     ):
@@ -84,12 +131,11 @@ class Stream(WebRTCConnectionMixin):
         import click
 
         def print_startup_message():
+            self._check_colab_or_spaces()
             print(
                 click.style("INFO", fg="green")
                 + ":\t  Visit "
-                + click.style(
-                    "https://fastrtc.org/pr-preview/pr-60/userguide/api/", fg="cyan"
-                )
+                + click.style("https://fastrtc.org/userguide/api/", fg="cyan")
                 + " for WebRTC or Websocket API docs."
             )
 
@@ -475,8 +521,7 @@ class Stream(WebRTCConnectionMixin):
         )
         host = urllib.parse.urlparse(url).netloc
 
-        # URL = "https://api.fastrtc.org"
-        URL = "http://localhost:8082"
+        URL = "https://api.fastrtc.org"
         r = httpx.post(
             URL + "/register",
             json={"url": host},

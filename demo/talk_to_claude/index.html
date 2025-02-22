@@ -217,14 +217,22 @@
             top: 20px;
             left: 50%;
             transform: translateX(-50%);
-            background-color: #f44336;
-            color: white;
             padding: 16px 24px;
             border-radius: 4px;
             font-size: 14px;
             z-index: 1000;
             display: none;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .toast.error {
+            background-color: #f44336;
+            color: white;
+        }
+
+        .toast.warning {
+            background-color: #ffd700;
+            color: black;
         }
     </style>
 </head>
@@ -291,6 +299,7 @@
         function showError(message) {
             const toast = document.getElementById('error-toast');
             toast.textContent = message;
+            toast.className = 'toast error';
             toast.style.display = 'block';
 
             // Hide toast after 5 seconds
@@ -302,6 +311,18 @@
         async function setupWebRTC() {
             const config = __RTC_CONFIGURATION__;
             peerConnection = new RTCPeerConnection(config);
+
+            const timeoutId = setTimeout(() => {
+                const toast = document.getElementById('error-toast');
+                toast.textContent = "Connection is taking longer than usual. Are you on a VPN?";
+                toast.className = 'toast warning';
+                toast.style.display = 'block';
+
+                // Hide warning after 5 seconds
+                setTimeout(() => {
+                    toast.style.display = 'none';
+                }, 5000);
+            }, 5000);
 
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({
@@ -337,6 +358,11 @@
                 // Add connection state change listener
                 peerConnection.addEventListener('connectionstatechange', () => {
                     console.log('Connection state:', peerConnection.connectionState);
+                    if (peerConnection.connectionState === 'connected') {
+                        clearTimeout(timeoutId);
+                        const toast = document.getElementById('error-toast');
+                        toast.style.display = 'none';
+                    }
                     updateButtonState();
                 });
 
@@ -437,6 +463,7 @@
                     addMessage(eventJson.role, eventJson.content);
                 });
             } catch (err) {
+                clearTimeout(timeoutId);
                 console.error('Error setting up WebRTC:', err);
                 showError('Failed to establish connection. Please try again.');
                 stop();

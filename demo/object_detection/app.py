@@ -13,7 +13,7 @@ from pydantic import BaseModel, Field
 try:
     from demo.object_detection.inference import YOLOv10
 except (ImportError, ModuleNotFoundError):
-    from .inference import YOLOv10
+    from inference import YOLOv10
 
 
 cur_dir = Path(__file__).parent
@@ -74,7 +74,7 @@ if __name__ == "__main__":
     import os
 
     if (mode := os.getenv("MODE")) == "UI":
-        stream.ui.launch(server_port=7860, server_name="0.0.0.0")
+        stream.ui.launch(server_port=7860)
     elif mode == "PHONE":
         stream.fastphone(host="0.0.0.0", port=7860)
     else:

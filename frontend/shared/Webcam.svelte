@@ -161,6 +161,11 @@
 			});
 			stream_state = "waiting";
 			webrtc_id = Math.random().toString(36).substring(2);
+			const timeoutId = setTimeout(() => {
+				// @ts-ignore
+				on_change_cb({ type: "connection_timeout" });
+			}, 5000);
+
 			start(
 				stream,
 				pc,
@@ -174,9 +179,11 @@
 				reject_cb,
 			)
 				.then((connection) => {
+					clearTimeout(timeoutId);
 					pc = connection;
 				})
 				.catch(() => {
+					clearTimeout(timeoutId);
 					console.info("catching");
 					stream_state = "closed";
 				});

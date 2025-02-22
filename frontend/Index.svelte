@@ -53,6 +53,11 @@
 			gradio.dispatch("state_change");
 		} else if (msg?.type === "send_input") {
 			gradio.dispatch("tick");
+		} else if (msg?.type === "connection_timeout") {
+			gradio.dispatch(
+				"warning",
+				"Taking a while to connect. Are you on a VPN?",
+			);
 		}
 		if (msg.type === "state_change") {
 			gradio.dispatch(msg === "change" ? "state_change" : "tick");

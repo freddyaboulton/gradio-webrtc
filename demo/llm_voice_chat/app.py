@@ -3,7 +3,6 @@ import time
 
 import gradio as gr
 import numpy as np
-from numpy.typing import NDArray
 from dotenv import load_dotenv
 from elevenlabs import ElevenLabs
 from fastapi import FastAPI
@@ -17,6 +16,7 @@ from fastrtc import (
 )
 from gradio.utils import get_space
 from groq import Groq
+from numpy.typing import NDArray
 
 load_dotenv()
 groq_client = Groq()
@@ -89,6 +89,8 @@ app = gr.mount_gradio_app(app, stream.ui, path="/")
 
 if __name__ == "__main__":
     import os
+
+    os.environ["GRADIO_SSR_MODE"] = "false"
 
     if (mode := os.getenv("MODE")) == "UI":
         stream.ui.launch(server_port=7860)

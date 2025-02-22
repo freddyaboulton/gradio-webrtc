@@ -8,6 +8,7 @@ from typing import Any, AsyncGenerator, Callable, Generator, Literal, cast
 
 import click
 import numpy as np
+from numpy.typing import NDArray
 
 from .pause_detection import SileroVADModel, SileroVadOptions
 from .tracks import EmitType, StreamHandler
@@ -62,19 +63,19 @@ class AppState:
 
 ReplyFnGenerator = (
     Callable[
-        [tuple[int, np.ndarray], list[dict[Any, Any]]],
+        [tuple[int, NDArray[np.int16]], list[dict[Any, Any]]],
         Generator[EmitType, None, None],
     ]
     | Callable[
-        [tuple[int, np.ndarray]],
+        [tuple[int, NDArray[np.int16]]],
         Generator[EmitType, None, None],
     ]
     | Callable[
-        [tuple[int, np.ndarray]],
+        [tuple[int, NDArray[np.int16]]],
         AsyncGenerator[EmitType, None],
     ]
     | Callable[
-        [tuple[int, np.ndarray], list[dict[Any, Any]]],
+        [tuple[int, NDArray[np.int16]], list[dict[Any, Any]]],
         AsyncGenerator[EmitType, None],
     ]
 )
