@@ -67,11 +67,11 @@ document.querySelectorAll('.tag-button').forEach(button => {
 
     <video width=98% src="https://github.com/user-attachments/assets/9636dc97-4fee-46bb-abb8-b92e69c08c71" controls style="text-align: center"></video>
 
-    [:octicons-arrow-right-24: Demo](https://huggingface.co/spaces/freddyaboulton/gemini-audio-video-chat)
+    [:octicons-arrow-right-24: Demo](https://huggingface.co/spaces/fastrtc/gemini-audio-video)
 
-    [:octicons-arrow-right-24: Gradio UI](https://huggingface.co/spaces/freddyaboulton/gemini-audio-video-chat-gradio)
+    [:octicons-arrow-right-24: Gradio UI](https://huggingface.co/spaces/fastrtc/gemini-audio-video)
     
-    [:octicons-code-16: Code](https://huggingface.co/spaces/freddyaboulton/gemini-audio-video-chat/blob/main/app.py)
+    [:octicons-code-16: Code](https://huggingface.co/spaces/fastrtc/gemini-audio-video)
 
 -   :speaking_head:{ .lg .middle } __Google Gemini Real Time Voice API__
 {: data-tags="audio,real-time-api,voice-chat"}
