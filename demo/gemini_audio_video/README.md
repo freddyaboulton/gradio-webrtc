@@ -1,5 +1,5 @@
 ---
-title: Talk to Gemini
+title: Gemini Audio Video
 emoji: ♊️
 colorFrom: purple
 colorTo: red
@@ -8,7 +8,7 @@ sdk_version: 5.16.0
 app_file: app.py
 pinned: false
 license: mit
-short_description: Talk to Gemini using Google's multimodal API
+short_description: Gemini understands audio and video!
 tags: [webrtc, websocket, gradio, secret|TWILIO_ACCOUNT_SID, secret|TWILIO_AUTH_TOKEN, secret|GEMINI_API_KEY]
 ---
 
