@@ -4,6 +4,7 @@ repo_name: fastrtc
 repo_url: https://github.com/freddyaboulton/gradio-webrtc
 theme:
   name: material
+  custom_dir: overrides
   palette:
     scheme: fastrtc-dark
   features:
