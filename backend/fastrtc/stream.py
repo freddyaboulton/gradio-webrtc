@@ -466,6 +466,8 @@ class Stream(WebRTCConnectionMixin):
                             inputs=additional_output_components,
                             outputs=additional_output_components,
                         )
+        else:
+            raise ValueError(f"Invalid modality: {self.modality} and mode: {self.mode}")
         return demo
 
     @property
