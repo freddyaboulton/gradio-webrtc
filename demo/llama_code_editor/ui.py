@@ -63,8 +63,8 @@ with gr.Blocks(css=".code-component {max-height: 500px !important}") as demo:
         CodeHandler,
         inputs=[webrtc, history, code],
         outputs=[webrtc],
-        time_limit=90,
-        concurrency_limit=10,
+        time_limit=90 if get_space() else None,
+        concurrency_limit=10 if get_space() else None,
     )
     webrtc.on_additional_outputs(
         lambda history, code: (history, code, history), outputs=[history, code, cb]

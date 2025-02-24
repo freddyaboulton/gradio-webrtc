@@ -17,8 +17,8 @@ stream = Stream(
     handler=CodeHandler,
     modality="audio",
     mode="send-receive",
-    concurrency_limit=10,
-    time_limit=90,
+    concurrency_limit=10 if get_space() else None,
+    time_limit=90 if get_space() else None,
 )
 
 stream.ui = ui

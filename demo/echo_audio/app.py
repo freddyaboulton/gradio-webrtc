@@ -16,7 +16,8 @@ stream = Stream(
     modality="audio",
     mode="send-receive",
     rtc_configuration=get_twilio_turn_credentials() if get_space() else None,
-    concurrency_limit=20 if get_space() else None,
+    concurrency_limit=5 if get_space() else None,
+    time_limit=90 if get_space() else None,
 )
 
 app = FastAPI()
