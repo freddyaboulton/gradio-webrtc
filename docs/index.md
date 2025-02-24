@@ -16,6 +16,9 @@ The Real-Time Communication Library for Python.
 </h3>
 
 Turn any python function into a real-time audio and video stream over WebRTC or WebSockets.
+
+<video src="https://github.com/user-attachments/assets/6fb7f4fe-c5b2-48f3-88ff-f563611812ec" controls></video>
+
 ## Installation
 
 ```bash

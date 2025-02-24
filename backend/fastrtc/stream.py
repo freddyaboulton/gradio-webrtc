@@ -185,7 +185,7 @@ class Stream(WebRTCConnectionMixin):
                 gr.HTML(
                     f"""
                 <h1 style='text-align: center'>
-                {ui_args.get("title", "Video Streaming (Powered by WebRTC ⚡️)")}
+                {ui_args.get("title", "Video Streaming (Powered by FastRTC ⚡️)")}
                 </h1>
                 """
                 )
@@ -224,7 +224,7 @@ class Stream(WebRTCConnectionMixin):
                 gr.HTML(
                     f"""
                 <h1 style='text-align: center'>
-                {ui_args.get("title", "Video Streaming (Powered by WebRTC ⚡️)")}
+                {ui_args.get("title", "Video Streaming (Powered by FastRTC ⚡️)")}
                 </h1>
                 """
                 )
@@ -264,7 +264,7 @@ class Stream(WebRTCConnectionMixin):
                 gr.HTML(
                     f"""
                 <h1 style='text-align: center'>
-                {ui_args.get("title", "Video Streaming (Powered by WebRTC ⚡️)")}
+                {ui_args.get("title", "Video Streaming (Powered by FastRTC ⚡️)")}
                 </h1>
                 """
                 )
@@ -301,9 +301,9 @@ class Stream(WebRTCConnectionMixin):
         elif self.modality == "audio" and self.mode == "receive":
             with gr.Blocks() as demo:
                 gr.HTML(
-                    """
+                    f"""
                 <h1 style='text-align: center'>
-                FastAPI (Powered by WebRTC ⚡️)
+                {ui_args.get("title", "Audio Streaming (Powered by FastRTC ⚡️)")}
                 </h1>
                 """
                 )
