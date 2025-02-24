@@ -185,7 +185,7 @@ class Stream(WebRTCConnectionMixin):
                 gr.HTML(
                     f"""
                 <h1 style='text-align: center'>
-                {ui_args.get("title", "Video Streaming (Powered by WebRTC ⚡️)")}
+                {ui_args.get("title", "Video Streaming (Powered by FastRTC ⚡️)")}
                 </h1>
                 """
                 )
@@ -224,7 +224,7 @@ class Stream(WebRTCConnectionMixin):
                 gr.HTML(
                     f"""
                 <h1 style='text-align: center'>
-                {ui_args.get("title", "Video Streaming (Powered by WebRTC ⚡️)")}
+                {ui_args.get("title", "Video Streaming (Powered by FastRTC ⚡️)")}
                 </h1>
                 """
                 )
@@ -264,7 +264,7 @@ class Stream(WebRTCConnectionMixin):
                 gr.HTML(
                     f"""
                 <h1 style='text-align: center'>
-                {ui_args.get("title", "Video Streaming (Powered by WebRTC ⚡️)")}
+                {ui_args.get("title", "Video Streaming (Powered by FastRTC ⚡️)")}
                 </h1>
                 """
                 )
@@ -301,9 +301,9 @@ class Stream(WebRTCConnectionMixin):
         elif self.modality == "audio" and self.mode == "receive":
             with gr.Blocks() as demo:
                 gr.HTML(
-                    """
+                    f"""
                 <h1 style='text-align: center'>
-                FastAPI (Powered by WebRTC ⚡️)
+                {ui_args.get("title", "Audio Streaming (Powered by FastRTC ⚡️)")}
                 </h1>
                 """
                 )
@@ -466,6 +466,8 @@ class Stream(WebRTCConnectionMixin):
                             inputs=additional_output_components,
                             outputs=additional_output_components,
                         )
+        else:
+            raise ValueError(f"Invalid modality: {self.modality} and mode: {self.mode}")
         return demo
 
     @property
