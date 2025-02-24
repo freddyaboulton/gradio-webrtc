@@ -36,7 +36,12 @@ def parse_readme_secrets(readme_path: Path) -> list[str]:
 
 
 def upload_space(dir_path: str):
-    NO_GRADIO_SPACE = ["webrtc_vs_websocket", "llama_code_editor"]
+    NO_GRADIO_SPACE = [
+        "webrtc_vs_websocket",
+        "llama_code_editor",
+        "phonic_chat",
+        "gemini_audio_video",
+    ]
 
     path: Path = Path(dir_path)
     if not path.exists():

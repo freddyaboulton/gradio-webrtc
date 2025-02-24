@@ -88,8 +88,10 @@ class WebRTCConnectionMixin:
             if isinstance(conn, AudioCallback):
                 if inspect.iscoroutinefunction(conn.event_handler.shutdown):
                     asyncio.create_task(conn.event_handler.shutdown())
+                    conn.event_handler.reset()
                 else:
                     conn.event_handler.shutdown()
+                    conn.event_handler.reset()
         output = self.additional_outputs.pop(webrtc_id, None)
         if output:
             logger.debug("setting quit for webrtc id %s", webrtc_id)

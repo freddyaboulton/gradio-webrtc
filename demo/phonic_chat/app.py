@@ -1,3 +1,7 @@
+import subprocess
+
+subprocess.run(["pip", "install", "fastrtc==0.0.3.post7"])
+
 import asyncio
 import base64
 import os
@@ -80,6 +84,11 @@ class PhonicHandler(AsyncStreamHandler):
         except Exception as e:
             raise WebRTCError(f"Error sending audio: {e}")
 
+    async def shutdown(self):
+        if self.client:
+            await self.client._websocket.close()
+        return super().shutdown()
+
 
 def add_to_chatbot(state, chatbot, message):
     state.append(message)
@@ -102,7 +111,9 @@ stream = Stream(
     ],
     additional_outputs=[state, chatbot],
     additional_outputs_handler=add_to_chatbot,
-    ui_args={"title": "Phonic Chat (Powered by FastRTC ⚡️)"},
+    ui_args={
+        "title": "Phonic Chat (Powered by FastRTC ⚡️)",
+    },
     rtc_configuration=get_twilio_turn_credentials() if get_space() else None,
     concurrency_limit=5 if get_space() else None,
     time_limit=90 if get_space() else None,

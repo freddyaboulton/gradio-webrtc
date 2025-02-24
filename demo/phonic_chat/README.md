@@ -10,6 +10,7 @@ pinned: false
 license: mit
 short_description: Talk to Phonic AI's speech-to-speech model
 tags: [webrtc, websocket, gradio, secret|TWILIO_ACCOUNT_SID, secret|TWILIO_AUTH_TOKEN, secret|PHONIC_API_KEY]
+python_version: 3.11
 ---
 
 Check out the configuration reference at https://huggingface.co/docs/hub/spaces-config-reference

@@ -17,7 +17,7 @@ from gradio.components.base import Component
 from pydantic import BaseModel
 from typing_extensions import NotRequired
 
-from .tracks import StreamHandlerImpl, VideoEventHandler
+from .tracks import HandlerType, StreamHandlerImpl
 from .webrtc import WebRTC
 from .webrtc_connection_mixin import WebRTCConnectionMixin
 from .websocket import WebSocketHandler
@@ -35,12 +35,19 @@ class Body(BaseModel):
 
 class UIArgs(TypedDict):
     title: NotRequired[str]
+    """Title of the demo"""
+    icon: NotRequired[str]
+    """Icon to display on the button instead of the wave animation. The icon should be a path/url to a .svg/.png/.jpeg file."""
+    icon_button_color: NotRequired[str]
+    """Color of the icon button. Default is var(--color-accent) of the demo theme."""
+    pulse_color: NotRequired[str]
+    """Color of the pulse animation. Default is var(--color-accent) of the demo theme."""
 
 
 class Stream(WebRTCConnectionMixin):
     def __init__(
         self,
-        handler: VideoEventHandler | StreamHandlerImpl,
+        handler: HandlerType,
         *,
         additional_outputs_handler: Callable | None = None,
         mode: Literal["send-receive", "receive", "send"] = "send-receive",
@@ -312,6 +319,9 @@ class Stream(WebRTCConnectionMixin):
                                 rtc_configuration=self.rtc_configuration,
                                 mode="receive",
                                 modality="audio",
+                                icon=ui_args.get("icon"),
+                                icon_button_color=ui_args.get("icon_button_color"),
+                                pulse_color=ui_args.get("pulse_color"),
                             )
                             for component in additional_output_components:
                                 if component not in same_components:
@@ -387,6 +397,52 @@ class Stream(WebRTCConnectionMixin):
                                 rtc_configuration=self.rtc_configuration,
                                 mode="send-receive",
                                 modality="audio",
+                                icon=ui_args.get("icon"),
+                                icon_button_color=ui_args.get("icon_button_color"),
+                                pulse_color=ui_args.get("pulse_color"),
+                            )
+                            for component in additional_input_components:
+                                if component not in same_components:
+                                    component.render()
+                    if additional_output_components:
+                        with gr.Column():
+                            for component in additional_output_components:
+                                component.render()
+
+                    image.stream(
+                        fn=self.event_handler,
+                        inputs=[image] + additional_input_components,
+                        outputs=[image],
+                        time_limit=self.time_limit,
+                        concurrency_limit=self.concurrency_limit,  # type: ignore
+                    )
+                    if additional_output_components:
+                        assert self.additional_outputs_handler
+                        image.on_additional_outputs(
+                            self.additional_outputs_handler,
+                            inputs=additional_output_components,
+                            outputs=additional_output_components,
+                        )
+        elif self.modality == "audio-video" and self.mode == "send-receive":
+            with gr.Blocks() as demo:
+                gr.HTML(
+                    f"""
+                <h1 style='text-align: center'>
+                {ui_args.get("title", "Audio Streaming (Powered by WebRTC ⚡️)")}
+                </h1>
+                """
+                )
+                with gr.Row():
+                    with gr.Column():
+                        with gr.Group():
+                            image = WebRTC(
+                                label="Stream",
+                                rtc_configuration=self.rtc_configuration,
+                                mode="send-receive",
+                                modality="audio-video",
+                                icon=ui_args.get("icon"),
+                                icon_button_color=ui_args.get("icon_button_color"),
+                                pulse_color=ui_args.get("pulse_color"),
                             )
                             for component in additional_input_components:
                                 if component not in same_components:
@@ -555,7 +611,7 @@ class Stream(WebRTCConnectionMixin):
             click.style("INFO", fg="green")
             + ":\t  Visit "
             + click.style(
-                "https://fastrtc.org/pr-preview/pr-60/userguide/audio/#telephone-integration",
+                "https://fastrtc.org/userguide/audio/#telephone-integration",
                 fg="cyan",
             )
             + " for information on making your handler compatible with phone usage."
