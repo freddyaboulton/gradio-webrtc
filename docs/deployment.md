@@ -1,9 +1,12 @@
-When deploying in a cloud environment (like Hugging Face Spaces, EC2, etc), you need to set up a TURN server to relay the WebRTC traffic.
+When deploying in a cloud environment (like Hugging Face Spaces, EC2, etc), you need to set up a TURN server to relay the WebRTC traffic. This guide will cover the different options for setting up a TURN server.
+
+!!! tip
+    The `rtc_configuration` parameter of the `Stream` class also be passed to the [`WebRTC`](../userguide/gradio) component directly if you're building a standalone gradio app.
 
 ## Community Server
 
 Hugging Face graciously provides a TURN server for the community.
-In order to use it, you need to first create a Hugging Face account by going to the [huggingface.co](https://huggingface.co/).
+In order to use it, you need to first create a Hugging Face account by going to [huggingface.co](https://huggingface.co/).
 
 Then navigate to this [space](https://huggingface.co/spaces/freddyaboulton/turn-server-login) and follow the instructions on the page. You just have to click the "Log in" button and then the "Sign Up" button.
 
@@ -12,17 +15,18 @@ Then navigate to this [space](https://huggingface.co/spaces/freddyaboulton/turn-
 Then you can use the `get_hf_turn_credentials` helper to get your credentials:
 
 ```python
-from gradio_webrtc import get_hf_turn_credentials, WebRTC
+from fastrtc import get_hf_turn_credentials, Stream
 
 # Pass a valid access token for your Hugging Face account
 # or set the HF_TOKEN environment variable 
 credentials = get_hf_turn_credentials(token=None)
 
-with gr.Blcocks() as demo:
-    webrtc = WebRTC(rtc_configuration=credentials)
-    ...
-
-demo.launch()
+Stream(
+    handler=...,
+    rtc_configuration=credentials,
+    modality="audio",
+    mode="send-receive"
+)
 ```
 
 !!! warning
@@ -38,6 +42,7 @@ The easiest way to do this is to use a service like Twilio.
 Create a **free** [account](https://login.twilio.com/u/signup) and the install the `twilio` package with pip (`pip install twilio`). You can then connect from the WebRTC component like so:
 
 ```python
+from fastrtc import Stream
 from twilio.rest import Client
 import os
 
@@ -53,13 +58,15 @@ rtc_configuration = {
     "iceTransportPolicy": "relay",
 }
 
-with gr.Blocks() as demo:
-    ...
-    rtc = WebRTC(rtc_configuration=rtc_configuration, ...)
-    ...
+Stream(
+    handler=...,
+    rtc_configuration=rtc_configuration,
+    modality="audio",
+    mode="send-receive"
+)
 ```
 
-!!! tip "Automatic Login"
+!!! tip "Automatic login"
 
     You can log in automatically with the `get_twilio_turn_credentials` helper
 
@@ -148,8 +155,7 @@ The `server-info.json` file will have the server's public IP and public DNS:
 Finally, you can connect to your EC2 server from the gradio WebRTC component via the `rtc_configuration` argument:
 
 ```python
-import gradio as gr
-from gradio_webrtc import WebRTC
+from fastrtc import Stream
 rtc_configuration = {
     "iceServers": [
         {
@@ -159,7 +165,10 @@ rtc_configuration = {
         },
     ]
 }
-
-with gr.Blocks() as demo:
-    webrtc = WebRTC(rtc_configuration=rtc_configuration)
+Stream(
+    handler=...,
+    rtc_configuration=rtc_configuration,
+    modality="audio",
+    mode="send-receive"
+)
 ```

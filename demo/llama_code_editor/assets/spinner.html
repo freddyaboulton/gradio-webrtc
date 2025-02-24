@@ -1,0 +1,60 @@
+<div style="
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-radius: 8px;
+  padding: 2rem;
+  text-align: center;
+  font-family: system-ui, -apple-system, sans-serif;
+">
+  <!-- Spinner container -->
+  <div style="
+    position: relative;
+    width: 64px;
+    height: 64px;
+    margin-bottom: 1.5rem;
+  ">
+    <!-- Static ring -->
+    <div style="
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      border: 4px solid #e2e8f0;
+      border-radius: 50%;
+    "></div>
+    <!-- Animated spinner -->
+    <div style="
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      border: 4px solid transparent;
+      border-top-color: #3b82f6;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    "></div>
+  </div>
+
+  <!-- Text content -->
+  <h2 style="
+    margin: 0 0 0.5rem 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #475569;
+  ">Generating your application...</h2>
+  
+  <p style="
+    margin: 0;
+    font-size: 0.875rem;
+    color: #64748b;
+  ">This may take a few moments</p>
+
+  <style>
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</div>

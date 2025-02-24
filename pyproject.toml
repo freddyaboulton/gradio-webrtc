@@ -7,25 +7,49 @@ requires = [
 build-backend = "hatchling.build"
 
 [project]
-name = "gradio_webrtc"
-version = "0.0.30"
-description = "Stream images in realtime with webrtc"
+name = "fastrtc"
+version = "0.0.3.post9"
+description = "The realtime communication library for Python"
 readme = "README.md"
 license = "apache-2.0"
 requires-python = ">=3.10"
 authors = [{ name = "Freddy Boulton", email = "YOUREMAIL@domain.com" }]
-keywords = ["gradio-custom-component", "gradio-template-Video", "streaming", "webrtc", "realtime"]
+keywords = [
+  "streaming",
+  "webrtc",
+  "realtime",
+  "machine learning",
+  "computer vision",
+  "audio",
+  "video",
+  "image",
+  "audio processing",
+  "video processing",
+  "gradio-custom-component",
+]
 # Add dependencies here
-dependencies = ["gradio>=4.0,<6.0", "aiortc"]
+dependencies = [
+  "gradio>=4.0,<6.0",
+  "aiortc",
+  "audioop-lts;python_version>='3.13'",
+  "librosa",
+  "numpy>=2.0.2",                       # because of librosa
+  "numba>=0.60.0",
+]
 classifiers = [
   'Development Status :: 3 - Alpha',
   'Operating System :: OS Independent',
   'Programming Language :: Python :: 3',
   'Programming Language :: Python :: 3 :: Only',
-  'Programming Language :: Python :: 3.9',
   'Programming Language :: Python :: 3.10',
   'Programming Language :: Python :: 3.11',
   'Programming Language :: Python :: 3.12',
+  'Programming Language :: Python :: 3.13',
+  'Topic :: Internet',
+  "Topic :: Software Development :: Libraries :: Application Frameworks",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+  "Topic :: Software Development :: Libraries",
+  "Topic :: Software Development",
   'Topic :: Scientific/Engineering',
   'Topic :: Scientific/Engineering :: Artificial Intelligence',
   'Topic :: Scientific/Engineering :: Visualization',
@@ -37,20 +61,23 @@ classifiers = [
 # This will make it easy for people to find your deployed demo or source code when they
 # encounter your project in the wild.
 
-# [project.urls]
-# repository = "your github repository"
-# space = "your space url"
+[project.urls]
+repository = "https://github.com/freddyaboulton/gradio-webrtc"
+issues = "https://github.com/freddyaboulton/gradio-webrtc/issues"
+Documentation = "https://freddyaboulton.github.io/gradio-webrtc/cookbook/"
 
 [project.optional-dependencies]
 dev = ["build", "twine"]
-vad = ["librosa", "onnxruntime"]
-stopword = ["silero", "librosa", "onnxruntime"]
+vad = ["onnxruntime>=1.20.1"]
+tts = ["kokoro-onnx"]
+stopword = ["fastrtc-moonshine-onnx", "onnxruntime>=1.20.1"]
+stt = ["fastrtc-moonshine-onnx", "onnxruntime>=1.20.1"]
 
 [tool.hatch.build]
-artifacts = ["/backend/gradio_webrtc/templates", "*.pyi"]
+artifacts = ["/backend/fastrtc/templates", "*.pyi"]
 
 [tool.hatch.build.targets.wheel]
-packages = ["/backend/gradio_webrtc"]
+packages = ["/backend/fastrtc"]
 
 [tool.ruff]
 target-version = "py310"

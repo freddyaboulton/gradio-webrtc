@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebRTC vs WebSocket Benchmark</title>
+    <script src="https://cdn.jsdelivr.net/npm/alawmulaw"></script>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .panel {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .chat-container {
+            height: 400px;
+            overflow-y: auto;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .message {
+            margin-bottom: 10px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            max-width: 80%;
+        }
+
+        .message.user {
+            background-color: #e3f2fd;
+            margin-left: auto;
+        }
+
+        .message.assistant {
+            background-color: #f5f5f5;
+        }
+
+        .metrics {
+            margin-top: 15px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .metric {
+            margin: 5px 0;
+            font-size: 14px;
+        }
+
+        button {
+            background-color: #1976d2;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: #1565c0;
+        }
+
+        button:disabled {
+            background-color: #bdbdbd;
+            cursor: not-allowed;
+        }
+
+        h2 {
+            margin-top: 0;
+            color: #1976d2;
+        }
+
+        .visualizer {
+            width: 100%;
+            height: 100px;
+            margin: 10px 0;
+            background: #fafafa;
+            border-radius: 8px;
+        }
+
+        /* Add styles for disclaimer */
+        .disclaimer {
+            background-color: #fff3e0;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            line-height: 1.5;
+            max-width: 1400px;
+            margin: 0 auto 20px auto;
+        }
+
+        /* Update nav bar styles */
+        .nav-bar {
+            background-color: #f5f5f5;
+            padding: 10px 20px;
+            margin-bottom: 20px;
+        }
+
+        .nav-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            gap: 10px;
+        }
+
+        .nav-button {
+            background-color: #1976d2;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 14px;
+            transition: background-color 0.2s;
+        }
+
+        .nav-button:hover {
+            background-color: #1565c0;
+        }
+
+        /* Add styles for toast notifications */
+        .toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 16px 24px;
+            border-radius: 4px;
+            font-size: 14px;
+            z-index: 1000;
+            display: none;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .toast.error {
+            background-color: #f44336;
+            color: white;
+        }
+
+        .toast.warning {
+            background-color: #ffd700;
+            color: black;
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="nav-bar">
+        <div class="nav-container">
+            <a href="./webrtc/docs" class="nav-button">WebRTC Docs</a>
+            <a href="./websocket/docs" class="nav-button">WebSocket Docs</a>
+            <a href="./telephone/docs" class="nav-button">Telephone Docs</a>
+            <a href="./ui" class="nav-button">UI</a>
+        </div>
+    </nav>
+
+    <div class="disclaimer">
+        This page compares the WebRTC Round-Trip-Time calculated from <code>getStats()</code> to the time taken to
+        process a ping/pong response pattern over websockets. It may not be a gold standard benchmark. Both WebRTC and
+        Websockets have their merits/advantages which is why FastRTC supports both. Artifacts in the WebSocket playback
+        audio are due to gaps in my frontend processing code and not FastRTC web server.
+    </div>
+
+    <div class="container">
+        <div class="panel">
+            <h2>WebRTC Connection</h2>
+            <div id="webrtc-chat" class="chat-container"></div>
+            <div id="webrtc-metrics" class="metrics">
+                <div class="metric">RTT (Round Trip Time): <span id="webrtc-rtt">-</span></div>
+            </div>
+            <button id="webrtc-button">Connect WebRTC</button>
+        </div>
+
+        <div class="panel">
+            <h2>WebSocket Connection</h2>
+            <div id="ws-chat" class="chat-container"></div>
+            <div id="ws-metrics" class="metrics">
+                <div class="metric">RTT (Round Trip Time): <span id="ws-rtt">0</span></div>
+            </div>
+            <button id="ws-button">Connect WebSocket</button>
+        </div>
+    </div>
+
+    <audio id="webrtc-audio" style="display: none;"></audio>
+    <audio id="ws-audio" style="display: none;"></audio>
+
+    <div id="error-toast" class="toast"></div>
+
+    <script>
+        // Shared utilities
+        function generateId() {
+            return Math.random().toString(36).substring(7);
+        }
+
+        function sendInput(id) {
+
+            return function handleMessage(event) {
+                const eventJson = JSON.parse(event.data);
+                if (eventJson.type === "send_input") {
+                    fetch('/input_hook', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            webrtc_id: id,
+                            chatbot: chatHistoryWebRTC
+                        })
+                    });
+                }
+            }
+        }
+
+        let chatHistoryWebRTC = [];
+        let chatHistoryWebSocket = [];
+
+        function addMessage(containerId, role, content) {
+            const container = document.getElementById(containerId);
+            const messageDiv = document.createElement('div');
+            messageDiv.classList.add('message', role);
+            messageDiv.textContent = content;
+            container.appendChild(messageDiv);
+            container.scrollTop = container.scrollHeight;
+            if (containerId === 'webrtc-chat') {
+                chatHistoryWebRTC.push({ role, content });
+            } else {
+                chatHistoryWebSocket.push({ role, content });
+            }
+        }
+
+        // WebRTC Implementation
+        let webrtcPeerConnection;
+
+        // Add this function to collect RTT stats
+        async function updateWebRTCStats() {
+            if (!webrtcPeerConnection) return;
+
+            const stats = await webrtcPeerConnection.getStats();
+            stats.forEach(report => {
+                if (report.type === 'candidate-pair' && report.state === 'succeeded') {
+                    const rtt = report.currentRoundTripTime * 1000; // Convert to ms
+                    document.getElementById('webrtc-rtt').textContent = `${rtt.toFixed(2)}ms`;
+                }
+            });
+        }
+
+        async function setupWebRTC() {
+            const button = document.getElementById('webrtc-button');
+            button.textContent = "Stop";
+
+            const config = __RTC_CONFIGURATION__;
+            webrtcPeerConnection = new RTCPeerConnection(config);
+            const webrtcId = generateId();
+
+            const timeoutId = setTimeout(() => {
+                const toast = document.getElementById('error-toast');
+                toast.textContent = "Connection is taking longer than usual. Are you on a VPN?";
+                toast.className = 'toast warning';
+                toast.style.display = 'block';
+
+                // Hide warning after 5 seconds
+                setTimeout(() => {
+                    toast.style.display = 'none';
+                }, 5000);
+            }, 5000);
+
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                stream.getTracks().forEach(track => {
+                    webrtcPeerConnection.addTrack(track, stream);
+                });
+
+                webrtcPeerConnection.addEventListener('track', (evt) => {
+                    const audio = document.getElementById('webrtc-audio');
+                    if (audio.srcObject !== evt.streams[0]) {
+                        audio.srcObject = evt.streams[0];
+                        audio.play();
+                    }
+                });
+
+                const dataChannel = webrtcPeerConnection.createDataChannel('text');
+                dataChannel.onmessage = sendInput(webrtcId);
+
+                const offer = await webrtcPeerConnection.createOffer();
+                await webrtcPeerConnection.setLocalDescription(offer);
+
+                await new Promise((resolve) => {
+                    if (webrtcPeerConnection.iceGatheringState === "complete") {
+                        resolve();
+                    } else {
+                        const checkState = () => {
+                            if (webrtcPeerConnection.iceGatheringState === "complete") {
+                                webrtcPeerConnection.removeEventListener("icegatheringstatechange", checkState);
+                                resolve();
+                            }
+                        };
+                        webrtcPeerConnection.addEventListener("icegatheringstatechange", checkState);
+                    }
+                });
+
+                const response = await fetch('/webrtc/offer', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        sdp: webrtcPeerConnection.localDescription.sdp,
+                        type: webrtcPeerConnection.localDescription.type,
+                        webrtc_id: webrtcId
+                    })
+                });
+
+                const serverResponse = await response.json();
+                await webrtcPeerConnection.setRemoteDescription(serverResponse);
+
+                // Setup event source for messages
+                const eventSource = new EventSource('/outputs?webrtc_id=' + webrtcId);
+                eventSource.addEventListener("output", (event) => {
+                    const eventJson = JSON.parse(event.data);
+                    addMessage('webrtc-chat', eventJson.role, eventJson.content);
+                });
+
+                // Add periodic stats collection
+                const statsInterval = setInterval(updateWebRTCStats, 1000);
+
+                // Store the interval ID on the connection
+                webrtcPeerConnection.statsInterval = statsInterval;
+
+                webrtcPeerConnection.addEventListener('connectionstatechange', () => {
+                    if (webrtcPeerConnection.connectionState === 'connected') {
+                        clearTimeout(timeoutId);
+                        const toast = document.getElementById('error-toast');
+                        toast.style.display = 'none';
+                    }
+                });
+
+            } catch (err) {
+                clearTimeout(timeoutId);
+                console.error('WebRTC setup error:', err);
+            }
+        }
+
+        function webrtc_stop() {
+            if (webrtcPeerConnection) {
+                // Clear the stats interval
+                if (webrtcPeerConnection.statsInterval) {
+                    clearInterval(webrtcPeerConnection.statsInterval);
+                }
+
+                // Close all tracks
+                webrtcPeerConnection.getSenders().forEach(sender => {
+                    if (sender.track) {
+                        sender.track.stop();
+                    }
+                });
+
+                webrtcPeerConnection.close();
+                webrtcPeerConnection = null;
+
+                // Reset metrics display
+                document.getElementById('webrtc-rtt').textContent = '-';
+            }
+        }
+
+        // WebSocket Implementation
+        let webSocket;
+        let wsMetrics = {
+            pingStartTime: 0,
+            rttValues: []
+        };
+
+        // Load mu-law library
+
+        // Add load promise to track when the script is ready
+
+
+        function resample(audioData, fromSampleRate, toSampleRate) {
+            const ratio = fromSampleRate / toSampleRate;
+            const newLength = Math.round(audioData.length / ratio);
+            const result = new Float32Array(newLength);
+
+            for (let i = 0; i < newLength; i++) {
+                const position = i * ratio;
+                const index = Math.floor(position);
+                const fraction = position - index;
+
+                if (index + 1 < audioData.length) {
+                    result[i] = audioData[index] * (1 - fraction) + audioData[index + 1] * fraction;
+                } else {
+                    result[i] = audioData[index];
+                }
+            }
+            return result;
+        }
+
+        function convertToMulaw(audioData, sampleRate) {
+            // Resample to 8000 Hz if needed
+            if (sampleRate !== 8000) {
+                audioData = resample(audioData, sampleRate, 8000);
+            }
+
+            // Convert float32 [-1,1] to int16 [-32768,32767]
+            const int16Data = new Int16Array(audioData.length);
+            for (let i = 0; i < audioData.length; i++) {
+                int16Data[i] = Math.floor(audioData[i] * 32768);
+            }
+
+            // Convert to mu-law using the library
+            return alawmulaw.mulaw.encode(int16Data);
+        }
+
+        async function setupWebSocket() {
+            const button = document.getElementById('ws-button');
+            button.textContent = "Stop";
+
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    audio: {
+                        "echoCancellation": true,
+                        "noiseSuppression": { "exact": true },
+                        "autoGainControl": { "exact": true },
+                        "sampleRate": { "ideal": 24000 },
+                        "sampleSize": { "ideal": 16 },
+                        "channelCount": { "exact": 1 },
+                    }
+                });
+                const wsId = generateId();
+                wsMetrics.startTime = performance.now();
+
+                // Create audio context and analyser for visualization
+                const audioContext = new AudioContext();
+                const analyser = audioContext.createAnalyser();
+                const source = audioContext.createMediaStreamSource(stream);
+                source.connect(analyser);
+
+                // Connect to websocket endpoint
+                webSocket = new WebSocket(`${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/websocket/offer`);
+
+                webSocket.onopen = () => {
+                    // Send initial start message
+                    webSocket.send(JSON.stringify({
+                        event: "start",
+                        websocket_id: wsId
+                    }));
+
+                    // Setup audio processing
+                    const processor = audioContext.createScriptProcessor(2048, 1, 1);
+                    source.connect(processor);
+                    processor.connect(audioContext.destination);
+
+                    processor.onaudioprocess = (e) => {
+                        const inputData = e.inputBuffer.getChannelData(0);
+                        const mulawData = convertToMulaw(inputData, audioContext.sampleRate);
+                        const base64Audio = btoa(String.fromCharCode.apply(null, mulawData));
+                        if (webSocket.readyState === WebSocket.OPEN) {
+                            webSocket.send(JSON.stringify({
+                                event: "media",
+                                media: {
+                                    payload: base64Audio
+                                }
+                            }));
+                        }
+                    };
+
+                    // Add ping interval
+                    webSocket.pingInterval = setInterval(() => {
+                        wsMetrics.pingStartTime = performance.now();
+                        webSocket.send(JSON.stringify({
+                            event: "ping"
+                        }));
+                    }, 500);
+                };
+
+                // Setup audio output context
+                const outputContext = new AudioContext({ sampleRate: 24000 });
+                const sampleRate = 24000; // Updated to match server sample rate
+                let audioQueue = [];
+                let isPlaying = false;
+
+                webSocket.onmessage = (event) => {
+                    const data = JSON.parse(event.data);
+                    if (data?.type === "send_input") {
+                        console.log("sending input")
+                        fetch('/input_hook', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ webrtc_id: wsId, chatbot: chatHistoryWebSocket })
+                        });
+                    }
+                    if (data.event === "media") {
+                        // Process received audio
+                        const audioData = atob(data.media.payload);
+                        const mulawData = new Uint8Array(audioData.length);
+                        for (let i = 0; i < audioData.length; i++) {
+                            mulawData[i] = audioData.charCodeAt(i);
+                        }
+
+                        // Convert mu-law to linear PCM
+                        const linearData = alawmulaw.mulaw.decode(mulawData);
+
+                        // Create an AudioBuffer
+                        const audioBuffer = outputContext.createBuffer(1, linearData.length, sampleRate);
+                        const channelData = audioBuffer.getChannelData(0);
+
+                        // Fill the buffer with the decoded data
+                        for (let i = 0; i < linearData.length; i++) {
+                            channelData[i] = linearData[i] / 32768.0;
+                        }
+
+                        // Queue the audio buffer
+                        audioQueue.push(audioBuffer);
+
+                        // Start playing if not already playing
+                        if (!isPlaying) {
+                            playNextBuffer();
+                        }
+                    }
+
+                    // Add pong handler
+                    if (data.event === "pong") {
+                        const rtt = performance.now() - wsMetrics.pingStartTime;
+                        wsMetrics.rttValues.push(rtt);
+                        // Keep only last 20 values for running mean
+                        if (wsMetrics.rttValues.length > 20) {
+                            wsMetrics.rttValues.shift();
+                        }
+                        const avgRtt = wsMetrics.rttValues.reduce((a, b) => a + b, 0) / wsMetrics.rttValues.length;
+                        document.getElementById('ws-rtt').textContent = `${avgRtt.toFixed(2)}ms`;
+                        return;
+                    }
+                };
+
+                function playNextBuffer() {
+                    if (audioQueue.length === 0) {
+                        isPlaying = false;
+                        return;
+                    }
+
+                    isPlaying = true;
+                    const bufferSource = outputContext.createBufferSource();
+                    bufferSource.buffer = audioQueue.shift();
+                    bufferSource.connect(outputContext.destination);
+
+                    bufferSource.onended = playNextBuffer;
+                    bufferSource.start();
+                }
+
+                const eventSource = new EventSource('/outputs?webrtc_id=' + wsId);
+                eventSource.addEventListener("output", (event) => {
+                    console.log("ws output", event);
+                    const eventJson = JSON.parse(event.data);
+                    addMessage('ws-chat', eventJson.role, eventJson.content);
+                });
+
+            } catch (err) {
+                console.error('WebSocket setup error:', err);
+                button.disabled = false;
+            }
+        }
+
+        function ws_stop() {
+            if (webSocket) {
+                webSocket.send(JSON.stringify({
+                    event: "stop"
+                }));
+                // Clear ping interval
+                if (webSocket.pingInterval) {
+                    clearInterval(webSocket.pingInterval);
+                }
+                // Reset RTT display
+                document.getElementById('ws-rtt').textContent = '-';
+                wsMetrics.rttValues = [];
+
+                // Clear the stats interval
+                if (webSocket.statsInterval) {
+                    clearInterval(webSocket.statsInterval);
+                }
+                webSocket.close();
+            }
+        }
+
+        // Event Listeners
+        document.getElementById('webrtc-button').addEventListener('click', () => {
+            const button = document.getElementById('webrtc-button');
+            if (button.textContent === 'Connect WebRTC') {
+                setupWebRTC();
+            } else {
+                webrtc_stop();
+                button.textContent = 'Connect WebRTC';
+            }
+        });
+        const ws_start_button = document.getElementById('ws-button')
+        ws_start_button.addEventListener('click', () => {
+            if (ws_start_button.textContent === 'Connect WebSocket') {
+                setupWebSocket();
+                ws_start_button.textContent = 'Stop';
+            } else {
+                ws_stop();
+                ws_start_button.textContent = 'Connect WebSocket';
+            }
+        });
+        document.addEventListener("beforeunload", () => {
+            ws_stop();
+            webrtc_stop();
+        });
+    </script>
+</body>
+
+</html>

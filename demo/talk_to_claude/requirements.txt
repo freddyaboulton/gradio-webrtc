@@ -1,0 +1,6 @@
+fastrtc[vad, tts]
+elevenlabs
+groq
+anthropic
+twilio
+python-dotenv

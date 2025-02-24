@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Object Detection</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #2d2b52 0%, #191731 100%);
+            color: white;
+            margin: 0;
+            padding: 20px;
+            height: 100vh;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .video-container {
+            width: 100%;
+            max-width: 500px;
+            aspect-ratio: 1/1;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            margin: 10px 0;
+        }
+
+        #video-output {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        button {
+            background: white;
+            color: #2d2b52;
+            border: none;
+            padding: 12px 32px;
+            border-radius: 24px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 0.3em;
+        }
+
+        p {
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 1em;
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            align-items: center;
+            margin-top: 10px;
+        }
+
+        .slider-container {
+            width: 100%;
+            max-width: 300px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .slider-container label {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 14px;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            -webkit-appearance: none;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            outline: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            background: white;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        /* Add styles for toast notifications */
+        .toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 16px 24px;
+            border-radius: 4px;
+            font-size: 14px;
+            z-index: 1000;
+            display: none;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .toast.error {
+            background-color: #f44336;
+            color: white;
+        }
+
+        .toast.warning {
+            background-color: #ffd700;
+            color: black;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Add toast element after body opening tag -->
+    <div id="error-toast" class="toast"></div>
+    <div class="container">
+        <h1>Real-time Object Detection</h1>
+        <p>Using YOLOv10 to detect objects in your webcam feed</p>
+        <div class="video-container">
+            <video id="video-output" autoplay playsinline></video>
+        </div>
+        <div class="controls">
+            <div class="slider-container">
+                <label>Confidence Threshold: <span id="conf-value">0.3</span></label>
+                <input type="range" id="conf-threshold" min="0" max="1" step="0.01" value="0.3">
+            </div>
+            <button id="start-button">Start</button>
+        </div>
+    </div>
+
+    <script>
+        let peerConnection;
+        let webrtc_id;
+        const startButton = document.getElementById('start-button');
+        const videoOutput = document.getElementById('video-output');
+        const confThreshold = document.getElementById('conf-threshold');
+        const confValue = document.getElementById('conf-value');
+
+        // Update confidence value display
+        confThreshold.addEventListener('input', (e) => {
+            confValue.textContent = e.target.value;
+            if (peerConnection) {
+                updateConfThreshold(e.target.value);
+            }
+        });
+
+        function updateConfThreshold(value) {
+            fetch('/input_hook', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    webrtc_id: webrtc_id,
+                    conf_threshold: parseFloat(value)
+                })
+            });
+        }
+
+        function showError(message) {
+            const toast = document.getElementById('error-toast');
+            toast.textContent = message;
+            toast.className = 'toast error';
+            toast.style.display = 'block';
+
+            // Hide toast after 5 seconds
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 5000);
+        }
+
+        async function setupWebRTC() {
+            const config = __RTC_CONFIGURATION__;
+            peerConnection = new RTCPeerConnection(config);
+
+            const timeoutId = setTimeout(() => {
+                const toast = document.getElementById('error-toast');
+                toast.textContent = "Connection is taking longer than usual. Are you on a VPN?";
+                toast.className = 'toast warning';
+                toast.style.display = 'block';
+
+                // Hide warning after 5 seconds
+                setTimeout(() => {
+                    toast.style.display = 'none';
+                }, 5000);
+            }, 5000);
+
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: true
+                });
+
+                stream.getTracks().forEach(track => {
+                    peerConnection.addTrack(track, stream);
+                });
+
+                peerConnection.addEventListener('track', (evt) => {
+                    if (videoOutput && videoOutput.srcObject !== evt.streams[0]) {
+                        videoOutput.srcObject = evt.streams[0];
+                    }
+                });
+
+                const dataChannel = peerConnection.createDataChannel('text');
+                dataChannel.onmessage = (event) => {
+                    const eventJson = JSON.parse(event.data);
+                    if (eventJson.type === "error") {
+                        showError(eventJson.message);
+                    } else if (eventJson.type === "send_input") {
+                        updateConfThreshold(confThreshold.value);
+                    }
+                };
+
+                const offer = await peerConnection.createOffer();
+                await peerConnection.setLocalDescription(offer);
+
+                await new Promise((resolve) => {
+                    if (peerConnection.iceGatheringState === "complete") {
+                        resolve();
+                    } else {
+                        const checkState = () => {
+                            if (peerConnection.iceGatheringState === "complete") {
+                                peerConnection.removeEventListener("icegatheringstatechange", checkState);
+                                resolve();
+                            }
+                        };
+                        peerConnection.addEventListener("icegatheringstatechange", checkState);
+                    }
+                });
+
+                webrtc_id = Math.random().toString(36).substring(7);
+
+                const response = await fetch('/webrtc/offer', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        sdp: peerConnection.localDescription.sdp,
+                        type: peerConnection.localDescription.type,
+                        webrtc_id: webrtc_id
+                    })
+                });
+
+                const serverResponse = await response.json();
+
+                if (serverResponse.status === 'failed') {
+                    showError(serverResponse.meta.error === 'concurrency_limit_reached'
+                        ? `Too many connections. Maximum limit is ${serverResponse.meta.limit}`
+                        : serverResponse.meta.error);
+                    stop();
+                    startButton.textContent = 'Start';
+                    return;
+                }
+
+                await peerConnection.setRemoteDescription(serverResponse);
+
+                // Send initial confidence threshold
+                updateConfThreshold(confThreshold.value);
+
+                peerConnection.addEventListener('connectionstatechange', () => {
+                    if (peerConnection.connectionState === 'connected') {
+                        clearTimeout(timeoutId);
+                        const toast = document.getElementById('error-toast');
+                        toast.style.display = 'none';
+                    }
+                });
+
+            } catch (err) {
+                clearTimeout(timeoutId);
+                console.error('Error setting up WebRTC:', err);
+                showError('Failed to establish connection. Please try again.');
+                stop();
+                startButton.textContent = 'Start';
+            }
+        }
+
+        function stop() {
+            if (peerConnection) {
+                if (peerConnection.getTransceivers) {
+                    peerConnection.getTransceivers().forEach(transceiver => {
+                        if (transceiver.stop) {
+                            transceiver.stop();
+                        }
+                    });
+                }
+
+                if (peerConnection.getSenders) {
+                    peerConnection.getSenders().forEach(sender => {
+                        if (sender.track && sender.track.stop) sender.track.stop();
+                    });
+                }
+
+                setTimeout(() => {
+                    peerConnection.close();
+                }, 500);
+            }
+
+            videoOutput.srcObject = null;
+        }
+
+        startButton.addEventListener('click', () => {
+            if (startButton.textContent === 'Start') {
+                setupWebRTC();
+                startButton.textContent = 'Stop';
+            } else {
+                stop();
+                startButton.textContent = 'Start';
+            }
+        });
+    </script>
+</body>
+
+</html>

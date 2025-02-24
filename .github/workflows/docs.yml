@@ -3,8 +3,16 @@ on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
+
 permissions:
   contents: write
+  pull-requests: write
+  deployments: write
+  pages: write
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -24,5 +32,19 @@ jobs:
           path: .cache
           restore-keys: |
             mkdocs-material-
-      - run: pip install mkdocs-material 
-      - run: mkdocs gh-deploy --force
+      - run: pip install mkdocs-material
+      - name: Build docs
+        run: mkdocs build
+
+      - name: Deploy to GH Pages (main)
+        if: github.event_name == 'push'
+        run: mkdocs gh-deploy --force
+
+      - name: Deploy PR Preview
+        if: github.event_name == 'pull_request'
+        uses: rossjrw/pr-preview-action@v1
+        with:
+          source-dir: ./site
+          preview-branch: gh-pages
+          umbrella-dir: pr-preview
+          action: auto

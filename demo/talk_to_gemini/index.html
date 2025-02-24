@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gemini Voice Chat</title>
+    <style>
+        :root {
+            --color-accent: #6366f1;
+            --color-background: #0f172a;
+            --color-surface: #1e293b;
+            --color-text: #e2e8f0;
+            --boxSize: 8px;
+            --gutter: 4px;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--color-background);
+            color: var(--color-text);
+            font-family: system-ui, -apple-system, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 800px;
+            background-color: var(--color-surface);
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+
+        .wave-container {
+            position: relative;
+            display: flex;
+            min-height: 100px;
+            max-height: 128px;
+            justify-content: center;
+            align-items: center;
+            margin: 2rem 0;
+        }
+
+        .box-container {
+            display: flex;
+            justify-content: space-between;
+            height: 64px;
+            width: 100%;
+        }
+
+        .box {
+            height: 100%;
+            width: var(--boxSize);
+            background: var(--color-accent);
+            border-radius: 8px;
+            transition: transform 0.05s ease;
+        }
+
+        .controls {
+            display: grid;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        label {
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        input,
+        select {
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background-color: var(--color-background);
+            color: var(--color-text);
+            font-size: 1rem;
+        }
+
+        button {
+            padding: 1rem 2rem;
+            border-radius: 0.5rem;
+            border: none;
+            background-color: var(--color-accent);
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        button:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        .icon-with-spinner {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            min-width: 180px;
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid white;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            flex-shrink: 0;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .pulse-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            min-width: 180px;
+        }
+
+        .pulse-circle {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background-color: white;
+            opacity: 0.2;
+            flex-shrink: 0;
+            transform: translateX(-0%) scale(var(--audio-level, 1));
+            transition: transform 0.1s ease;
+        }
+
+        /* Add styles for toast notifications */
+        .toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 16px 24px;
+            border-radius: 4px;
+            font-size: 14px;
+            z-index: 1000;
+            display: none;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .toast.error {
+            background-color: #f44336;
+            color: white;
+        }
+
+        .toast.warning {
+            background-color: #ffd700;
+            color: black;
+        }
+    </style>
+</head>
+
+
+<body>
+    <!-- Add toast element after body opening tag -->
+    <div id="error-toast" class="toast"></div>
+    <div style="text-align: center">
+        <h1>Gemini Voice Chat</h1>
+        <p>Speak with Gemini using real-time audio streaming</p>
+        <p>
+            Get a Gemini API key
+            <a href="https://ai.google.dev/gemini-api/docs/api-key">here</a>
+        </p>
+    </div>
+    <div class="container">
+        <div class="controls">
+            <div class="input-group">
+                <label for="api-key">API Key</label>
+                <input type="password" id="api-key" placeholder="Enter your API key">
+            </div>
+            <div class="input-group">
+                <label for="voice">Voice</label>
+                <select id="voice">
+                    <option value="Puck">Puck</option>
+                    <option value="Charon">Charon</option>
+                    <option value="Kore">Kore</option>
+                    <option value="Fenrir">Fenrir</option>
+                    <option value="Aoede">Aoede</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="wave-container">
+            <div class="box-container">
+                <!-- Boxes will be dynamically added here -->
+            </div>
+        </div>
+
+        <button id="start-button">Start Recording</button>
+    </div>
+
+    <audio id="audio-output"></audio>
+
+    <script>
+        let peerConnection;
+        let audioContext;
+        let dataChannel;
+        let isRecording = false;
+        let webrtc_id;
+
+        const startButton = document.getElementById('start-button');
+        const apiKeyInput = document.getElementById('api-key');
+        const voiceSelect = document.getElementById('voice');
+        const audioOutput = document.getElementById('audio-output');
+        const boxContainer = document.querySelector('.box-container');
+
+        const numBars = 32;
+        for (let i = 0; i < numBars; i++) {
+            const box = document.createElement('div');
+            box.className = 'box';
+            boxContainer.appendChild(box);
+        }
+
+        function updateButtonState() {
+            if (peerConnection && (peerConnection.connectionState === 'connecting' || peerConnection.connectionState === 'new')) {
+                startButton.innerHTML = `
+                    <div class="icon-with-spinner">
+                        <div class="spinner"></div>
+                        <span>Connecting...</span>
+                    </div>
+                `;
+            } else if (peerConnection && peerConnection.connectionState === 'connected') {
+                startButton.innerHTML = `
+                    <div class="pulse-container">
+                        <div class="pulse-circle"></div>
+                        <span>Stop Recording</span>
+                    </div>
+                `;
+            } else {
+                startButton.innerHTML = 'Start Recording';
+            }
+        }
+
+        function showError(message) {
+            const toast = document.getElementById('error-toast');
+            toast.textContent = message;
+            toast.className = 'toast error';
+            toast.style.display = 'block';
+
+            // Hide toast after 5 seconds
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 5000);
+        }
+
+        async function setupWebRTC() {
+            const config = __RTC_CONFIGURATION__;
+            peerConnection = new RTCPeerConnection(config);
+            webrtc_id = Math.random().toString(36).substring(7);
+
+            const timeoutId = setTimeout(() => {
+                const toast = document.getElementById('error-toast');
+                toast.textContent = "Connection is taking longer than usual. Are you on a VPN?";
+                toast.className = 'toast warning';
+                toast.style.display = 'block';
+
+                // Hide warning after 5 seconds
+                setTimeout(() => {
+                    toast.style.display = 'none';
+                }, 5000);
+            }, 5000);
+
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                stream.getTracks().forEach(track => peerConnection.addTrack(track, stream));
+
+                // Update audio visualization setup
+                audioContext = new AudioContext();
+                analyser_input = audioContext.createAnalyser();
+                const source = audioContext.createMediaStreamSource(stream);
+                source.connect(analyser_input);
+                analyser_input.fftSize = 64;
+                dataArray_input = new Uint8Array(analyser_input.frequencyBinCount);
+
+                function updateAudioLevel() {
+                    analyser_input.getByteFrequencyData(dataArray_input);
+                    const average = Array.from(dataArray_input).reduce((a, b) => a + b, 0) / dataArray_input.length;
+                    const audioLevel = average / 255;
+
+                    const pulseCircle = document.querySelector('.pulse-circle');
+                    if (pulseCircle) {
+                        console.log("audioLevel", audioLevel);
+                        pulseCircle.style.setProperty('--audio-level', 1 + audioLevel);
+                    }
+
+                    animationId = requestAnimationFrame(updateAudioLevel);
+                }
+                updateAudioLevel();
+
+                // Add connection state change listener
+                peerConnection.addEventListener('connectionstatechange', () => {
+                    console.log('connectionstatechange', peerConnection.connectionState);
+                    if (peerConnection.connectionState === 'connected') {
+                        clearTimeout(timeoutId);
+                        const toast = document.getElementById('error-toast');
+                        toast.style.display = 'none';
+                    }
+                    updateButtonState();
+                });
+
+                // Handle incoming audio
+                peerConnection.addEventListener('track', (evt) => {
+                    if (audioOutput && audioOutput.srcObject !== evt.streams[0]) {
+                        audioOutput.srcObject = evt.streams[0];
+                        audioOutput.play();
+
+                        // Set up audio visualization on the output stream
+                        audioContext = new AudioContext();
+                        analyser = audioContext.createAnalyser();
+                        const source = audioContext.createMediaStreamSource(evt.streams[0]);
+                        source.connect(analyser);
+                        analyser.fftSize = 2048;
+                        dataArray = new Uint8Array(analyser.frequencyBinCount);
+                        updateVisualization();
+                    }
+                });
+
+                // Create data channel for messages
+                dataChannel = peerConnection.createDataChannel('text');
+                dataChannel.onmessage = (event) => {
+                    const eventJson = JSON.parse(event.data);
+                    if (eventJson.type === "error") {
+                        showError(eventJson.message);
+                    } else if (eventJson.type === "send_input") {
+                        fetch('/input_hook', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                webrtc_id: webrtc_id,
+                                api_key: apiKeyInput.value,
+                                voice_name: voiceSelect.value
+                            })
+                        });
+                    }
+                };
+
+                // Create and send offer
+                const offer = await peerConnection.createOffer();
+                await peerConnection.setLocalDescription(offer);
+
+                await new Promise((resolve) => {
+                    if (peerConnection.iceGatheringState === "complete") {
+                        resolve();
+                    } else {
+                        const checkState = () => {
+                            if (peerConnection.iceGatheringState === "complete") {
+                                peerConnection.removeEventListener("icegatheringstatechange", checkState);
+                                resolve();
+                            }
+                        };
+                        peerConnection.addEventListener("icegatheringstatechange", checkState);
+                    }
+                });
+
+                const response = await fetch('/webrtc/offer', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        sdp: peerConnection.localDescription.sdp,
+                        type: peerConnection.localDescription.type,
+                        webrtc_id: webrtc_id,
+                    })
+                });
+
+                const serverResponse = await response.json();
+
+                if (serverResponse.status === 'failed') {
+                    showError(serverResponse.meta.error === 'concurrency_limit_reached'
+                        ? `Too many connections. Maximum limit is ${serverResponse.meta.limit}`
+                        : serverResponse.meta.error);
+                    stop();
+                    startButton.textContent = 'Start Recording';
+                    return;
+                }
+
+                await peerConnection.setRemoteDescription(serverResponse);
+            } catch (err) {
+                clearTimeout(timeoutId);
+                console.error('Error setting up WebRTC:', err);
+                showError('Failed to establish connection. Please try again.');
+                stop();
+                startButton.textContent = 'Start Recording';
+            }
+        }
+
+        function updateVisualization() {
+            if (!analyser) return;
+
+            analyser.getByteFrequencyData(dataArray);
+            const bars = document.querySelectorAll('.box');
+
+            for (let i = 0; i < bars.length; i++) {
+                const barHeight = (dataArray[i] / 255) * 2;
+                bars[i].style.transform = `scaleY(${Math.max(0.1, barHeight)})`;
+            }
+
+            animationId = requestAnimationFrame(updateVisualization);
+        }
+
+        function stopWebRTC() {
+            if (peerConnection) {
+                peerConnection.close();
+            }
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+            }
+            if (audioContext) {
+                audioContext.close();
+            }
+            updateButtonState();
+        }
+
+        startButton.addEventListener('click', () => {
+            if (!isRecording) {
+                setupWebRTC();
+                startButton.classList.add('recording');
+            } else {
+                stopWebRTC();
+                startButton.classList.remove('recording');
+            }
+            isRecording = !isRecording;
+        });
+    </script>
+</body>
+
+</html>

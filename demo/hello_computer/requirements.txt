@@ -1,0 +1,4 @@
+fastrtc[stopword]
+python-dotenv
+openai
+twilio

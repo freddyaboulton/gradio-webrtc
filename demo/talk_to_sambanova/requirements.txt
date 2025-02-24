@@ -1,0 +1,4 @@
+fastrtc[vad, stt]
+python-dotenv
+openai
+twilio

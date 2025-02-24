@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RetroChat Audio</title>
+    <style>
+        body {
+            font-family: monospace;
+            background-color: #1a1a1a;
+            color: #00ff00;
+            margin: 0;
+            padding: 20px;
+            height: 100vh;
+            box-sizing: border-box;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            height: calc(100% - 100px);
+            margin-bottom: 20px;
+        }
+
+        .chat-container {
+            border: 2px solid #00ff00;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+            box-sizing: border-box;
+        }
+
+        .controls-container {
+            border: 2px solid #00ff00;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            height: 128px;
+            box-sizing: border-box;
+        }
+
+        .visualization-container {
+            flex-grow: 1;
+            display: flex;
+            align-items: center;
+        }
+
+        .box-container {
+            display: flex;
+            justify-content: space-between;
+            height: 64px;
+            width: 100%;
+        }
+
+        .box {
+            height: 100%;
+            width: 8px;
+            background: #00ff00;
+            border-radius: 8px;
+            transition: transform 0.05s ease;
+        }
+
+        .chat-messages {
+            flex-grow: 1;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            padding: 10px;
+            border: 1px solid #00ff00;
+        }
+
+        .message {
+            margin-bottom: 10px;
+            padding: 8px;
+            border-radius: 4px;
+        }
+
+        .message.user {
+            background-color: #003300;
+        }
+
+        .message.assistant {
+            background-color: #002200;
+        }
+
+        button {
+            height: 64px;
+            min-width: 120px;
+            background-color: #000;
+            color: #00ff00;
+            border: 2px solid #00ff00;
+            padding: 10px 20px;
+            font-family: monospace;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        button:hover {
+            border-width: 3px;
+        }
+
+        #audio-output {
+            display: none;
+        }
+
+        /* Retro CRT effect */
+        .crt-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(0deg,
+                    rgba(0, 255, 0, 0.03),
+                    rgba(0, 255, 0, 0.03) 1px,
+                    transparent 1px,
+                    transparent 2px);
+            pointer-events: none;
+        }
+
+        /* Add these new styles */
+        .icon-with-spinner {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            min-width: 180px;
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #00ff00;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            flex-shrink: 0;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .pulse-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            min-width: 180px;
+        }
+
+        .pulse-circle {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background-color: #00ff00;
+            opacity: 0.2;
+            flex-shrink: 0;
+            transform: translateX(-0%) scale(var(--audio-level, 1));
+            transition: transform 0.1s ease;
+        }
+
+        /* Add styles for typing indicator */
+        .typing-indicator {
+            padding: 8px;
+            background-color: #002200;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            display: none;
+        }
+
+        .dots {
+            display: inline-flex;
+            gap: 4px;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            background-color: #00ff00;
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+            opacity: 0.5;
+        }
+
+        .dot:nth-child(2) {
+            animation-delay: 0.5s;
+        }
+
+        .dot:nth-child(3) {
+            animation-delay: 1s;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 0.5;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 1;
+                transform: scale(1.2);
+            }
+        }
+
+        /* Add styles for toast notifications */
+        .toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 16px 24px;
+            border-radius: 4px;
+            font-size: 14px;
+            z-index: 1000;
+            display: none;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .toast.error {
+            background-color: #f44336;
+            color: white;
+        }
+
+        .toast.warning {
+            background-color: #ffd700;
+            color: black;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Add toast element after body opening tag -->
+    <div id="error-toast" class="toast"></div>
+    <div class="container">
+        <div class="chat-container">
+            <div class="chat-messages" id="chat-messages"></div>
+            <!-- Move typing indicator outside the chat messages -->
+            <div class="typing-indicator" id="typing-indicator">
+                <div class="dots">
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                    <div class="dot"></div>
+                </div>
+            </div>
+        </div>
+        <div class="controls-container">
+            <div class="visualization-container">
+                <div class="box-container">
+                    <!-- Boxes will be dynamically added here -->
+                </div>
+            </div>
+            <button id="start-button">Start</button>
+        </div>
+    </div>
+    <audio id="audio-output"></audio>
+
+    <script>
+        let audioContext;
+        let analyser_input, analyser_output;
+        let dataArray_input, dataArray_output;
+        let animationId_input, animationId_output;
+        let chatHistory = [];
+        let peerConnection;
+        let webrtc_id;
+
+        const audioOutput = document.getElementById('audio-output');
+        const startButton = document.getElementById('start-button');
+        const chatMessages = document.getElementById('chat-messages');
+
+        function updateButtonState() {
+            if (peerConnection && (peerConnection.connectionState === 'connecting' || peerConnection.connectionState === 'new')) {
+                startButton.innerHTML = `
+                    <div class="icon-with-spinner">
+                        <div class="spinner"></div>
+                        <span>Connecting...</span>
+                    </div>
+                `;
+            } else if (peerConnection && peerConnection.connectionState === 'connected') {
+                startButton.innerHTML = `
+                    <div class="pulse-container">
+                        <div class="pulse-circle"></div>
+                        <span>Stop</span>
+                    </div>
+                `;
+            } else {
+                startButton.innerHTML = 'Start';
+            }
+        }
+
+        function showError(message) {
+            const toast = document.getElementById('error-toast');
+            toast.textContent = message;
+            toast.className = 'toast error';
+            toast.style.display = 'block';
+
+            // Hide toast after 5 seconds
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 5000);
+        }
+
+        async function setupWebRTC() {
+            const config = __RTC_CONFIGURATION__;
+            peerConnection = new RTCPeerConnection(config);
+
+            const timeoutId = setTimeout(() => {
+                const toast = document.getElementById('error-toast');
+                toast.textContent = "Connection is taking longer than usual. Are you on a VPN?";
+                toast.className = 'toast warning';
+                toast.style.display = 'block';
+
+                // Hide warning after 5 seconds
+                setTimeout(() => {
+                    toast.style.display = 'none';
+                }, 5000);
+            }, 5000);
+
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    audio: true
+                });
+
+                // Set up input visualization
+                audioContext = new AudioContext();
+                analyser_input = audioContext.createAnalyser();
+                const inputSource = audioContext.createMediaStreamSource(stream);
+                inputSource.connect(analyser_input);
+                analyser_input.fftSize = 64;
+                dataArray_input = new Uint8Array(analyser_input.frequencyBinCount);
+
+                function updateAudioLevel() {
+                    analyser_input.getByteFrequencyData(dataArray_input);
+                    const average = Array.from(dataArray_input).reduce((a, b) => a + b, 0) / dataArray_input.length;
+                    const audioLevel = average / 255;
+
+                    const pulseCircle = document.querySelector('.pulse-circle');
+                    if (pulseCircle) {
+                        pulseCircle.style.setProperty('--audio-level', 1 + audioLevel);
+                    }
+
+                    animationId_input = requestAnimationFrame(updateAudioLevel);
+                }
+                updateAudioLevel();
+
+                stream.getTracks().forEach(track => {
+                    peerConnection.addTrack(track, stream);
+                });
+
+                // Add connection state change listener
+                peerConnection.addEventListener('connectionstatechange', () => {
+                    console.log('Connection state:', peerConnection.connectionState);
+                    if (peerConnection.connectionState === 'connected') {
+                        clearTimeout(timeoutId);
+                        const toast = document.getElementById('error-toast');
+                        toast.style.display = 'none';
+                    }
+                    updateButtonState();
+                });
+
+                // Handle incoming audio
+                peerConnection.addEventListener('track', (evt) => {
+                    if (audioOutput.srcObject !== evt.streams[0]) {
+                        audioOutput.srcObject = evt.streams[0];
+                        audioOutput.play();
+
+                        // Set up output visualization
+                        analyser_output = audioContext.createAnalyser();
+                        const outputSource = audioContext.createMediaStreamSource(evt.streams[0]);
+                        outputSource.connect(analyser_output);
+                        analyser_output.fftSize = 2048;
+                        dataArray_output = new Uint8Array(analyser_output.frequencyBinCount);
+                        updateVisualization();
+                    }
+                });
+
+                // Create data channel for messages
+                const dataChannel = peerConnection.createDataChannel('text');
+                dataChannel.onmessage = (event) => {
+                    const eventJson = JSON.parse(event.data);
+                    const typingIndicator = document.getElementById('typing-indicator');
+
+                    if (eventJson.type === "error") {
+                        showError(eventJson.message);
+                    } else if (eventJson.type === "send_input") {
+                        fetch('/input_hook', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                webrtc_id: webrtc_id,
+                                chatbot: chatHistory
+                            })
+                        });
+                    } else if (eventJson.type === "log") {
+                        if (eventJson.data === "pause_detected") {
+                            typingIndicator.style.display = 'block';
+                            chatMessages.scrollTop = chatMessages.scrollHeight;
+                        } else if (eventJson.data === "response_starting") {
+                            typingIndicator.style.display = 'none';
+                        }
+                    }
+                };
+
+                // Create and send offer
+                const offer = await peerConnection.createOffer();
+                await peerConnection.setLocalDescription(offer);
+
+                await new Promise((resolve) => {
+                    if (peerConnection.iceGatheringState === "complete") {
+                        resolve();
+                    } else {
+                        const checkState = () => {
+                            if (peerConnection.iceGatheringState === "complete") {
+                                peerConnection.removeEventListener("icegatheringstatechange", checkState);
+                                resolve();
+                            }
+                        };
+                        peerConnection.addEventListener("icegatheringstatechange", checkState);
+                    }
+                });
+
+                webrtc_id = Math.random().toString(36).substring(7);
+
+                const response = await fetch('/webrtc/offer', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        sdp: peerConnection.localDescription.sdp,
+                        type: peerConnection.localDescription.type,
+                        webrtc_id: webrtc_id
+                    })
+                });
+
+                const serverResponse = await response.json();
+
+                if (serverResponse.status === 'failed') {
+                    showError(serverResponse.meta.error === 'concurrency_limit_reached'
+                        ? `Too many connections. Maximum limit is ${serverResponse.meta.limit}`
+                        : serverResponse.meta.error);
+                    stop();
+                    return;
+                }
+
+                await peerConnection.setRemoteDescription(serverResponse);
+
+                // Start visualization
+                updateVisualization();
+
+                // create event stream to receive messages from /output
+                const eventSource = new EventSource('/outputs?webrtc_id=' + webrtc_id);
+                eventSource.addEventListener("output", (event) => {
+                    const eventJson = JSON.parse(event.data);
+                    addMessage(eventJson.role, eventJson.content);
+                });
+            } catch (err) {
+                clearTimeout(timeoutId);
+                console.error('Error setting up WebRTC:', err);
+                showError('Failed to establish connection. Please try again.');
+                stop();
+            }
+        }
+
+        function addMessage(role, content) {
+            const messageDiv = document.createElement('div');
+            messageDiv.classList.add('message', role);
+            messageDiv.textContent = content;
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            chatHistory.push({ role, content });
+        }
+
+        // Add this after other const declarations
+        const boxContainer = document.querySelector('.box-container');
+        const numBars = 32;
+        for (let i = 0; i < numBars; i++) {
+            const box = document.createElement('div');
+            box.className = 'box';
+            boxContainer.appendChild(box);
+        }
+
+        // Replace the draw function with updateVisualization
+        function updateVisualization() {
+            animationId_output = requestAnimationFrame(updateVisualization);
+
+            analyser_output.getByteFrequencyData(dataArray_output);
+            const bars = document.querySelectorAll('.box');
+
+            for (let i = 0; i < bars.length; i++) {
+                const barHeight = (dataArray_output[i] / 255) * 2;
+                bars[i].style.transform = `scaleY(${Math.max(0.1, barHeight)})`;
+            }
+        }
+
+        function stop() {
+            if (peerConnection) {
+                if (peerConnection.getTransceivers) {
+                    peerConnection.getTransceivers().forEach(transceiver => {
+                        if (transceiver.stop) {
+                            transceiver.stop();
+                        }
+                    });
+                }
+
+                if (peerConnection.getSenders) {
+                    peerConnection.getSenders().forEach(sender => {
+                        if (sender.track && sender.track.stop) sender.track.stop();
+                    });
+                }
+
+                peerConnection.close();
+            }
+
+            if (animationId_input) {
+                cancelAnimationFrame(animationId_input);
+            }
+            if (animationId_output) {
+                cancelAnimationFrame(animationId_output);
+            }
+            if (audioContext) {
+                audioContext.close();
+            }
+
+            updateButtonState();
+        }
+
+        startButton.addEventListener('click', () => {
+            if (startButton.textContent === 'Start') {
+                setupWebRTC();
+            } else {
+                stop();
+            }
+        });
+    </script>
+</body>
+
+</html>

@@ -1,6 +1,0 @@
-safetensors==0.4.3
-opencv-python
-twilio
-https://huggingface.co/datasets/freddyaboulton/bucket/resolve/main/gradio-5.0.0b3-py3-none-any.whl
-https://huggingface.co/datasets/freddyaboulton/bucket/resolve/main/gradio_webrtc-0.0.1-py3-none-any.whl
-onnxruntime-gpu

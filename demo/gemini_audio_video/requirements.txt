@@ -1,0 +1,4 @@
+fastrtc
+python-dotenv
+google-genai
+twilio

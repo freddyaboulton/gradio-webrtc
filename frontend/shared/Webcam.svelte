@@ -6,7 +6,7 @@
 		Square,
 		DropdownArrow,
 		Spinner,
-        Microphone as Mic
+		Microphone as Mic,
 	} from "@gradio/icons";
 	import type { I18nFormatter } from "@gradio/utils";
 	import { StreamingBar } from "@gradio/statustracker";
@@ -15,29 +15,30 @@
 	import {
 		get_devices,
 		get_video_stream,
-		set_available_devices
+		set_available_devices,
 	} from "./stream_utils";
-    import { start, stop } from "./webrtc_utils";
-    import PulsingIcon from "./PulsingIcon.svelte";
+	import { start, stop } from "./webrtc_utils";
+	import PulsingIcon from "./PulsingIcon.svelte";
 
 	let video_source: HTMLVideoElement;
 	let available_video_devices: MediaDeviceInfo[] = [];
 	let selected_device: MediaDeviceInfo | null = null;
 	let _time_limit: number | null = null;
-    export let time_limit: number | null = null;
+	export let time_limit: number | null = null;
 	let stream_state: "open" | "waiting" | "closed" = "closed";
 	export let on_change_cb: (msg: "tick" | "change") => void;
+	export let reject_cb: (msg: object) => void;
 	export let mode: "send-receive" | "send";
-    const _webrtc_id = Math.random().toString(36).substring(2);
+	const _webrtc_id = Math.random().toString(36).substring(2);
 	export let rtp_params: RTCRtpParameters = {} as RTCRtpParameters;
 	export let icon: string | undefined | ComponentType = undefined;
-    export let icon_button_color: string = "var(--color-accent)";
-    export let pulse_color: string = "var(--color-accent)";
-	export let button_labels: {start: string, stop: string, waiting: string};
+	export let icon_button_color: string = "var(--color-accent)";
+	export let pulse_color: string = "var(--color-accent)";
+	export let button_labels: { start: string; stop: string; waiting: string };
 
-	export const modify_stream: (state: "open" | "closed" | "waiting") => void = (
-		state: "open" | "closed" | "waiting"
-	) => {
+	export const modify_stream: (
+		state: "open" | "closed" | "waiting",
+	) => void = (state: "open" | "closed" | "waiting") => {
 		if (state === "closed") {
 			_time_limit = null;
 			stream_state = "closed";
@@ -50,7 +51,7 @@
 
 	let canvas: HTMLCanvasElement;
 	export let track_constraints: MediaTrackConstraints | null = null;
-    export let rtc_configuration: Object;
+	export let rtc_configuration: Object;
 	export let stream_every = 1;
 	export let server: {
 		offer: (body: any) => Promise<any>;
@@ -73,21 +74,29 @@
 		const target = event.target as HTMLInputElement;
 		const device_id = target.value;
 
-		await get_video_stream(include_audio, video_source, device_id, track_constraints).then(
-			async (local_stream) => {
-				stream = local_stream;
-				selected_device =
-					available_video_devices.find(
-						(device) => device.deviceId === device_id
-					) || null;
-				options_open = false;
-			}
-		);
+		await get_video_stream(
+			include_audio,
+			video_source,
+			device_id,
+			track_constraints,
+		).then(async (local_stream) => {
+			stream = local_stream;
+			selected_device =
+				available_video_devices.find(
+					(device) => device.deviceId === device_id,
+				) || null;
+			options_open = false;
+		});
 	};
 
 	async function access_webcam(): Promise<void> {
 		try {
-			get_video_stream(include_audio, video_source, null, track_constraints)
+			get_video_stream(
+				include_audio,
+				video_source,
+				null,
+				track_constraints,
+			)
 				.then(async (local_stream) => {
 					webcam_accessed = true;
 					available_video_devices = await get_devices();
@@ -102,12 +111,16 @@
 						.map((track) => track.getSettings()?.deviceId)[0];
 
 					selected_device = used_devices
-						? devices.find((device) => device.deviceId === used_devices) ||
-							available_video_devices[0]
+						? devices.find(
+								(device) => device.deviceId === used_devices,
+							) || available_video_devices[0]
 						: available_video_devices[0];
 				});
 
-			if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+			if (
+				!navigator.mediaDevices ||
+				!navigator.mediaDevices.getUserMedia
+			) {
 				dispatch("error", i18n("image.no_webcam_support"));
 			}
 		} catch (err) {
@@ -123,46 +136,63 @@
 	let stream: MediaStream;
 
 	let webcam_accessed = false;
-    let pc: RTCPeerConnection;
+	let pc: RTCPeerConnection;
 	export let webrtc_id;
 
 	async function start_webrtc(): Promise<void> {
-        if (stream_state === 'closed') {
-            pc = new RTCPeerConnection(rtc_configuration);
-            pc.addEventListener("connectionstatechange",
-                async (event) => {
-                   switch(pc.connectionState) {
-                        case "connected":
-                            stream_state = "open";
-                            _time_limit = time_limit;
-							dispatch("tick");
-                            break;
-                        case "disconnected":
-                            stream_state = "closed";
-							_time_limit = null;
-							stop(pc);
-                            await access_webcam();
-                            break;
-                        default:
-                            break;
-                   }
-                }
-            )
-            stream_state = "waiting"
+		if (stream_state === "closed") {
+			pc = new RTCPeerConnection(rtc_configuration);
+			pc.addEventListener("connectionstatechange", async (event) => {
+				switch (pc.connectionState) {
+					case "connected":
+						stream_state = "open";
+						_time_limit = time_limit;
+						dispatch("tick");
+						break;
+					case "disconnected":
+						stream_state = "closed";
+						_time_limit = null;
+						stop(pc);
+						await access_webcam();
+						break;
+					default:
+						break;
+				}
+			});
+			stream_state = "waiting";
 			webrtc_id = Math.random().toString(36).substring(2);
-            start(stream, pc, mode === "send" ? null: video_source, server.offer, webrtc_id, "video", on_change_cb, rtp_params).then((connection) => {
-				pc = connection;
-			}).catch(() => {
-                console.info("catching")
-                stream_state = "closed";
-                dispatch("error", "Too many concurrent users. Come back later!");
-            });
-        } else {
-            stop(pc);
-            stream_state = "closed";
+			const timeoutId = setTimeout(() => {
+				// @ts-ignore
+				on_change_cb({ type: "connection_timeout" });
+			}, 5000);
+
+			start(
+				stream,
+				pc,
+				mode === "send" ? null : video_source,
+				server.offer,
+				webrtc_id,
+				"video",
+				on_change_cb,
+				rtp_params,
+				undefined,
+				reject_cb,
+			)
+				.then((connection) => {
+					clearTimeout(timeoutId);
+					pc = connection;
+				})
+				.catch(() => {
+					clearTimeout(timeoutId);
+					console.info("catching");
+					stream_state = "closed";
+				});
+		} else {
+			stop(pc);
+			stream_state = "closed";
 			_time_limit = null;
-            await access_webcam();
-        }
+			await access_webcam();
+		}
 	}
 
 	let options_open = false;
@@ -183,7 +213,7 @@
 		return {
 			destroy() {
 				document.removeEventListener("click", handle_click, true);
-			}
+			},
 		};
 	}
 
@@ -201,11 +231,11 @@
 	{#if stream_state === "open" && include_audio}
 		<div class="audio-indicator">
 			<PulsingIcon
-				stream_state={stream_state}
-				audio_source_callback={audio_source_callback}
+				{stream_state}
+				{audio_source_callback}
 				icon={icon || Mic}
-				icon_button_color={icon_button_color}
-				pulse_color={pulse_color}
+				{icon_button_color}
+				{pulse_color}
 			/>
 		</div>
 	{/if}
@@ -214,8 +244,9 @@
 	<video
 		bind:this={video_source}
 		class:hide={!webcam_accessed}
-        class:flip={(stream_state != "open") || (stream_state === "open" && include_audio)}
-        autoplay={true}
+		class:flip={stream_state != "open" ||
+			(stream_state === "open" && include_audio)}
+		autoplay={true}
 		playsinline={true}
 	/>
 	<!-- svelte-ignore a11y-missing-attribute -->
@@ -229,32 +260,29 @@
 		</div>
 	{:else}
 		<div class="button-wrap">
-			<button
-				on:click={start_webrtc}
-				aria-label={"start stream"}
-			>
-                {#if stream_state === "waiting"}
-                    <div class="icon-with-text">
-                        <div class="icon color-primary" title="spinner">
-                            <Spinner />
-                        </div>
-                        {button_labels.waiting || i18n("audio.waiting")}
-                    </div>
-                {:else if stream_state === "open"}
-                    <div class="icon-with-text">
-                        <div class="icon color-primary" title="stop recording">
-                            <Square />
-                        </div>
-                        {button_labels.stop || i18n("audio.stop")}
-                    </div>
-                {:else}
-                    <div class="icon-with-text">
-                        <div class="icon color-primary" title="start recording">
-                            <Circle />
-                        </div>
-                        {button_labels.start || i18n("audio.record")}
-                    </div>
-                {/if}
+			<button on:click={start_webrtc} aria-label={"start stream"}>
+				{#if stream_state === "waiting"}
+					<div class="icon-with-text">
+						<div class="icon color-primary" title="spinner">
+							<Spinner />
+						</div>
+						{button_labels.waiting || i18n("audio.waiting")}
+					</div>
+				{:else if stream_state === "open"}
+					<div class="icon-with-text">
+						<div class="icon color-primary" title="stop recording">
+							<Square />
+						</div>
+						{button_labels.stop || i18n("audio.stop")}
+					</div>
+				{:else}
+					<div class="icon-with-text">
+						<div class="icon color-primary" title="start recording">
+							<Circle />
+						</div>
+						{button_labels.start || i18n("audio.record")}
+					</div>
+				{/if}
 			</button>
 			{#if !recording}
 				<button
@@ -285,7 +313,8 @@
 					{#each available_video_devices as device}
 						<option
 							value={device.deviceId}
-							selected={selected_device.deviceId === device.deviceId}
+							selected={selected_device.deviceId ===
+								device.deviceId}
 						>
 							{device.label}
 						</option>
@@ -334,19 +363,19 @@
 		align-items: center;
 		margin: 0 var(--spacing-xl);
 		display: flex;
-        justify-content: space-evenly;    
-        /* Add gap between icon and text */
-        gap: var(--size-2);
+		justify-content: space-evenly;
+		/* Add gap between icon and text */
+		gap: var(--size-2);
 	}
 
-    .audio-indicator {
-        position: absolute;
-        top: var(--size-2);
-        right: var(--size-2);
+	.audio-indicator {
+		position: absolute;
+		top: var(--size-2);
+		right: var(--size-2);
 		z-index: var(--layer-2);
 		height: var(--size-5);
 		width: var(--size-5);
-    }
+	}
 
 	@media (--screen-md) {
 		button {

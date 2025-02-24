@@ -13,7 +13,7 @@
 	export let elem_classes: string[] = [];
 	export let visible = true;
 	export let value: string = "__webrtc_value__";
-	export let button_labels: {start: string, stop: string, waiting: string};
+	export let button_labels: { start: string; stop: string; waiting: string };
 
 	export let label: string;
 	export let root: string;
@@ -40,16 +40,45 @@
 	export let pulse_color: string = "var(--color-accent)";
 
 	const on_change_cb = (msg: "change" | "tick" | any) => {
-		if (msg?.type === "info" || msg?.type === "warning" || msg?.type === "error") {
-			console.log("dispatching info", msg.message);
-			gradio.dispatch(msg?.type === "error"? "error": "warning", msg.message);
+		if (
+			msg?.type === "info" ||
+			msg?.type === "warning" ||
+			msg?.type === "error"
+		) {
+			gradio.dispatch(
+				msg?.type === "error" ? "error" : "warning",
+				msg.message,
+			);
+		} else if (msg?.type === "fetch_output") {
+			gradio.dispatch("state_change");
+		} else if (msg?.type === "send_input") {
+			gradio.dispatch("tick");
+		} else if (msg?.type === "connection_timeout") {
+			gradio.dispatch(
+				"warning",
+				"Taking a while to connect. Are you on a VPN?",
+			);
 		}
-		gradio.dispatch(msg === "change" ? "state_change" : "tick");
-	}
+		if (msg.type === "state_change") {
+			gradio.dispatch(msg === "change" ? "state_change" : "tick");
+		}
+	};
+
+	const reject_cb = (msg: object) => {
+		if (
+			msg.status === "failed" &&
+			msg.meta?.error === "concurrency_limit_reached"
+		) {
+			gradio.dispatch(
+				"error",
+				`Too many concurrent connections. Please try again later!`,
+			);
+		} else {
+			gradio.dispatch("error", "Unexpected server error");
+		}
+	};
 
 	let dragging = false;
-
-	$: console.log("value", value);
 </script>
 
 <Block
@@ -65,17 +94,17 @@
 	{scale}
 	{min_width}
 	allow_overflow={false}
-	>
-		<StatusTracker
-			autoscroll={gradio.autoscroll}
-			i18n={gradio.i18n}
-			{...loading_status}
-			on:clear_status={() => gradio.dispatch("clear_status", loading_status)}
-		/>
+>
+	<StatusTracker
+		autoscroll={gradio.autoscroll}
+		i18n={gradio.i18n}
+		{...loading_status}
+		on:clear_status={() => gradio.dispatch("clear_status", loading_status)}
+	/>
 
 	{#if mode == "receive" && modality === "video"}
 		<StaticVideo
-			bind:value={value}
+			bind:value
 			{on_change_cb}
 			{label}
 			{show_label}
@@ -86,7 +115,7 @@
 		/>
 	{:else if mode == "receive" && modality === "audio"}
 		<StaticAudio
-			bind:value={value}
+			bind:value
 			{on_change_cb}
 			{label}
 			{show_label}
@@ -98,11 +127,10 @@
 			i18n={gradio.i18n}
 			on:tick={() => gradio.dispatch("tick")}
 			on:error={({ detail }) => gradio.dispatch("error", detail)}
-
 		/>
 	{:else if (mode === "send-receive" || mode == "send") && (modality === "video" || modality == "audio-video")}
 		<Video
-			bind:value={value}
+			bind:value
 			{label}
 			{show_label}
 			active_source={"webcam"}
@@ -114,6 +142,7 @@
 			{track_constraints}
 			{rtp_params}
 			{on_change_cb}
+			{reject_cb}
 			{icon}
 			{icon_button_color}
 			{pulse_color}
@@ -135,7 +164,7 @@
 		</Video>
 	{:else if (mode === "send-receive" || mode === "send") && modality === "audio"}
 		<InteractiveAudio
-			bind:value={value}
+			bind:value
 			{on_change_cb}
 			{label}
 			{show_label}
@@ -147,6 +176,7 @@
 			{rtp_params}
 			i18n={gradio.i18n}
 			{icon}
+			{reject_cb}
 			{icon_button_color}
 			{pulse_color}
 			{button_labels}
