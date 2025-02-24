@@ -49,20 +49,15 @@ def response(
 
     conversation_state.append({"role": "user", "content": text})
 
-    try:
-        request = client.chat.completions.create(
-            model="Meta-Llama-3.2-3B-Instruct",
-            messages=conversation_state,  # type: ignore
-            temperature=0.1,
-            top_p=0.1,
-        )
-        response = {"role": "assistant", "content": request.choices[0].message.content}
+    raise WebRTCError("test")
 
-    except Exception:
-        import traceback
-
-        traceback.print_exc()
-        raise WebRTCError(traceback.format_exc())
+    request = client.chat.completions.create(
+        model="Meta-Llama-3.2-3B-Instruct",
+        messages=conversation_state,  # type: ignore
+        temperature=0.1,
+        top_p=0.1,
+    )
+    response = {"role": "assistant", "content": request.choices[0].message.content}
 
     conversation_state.append(response)
     gradio_chatbot.append(response)
