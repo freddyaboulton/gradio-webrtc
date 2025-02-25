@@ -17,7 +17,7 @@ The Real-Time Communication Library for Python.
 
 Turn any python function into a real-time audio and video stream over WebRTC or WebSockets.
 
-<video src="https://github.com/user-attachments/assets/6fb7f4fe-c5b2-48f3-88ff-f563611812ec" controls></video>
+<video src="https://github.com/user-attachments/assets/a297aa1e-ff42-448c-a58c-389b0a575d4d" controls></video>
 
 ## Installation
 
@@ -25,10 +25,10 @@ Turn any python function into a real-time audio and video stream over WebRTC or 
 pip install fastrtc
 ```
 
-to use built-in pause detection (see [ReplyOnPause](userguide/audio/#reply-on-pause)), and text to speech (see [Text To Speech](userguide/audio/#text-to-speech)), install the `vad` and `tts` extras:
+to use built-in pause detection (see [ReplyOnPause](userguide/audio/#reply-on-pause)), speech-to-text (see [Speech To Text](userguide/audio/#speech-to-text)), and text to speech (see [Text To Speech](userguide/audio/#text-to-speech)), install the `vad`, `stt`, and `tts` extras:
 
 ```bash
-pip install fastrtc[vad, tts]
+pip install fastrtc[vad, stt, tts]
 ```
 
 ## Quickstart
