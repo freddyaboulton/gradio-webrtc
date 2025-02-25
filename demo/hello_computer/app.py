@@ -13,7 +13,6 @@ from fastrtc import (
     AdditionalOutputs,
     ReplyOnStopWords,
     Stream,
-    WebRTCError,
     get_stt_model,
     get_twilio_turn_credentials,
 )
@@ -39,30 +38,23 @@ def response(
 ):
     gradio_chatbot = gradio_chatbot or []
     conversation_state = conversation_state or []
-    try:
-        text = model.stt(audio)
-        print("STT in handler", text)
-        sample_rate, array = audio
-        gradio_chatbot.append(
-            {"role": "user", "content": gr.Audio((sample_rate, array.squeeze()))}
-        )
-        yield AdditionalOutputs(gradio_chatbot, conversation_state)
+    text = model.stt(audio)
+    print("STT in handler", text)
+    sample_rate, array = audio
+    gradio_chatbot.append(
+        {"role": "user", "content": gr.Audio((sample_rate, array.squeeze()))}
+    )
+    yield AdditionalOutputs(gradio_chatbot, conversation_state)
 
-        conversation_state.append({"role": "user", "content": text})
+    conversation_state.append({"role": "user", "content": text})
 
-        request = client.chat.completions.create(
-            model="Meta-Llama-3.2-3B-Instruct",
-            messages=conversation_state,  # type: ignore
-            temperature=0.1,
-            top_p=0.1,
-        )
-        response = {"role": "assistant", "content": request.choices[0].message.content}
-
-    except Exception as e:
-        import traceback
-
-        traceback.print_exc()
-        raise WebRTCError(str(e) + "\n" + traceback.format_exc())
+    request = client.chat.completions.create(
+        model="Meta-Llama-3.2-3B-Instruct",
+        messages=conversation_state,  # type: ignore
+        temperature=0.1,
+        top_p=0.1,
+    )
+    response = {"role": "assistant", "content": request.choices[0].message.content}
 
     conversation_state.append(response)
     gradio_chatbot.append(response)

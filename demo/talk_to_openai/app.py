@@ -13,8 +13,8 @@ from fastrtc import (
     AdditionalOutputs,
     AsyncStreamHandler,
     Stream,
-    WebRTCError,
     get_twilio_turn_credentials,
+    wait_for_item,
 )
 from gradio.utils import get_space
 from openai.types.beta.realtime import ResponseAudioTranscriptDoneEvent
@@ -47,60 +47,41 @@ class OpenAIHandler(AsyncStreamHandler):
     ):
         """Connect to realtime API. Run forever in separate thread to keep connection open."""
         self.client = openai.AsyncOpenAI()
-        try:
-            async with self.client.beta.realtime.connect(
-                model="gpt-4o-mini-realtime-preview-2024-12-17"
-            ) as conn:
-                await conn.session.update(
-                    session={"turn_detection": {"type": "server_vad"}}
-                )
-                self.connection = conn
-                async for event in self.connection:
-                    if event.type == "response.audio_transcript.done":
-                        await self.output_queue.put(AdditionalOutputs(event))
-                    if event.type == "response.audio.delta":
-                        await self.output_queue.put(
-                            (
-                                self.output_sample_rate,
-                                np.frombuffer(
-                                    base64.b64decode(event.delta), dtype=np.int16
-                                ).reshape(1, -1),
-                            ),
-                        )
-        except Exception:
-            import traceback
-
-            traceback.print_exc()
-            raise WebRTCError(str(traceback.format_exc()))
+        async with self.client.beta.realtime.connect(
+            model="gpt-4o-mini-realtime-preview-2024-12-17"
+        ) as conn:
+            await conn.session.update(
+                session={"turn_detection": {"type": "server_vad"}}
+            )
+            self.connection = conn
+            async for event in self.connection:
+                if event.type == "response.audio_transcript.done":
+                    await self.output_queue.put(AdditionalOutputs(event))
+                if event.type == "response.audio.delta":
+                    await self.output_queue.put(
+                        (
+                            self.output_sample_rate,
+                            np.frombuffer(
+                                base64.b64decode(event.delta), dtype=np.int16
+                            ).reshape(1, -1),
+                        ),
+                    )
 
     async def receive(self, frame: tuple[int, np.ndarray]) -> None:
         if not self.connection:
             return
-        try:
-            _, array = frame
-            array = array.squeeze()
-            audio_message = base64.b64encode(array.tobytes()).decode("utf-8")
-            await self.connection.input_audio_buffer.append(audio=audio_message)  # type: ignore
-        except Exception as e:
-            # print traceback
-            print(f"Error in receive: {str(e)}")
-            import traceback
-
-            traceback.print_exc()
-            raise WebRTCError(str(traceback.format_exc()))
+        _, array = frame
+        array = array.squeeze()
+        audio_message = base64.b64encode(array.tobytes()).decode("utf-8")
+        await self.connection.input_audio_buffer.append(audio=audio_message)  # type: ignore
 
     async def emit(self) -> tuple[int, np.ndarray] | AdditionalOutputs | None:
-        return await self.output_queue.get()
-
-    def reset_state(self):
-        """Reset connection state for new recording session"""
-        self.connection = None
-        self.args_set.clear()
+        return await wait_for_item(self.output_queue)
 
     async def shutdown(self) -> None:
         if self.connection:
             await self.connection.close()
-            self.reset_state()
+            self.connection = None
 
 
 def update_chatbot(chatbot: list[dict], response: ResponseAudioTranscriptDoneEvent):

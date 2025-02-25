@@ -10,7 +10,6 @@ from fastrtc import (
     AdditionalOutputs,
     ReplyOnPause,
     Stream,
-    WebRTCError,
     audio_to_bytes,
     get_twilio_turn_credentials,
 )
@@ -26,15 +25,12 @@ groq_client = AsyncClient()
 
 
 async def transcribe(audio: tuple[int, np.ndarray]):
-    try:
-        transcript = await groq_client.audio.transcriptions.create(
-            file=("audio-file.mp3", audio_to_bytes(audio)),
-            model="whisper-large-v3-turbo",
-            response_format="verbose_json",
-        )
-        yield AdditionalOutputs(transcript.text)
-    except Exception as e:
-        raise WebRTCError(str(e))
+    transcript = await groq_client.audio.transcriptions.create(
+        file=("audio-file.mp3", audio_to_bytes(audio)),
+        model="whisper-large-v3-turbo",
+        response_format="verbose_json",
+    )
+    yield AdditionalOutputs(transcript.text)
 
 
 stream = Stream(

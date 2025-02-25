@@ -10,7 +10,6 @@ from fastrtc import (
     AdditionalOutputs,
     ReplyOnPause,
     Stream,
-    WebRTCError,
     get_stt_model,
     get_twilio_turn_credentials,
 )
@@ -30,42 +29,36 @@ def response(
     audio: tuple[int, NDArray[np.int16 | np.float32]],
     chatbot: list[dict] | None = None,
 ):
-    try:
-        chatbot = chatbot or []
-        messages = [{"role": d["role"], "content": d["content"]} for d in chatbot]
-        start = time.time()
-        text = stt_model.stt(audio)
-        print("transcription", time.time() - start)
-        print("prompt", text)
-        chatbot.append({"role": "user", "content": text})
-        yield AdditionalOutputs(chatbot)
-        messages.append({"role": "user", "content": text})
-        response_text = (
-            groq_client.chat.completions.create(
-                model="llama-3.1-8b-instant",
-                max_tokens=512,
-                messages=messages,  # type: ignore
-            )
-            .choices[0]
-            .message.content
+    chatbot = chatbot or []
+    messages = [{"role": d["role"], "content": d["content"]} for d in chatbot]
+    start = time.time()
+    text = stt_model.stt(audio)
+    print("transcription", time.time() - start)
+    print("prompt", text)
+    chatbot.append({"role": "user", "content": text})
+    yield AdditionalOutputs(chatbot)
+    messages.append({"role": "user", "content": text})
+    response_text = (
+        groq_client.chat.completions.create(
+            model="llama-3.1-8b-instant",
+            max_tokens=512,
+            messages=messages,  # type: ignore
         )
+        .choices[0]
+        .message.content
+    )
 
-        chatbot.append({"role": "assistant", "content": response_text})
+    chatbot.append({"role": "assistant", "content": response_text})
 
-        for chunk in tts_client.text_to_speech.convert_as_stream(
-            text=response_text,  # type: ignore
-            voice_id="JBFqnCBsd6RMkjVDRZzb",
-            model_id="eleven_multilingual_v2",
-            output_format="pcm_24000",
-        ):
-            audio_array = np.frombuffer(chunk, dtype=np.int16).reshape(1, -1)
-            yield (24000, audio_array)
-        yield AdditionalOutputs(chatbot)
-    except Exception:
-        import traceback
-
-        traceback.print_exc()
-        raise WebRTCError(traceback.format_exc())
+    for chunk in tts_client.text_to_speech.convert_as_stream(
+        text=response_text,  # type: ignore
+        voice_id="JBFqnCBsd6RMkjVDRZzb",
+        model_id="eleven_multilingual_v2",
+        output_format="pcm_24000",
+    ):
+        audio_array = np.frombuffer(chunk, dtype=np.int16).reshape(1, -1)
+        yield (24000, audio_array)
+    yield AdditionalOutputs(chatbot)
 
 
 chatbot = gr.Chatbot(type="messages")

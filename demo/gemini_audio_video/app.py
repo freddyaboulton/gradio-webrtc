@@ -62,44 +62,28 @@ class GeminiHandler(AsyncAudioVideoStreamHandler):
             api_key=os.getenv("GEMINI_API_KEY"), http_options={"api_version": "v1alpha"}
         )
         config = {"response_modalities": ["AUDIO"]}
-        try:
-            async with client.aio.live.connect(
-                model="gemini-2.0-flash-exp", config=config
-            ) as session:
-                self.session = session
-                print("set session")
-                while not self.quit.is_set():
-                    turn = self.session.receive()
-                    async for response in turn:
-                        if data := response.data:
-                            audio = np.frombuffer(data, dtype=np.int16).reshape(1, -1)
-                            self.audio_queue.put_nowait(audio)
-        except Exception as e:
-            import traceback
-
-            traceback.print_exc()
+        async with client.aio.live.connect(
+            model="gemini-2.0-flash-exp", config=config
+        ) as session:
+            self.session = session
+            print("set session")
+            while not self.quit.is_set():
+                turn = self.session.receive()
+                async for response in turn:
+                    if data := response.data:
+                        audio = np.frombuffer(data, dtype=np.int16).reshape(1, -1)
+                        self.audio_queue.put_nowait(audio)
 
     async def video_receive(self, frame: np.ndarray):
-        try:
-            print("out")
-            if self.session:
-                print("here")
-                # send image every 1 second
-                print(time.time() - self.last_frame_time)
-                if time.time() - self.last_frame_time > 1:
-                    self.last_frame_time = time.time()
-                    print("sending image")
-                    await self.session.send(input=encode_image(frame))
-                    print("sent image")
-                    if self.latest_args[1] is not None:
-                        print("sending image2")
-                        await self.session.send(input=encode_image(self.latest_args[1]))
-                        print("sent image2")
-        except Exception as e:
-            print(e)
-            import traceback
+        if self.session:
+            # send image every 1 second
+            print(time.time() - self.last_frame_time)
+            if time.time() - self.last_frame_time > 1:
+                self.last_frame_time = time.time()
+                await self.session.send(input=encode_image(frame))
+                if self.latest_args[1] is not None:
+                    await self.session.send(input=encode_image(self.latest_args[1]))
 
-            traceback.print_exc()
         self.video_queue.put_nowait(frame)
 
     async def video_emit(self):
@@ -110,13 +94,7 @@ class GeminiHandler(AsyncAudioVideoStreamHandler):
         array = array.squeeze()
         audio_message = encode_audio(array)
         if self.session:
-            try:
-                await self.session.send(input=audio_message)
-            except Exception as e:
-                print(e)
-                import traceback
-
-                traceback.print_exc()
+            await self.session.send(input=audio_message)
 
     async def emit(self):
         array = await self.audio_queue.get()

@@ -97,4 +97,27 @@ Example
 >>>     print(chunk)
 ```
 
+## `wait_for_item`
 
+Wait for an item from an asyncio.Queue with a timeout.
+
+Parameters
+```
+queue : asyncio.Queue
+    The queue to wait for an item from
+timeout : float
+    The timeout in seconds
+```
+Returns
+```
+Any
+    The item from the queue or None if the timeout is reached
+```
+
+Example
+```python
+>>> queue = asyncio.Queue()
+>>> queue.put_nowait(1)
+>>> item = await wait_for_item(queue)
+>>> print(item)
+```

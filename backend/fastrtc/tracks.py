@@ -1,4 +1,4 @@
-"""gr.WebRTC() component."""
+"""WebRTC tracks."""
 
 from __future__ import annotations
 
@@ -277,9 +277,7 @@ class StreamHandler(StreamHandlerBase):
         pass
 
     @abstractmethod
-    def emit(
-        self,
-    ) -> EmitType:
+    def emit(self) -> EmitType:
         pass
 
     @abstractmethod
@@ -296,9 +294,7 @@ class AsyncStreamHandler(StreamHandlerBase):
         pass
 
     @abstractmethod
-    async def emit(
-        self,
-    ) -> EmitType:
+    async def emit(self) -> EmitType:
         pass
 
     @abstractmethod
@@ -312,15 +308,13 @@ class AsyncStreamHandler(StreamHandlerBase):
 StreamHandlerImpl = StreamHandler | AsyncStreamHandler
 
 
-class AudioVideoStreamHandler(StreamHandlerBase):
+class AudioVideoStreamHandler(StreamHandler):
     @abstractmethod
     def video_receive(self, frame: VideoFrame) -> None:
         pass
 
     @abstractmethod
-    def video_emit(
-        self,
-    ) -> VideoEmitType:
+    def video_emit(self) -> VideoEmitType:
         pass
 
     @abstractmethod
@@ -328,15 +322,13 @@ class AudioVideoStreamHandler(StreamHandlerBase):
         pass
 
 
-class AsyncAudioVideoStreamHandler(StreamHandlerBase):
+class AsyncAudioVideoStreamHandler(AsyncStreamHandler):
     @abstractmethod
     async def video_receive(self, frame: npt.NDArray[np.float32]) -> None:
         pass
 
     @abstractmethod
-    async def video_emit(
-        self,
-    ) -> VideoEmitType:
+    async def video_emit(self) -> VideoEmitType:
         pass
 
     @abstractmethod

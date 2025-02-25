@@ -233,3 +233,4 @@ class ReplyOnPause(StreamHandler):
                 traceback.print_exc()
                 logger.debug("Error in ReplyOnPause: %s", e)
                 self.reset()
+                raise e

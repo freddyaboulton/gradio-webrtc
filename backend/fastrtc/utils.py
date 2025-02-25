@@ -6,7 +6,9 @@ import logging
 import tempfile
 from contextvars import ContextVar
 from typing import Any, Callable, Literal, Protocol, TypedDict, cast
-
+import functools
+import traceback
+import inspect
 import av
 import numpy as np
 from numpy.typing import NDArray
@@ -353,3 +355,47 @@ async def async_aggregate_bytes_to_16bit(chunks_iterator):
         if to_process:
             audio_array = np.frombuffer(to_process, dtype=np.int16).reshape(1, -1)
             yield audio_array
+
+
+def webrtc_error_handler(func):
+    """Decorator to catch exceptions and raise WebRTCError with stacktrace."""
+
+    @functools.wraps(func)
+    async def async_wrapper(*args, **kwargs):
+        try:
+            return await func(*args, **kwargs)
+        except Exception as e:
+            traceback.print_exc()
+            if isinstance(e, WebRTCError):
+                raise e
+            else:
+                raise WebRTCError(str(e)) from e
+
+    @functools.wraps(func)
+    def sync_wrapper(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except Exception as e:
+            traceback.print_exc()
+            if isinstance(e, WebRTCError):
+                raise e
+            else:
+                raise WebRTCError(str(e)) from e
+
+    return async_wrapper if inspect.iscoroutinefunction(func) else sync_wrapper
+
+
+async def wait_for_item(queue: asyncio.Queue, timeout: float = 0.1) -> Any:
+    """
+    Wait for an item from an asyncio.Queue with a timeout.
+
+    This function attempts to retrieve an item from the queue using asyncio.wait_for.
+    If the timeout is reached, it returns None.
+
+    This is useful to avoid blocking `emit` when the queue is empty.
+    """
+
+    try:
+        return await asyncio.wait_for(queue.get(), timeout=timeout)
+    except (TimeoutError, asyncio.TimeoutError):
+        return None

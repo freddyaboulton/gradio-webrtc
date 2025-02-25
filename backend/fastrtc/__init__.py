@@ -25,6 +25,7 @@ from .utils import (
     audio_to_bytes,
     audio_to_file,
     audio_to_float32,
+    wait_for_item,
 )
 from .webrtc import (
     WebRTC,
@@ -58,4 +59,5 @@ __all__ = [
     "Warning",
     "get_tts_model",
     "KokoroTTSOptions",
+    "wait_for_item",
 ]

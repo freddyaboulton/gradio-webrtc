@@ -1,6 +1,6 @@
 import subprocess
 
-subprocess.run(["pip", "install", "fastrtc==0.0.3.post7"])
+subprocess.run(["pip", "install", "fastrtc==0.0.4.post1"])
 
 import asyncio
 import base64
@@ -15,10 +15,9 @@ from fastrtc import (
     AsyncStreamHandler,
     Stream,
     get_twilio_turn_credentials,
-    WebRTCError,
     audio_to_float32,
+    wait_for_item,
 )
-from fastapi import FastAPI
 from phonic.client import PhonicSTSClient, get_voices
 
 load_dotenv()
@@ -42,47 +41,38 @@ class PhonicHandler(AsyncStreamHandler):
     async def start_up(self):
         await self.wait_for_args()
         voice_id = self.latest_args[1]
-        try:
-            async with PhonicSTSClient(STS_URI, API_KEY) as client:
-                self.client = client
-                sts_stream = client.sts(  # type: ignore
-                    input_format="pcm_44100",
-                    output_format="pcm_44100",
-                    system_prompt="You are a helpful voice assistant. Respond conversationally.",
-                    # welcome_message="Hello! I'm your voice assistant. How can I help you today?",
-                    voice_id=voice_id,
-                )
-                async for message in sts_stream:
-                    message_type = message.get("type")
-                    if message_type == "audio_chunk":
-                        audio_b64 = message["audio"]
-                        audio_bytes = base64.b64decode(audio_b64)
-                        await self.output_queue.put(
-                            (SAMPLE_RATE, np.frombuffer(audio_bytes, dtype=np.int16))
-                        )
-                        if text := message.get("text"):
-                            msg = {"role": "assistant", "content": text}
-                            await self.output_queue.put(AdditionalOutputs(msg))
-                    elif message_type == "input_text":
-                        msg = {"role": "user", "content": message["text"]}
+        async with PhonicSTSClient(STS_URI, API_KEY) as client:
+            self.client = client
+            sts_stream = client.sts(  # type: ignore
+                input_format="pcm_44100",
+                output_format="pcm_44100",
+                system_prompt="You are a helpful voice assistant. Respond conversationally.",
+                # welcome_message="Hello! I'm your voice assistant. How can I help you today?",
+                voice_id=voice_id,
+            )
+            async for message in sts_stream:
+                message_type = message.get("type")
+                if message_type == "audio_chunk":
+                    audio_b64 = message["audio"]
+                    audio_bytes = base64.b64decode(audio_b64)
+                    await self.output_queue.put(
+                        (SAMPLE_RATE, np.frombuffer(audio_bytes, dtype=np.int16))
+                    )
+                    if text := message.get("text"):
+                        msg = {"role": "assistant", "content": text}
                         await self.output_queue.put(AdditionalOutputs(msg))
-        except Exception as e:
-            raise WebRTCError(f"Error starting up: {e}")
+                elif message_type == "input_text":
+                    msg = {"role": "user", "content": message["text"]}
+                    await self.output_queue.put(AdditionalOutputs(msg))
 
     async def emit(self):
-        try:
-            return await self.output_queue.get()
-        except Exception as e:
-            raise WebRTCError(f"Error emitting: {e}")
+        return await wait_for_item(self.output_queue)
 
     async def receive(self, frame: tuple[int, np.ndarray]) -> None:
-        try:
-            if not self.client:
-                return
-            audio_float32 = audio_to_float32(frame)
-            await self.client.send_audio(audio_float32)  # type: ignore
-        except Exception as e:
-            raise WebRTCError(f"Error sending audio: {e}")
+        if not self.client:
+            return
+        audio_float32 = audio_to_float32(frame)
+        await self.client.send_audio(audio_float32)  # type: ignore
 
     async def shutdown(self):
         if self.client:
@@ -121,9 +111,6 @@ stream = Stream(
 
 with stream.ui:
     state.change(lambda s: s, inputs=state, outputs=chatbot)
-
-app = FastAPI()
-stream.mount(app)
 
 if __name__ == "__main__":
     if (mode := os.getenv("MODE")) == "UI":
