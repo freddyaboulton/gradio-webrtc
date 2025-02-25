@@ -54,7 +54,7 @@ The `Stream` has three main methods:
         yield audio
 
     stream = Stream(
-        handler=ReplyOnPause(detection),
+        handler=ReplyOnPause(echo),
         modality="audio", 
         mode="send-receive",
     )

@@ -120,8 +120,8 @@ stream = Stream(
     ],
     ui_args={
         "icon": "https://www.gstatic.com/lamda/images/gemini_favicon_f069958c85030456e93de685481c559f160ea06b.png",
-        "pulse_color": "rgb(35, 157, 225)",
-        "icon_button_color": "rgb(35, 157, 225)",
+        "pulse_color": "rgb(255, 255, 255)",
+        "icon_button_color": "rgb(255, 255, 255)",
         "title": "Gemini Audio Video Chat",
     },
 )
@@ -157,8 +157,8 @@ with gr.Blocks(css=css) as demo:
                 if get_space() == "spaces"
                 else None,
                 icon="https://www.gstatic.com/lamda/images/gemini_favicon_f069958c85030456e93de685481c559f160ea06b.png",
-                pulse_color="rgb(35, 157, 225)",
-                icon_button_color="rgb(35, 157, 225)",
+                pulse_color="rgb(255, 255, 255)",
+                icon_button_color="rgb(255, 255, 255)",
             )
         with gr.Column():
             image_input = gr.Image(
