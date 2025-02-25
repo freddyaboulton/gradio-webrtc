@@ -94,7 +94,7 @@ stream = Stream(
     additional_inputs=[
         gr.Dropdown(
             choices=voice_ids,
-            value="katherine",
+            value="victoria",
             label="Voice",
             info="Select a voice from the dropdown",
         )
