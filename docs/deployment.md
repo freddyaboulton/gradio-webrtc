@@ -8,9 +8,9 @@ When deploying in a cloud environment (like Hugging Face Spaces, EC2, etc), you 
 Hugging Face graciously provides a TURN server for the community.
 In order to use it, you need to first create a Hugging Face account by going to [huggingface.co](https://huggingface.co/).
 
-Then navigate to this [space](https://huggingface.co/spaces/freddyaboulton/turn-server-login) and follow the instructions on the page. You just have to click the "Log in" button and then the "Sign Up" button.
+Then navigate to this [space](https://huggingface.co/spaces/fastrtc/turn-server-login) and follow the instructions on the page. You just have to click the "Log in" button and then the "Sign Up" button.
 
-![turn_login](https://github.com/user-attachments/assets/d077c3a3-7059-45d6-8e50-eb3d8a4aa43f)
+![turn_login](https://github.com/user-attachments/assets/cefa8dec-487e-47d8-bb96-1a14a701f6e5)
 
 Then you can use the `get_hf_turn_credentials` helper to get your credentials:
 
