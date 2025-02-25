@@ -199,7 +199,7 @@ document.querySelectorAll('.tag-button').forEach(button => {
 
     <video width=98% src="https://github.com/user-attachments/assets/3e10cb15-ff1b-4b17-b141-ff0ad852e613" controls style="text-align: center"></video>
 
-    [:octicons-arrow-right-24: Demo](hhttps://huggingface.co/spaces/freddyaboulton/hey-llama-code-editor)
+    [:octicons-arrow-right-24: Demo](https://huggingface.co/spaces/freddyaboulton/hey-llama-code-editor)
     
     [:octicons-code-16: Code](https://huggingface.co/spaces/freddyaboulton/hey-llama-code-editor/blob/main/app.py)
 
