@@ -346,7 +346,7 @@ class Stream(WebRTCConnectionMixin):
                 gr.HTML(
                     f"""
                 <h1 style='text-align: center'>
-                {ui_args.get("title", "Audio Streaming (Powered by WebRTC ⚡️)")}
+                {ui_args.get("title", "Audio Streaming (Powered by FastRTC ⚡️)")}
                 </h1>
                 """
                 )
@@ -385,7 +385,7 @@ class Stream(WebRTCConnectionMixin):
                 gr.HTML(
                     f"""
                 <h1 style='text-align: center'>
-                {ui_args.get("title", "Audio Streaming (Powered by WebRTC ⚡️)")}
+                {ui_args.get("title", "Audio Streaming (Powered by FastRTC ⚡️)")}
                 </h1>
                 """
                 )
@@ -428,7 +428,7 @@ class Stream(WebRTCConnectionMixin):
                 gr.HTML(
                     f"""
                 <h1 style='text-align: center'>
-                {ui_args.get("title", "Audio Streaming (Powered by WebRTC ⚡️)")}
+                {ui_args.get("title", "Audio Video Streaming (Powered by FastRTC ⚡️)")}
                 </h1>
                 """
                 )
@@ -563,6 +563,7 @@ class Stream(WebRTCConnectionMixin):
         from gradio.networking import setup_tunnel
         from gradio.tunneling import CURRENT_TUNNELS
         from huggingface_hub import get_token
+        import atexit
 
         app = FastAPI()
 
@@ -618,6 +619,16 @@ class Stream(WebRTCConnectionMixin):
             )
             + " for information on making your handler compatible with phone usage."
         )
+
+        def unregister():
+            httpx.post(
+                URL + "/unregister",
+                json={"url": host, "code": code},
+                headers={"Authorization": token or get_token() or ""},
+            )
+
+        atexit.register(unregister)
+
         try:
             while True:
                 time.sleep(0.1)
@@ -626,11 +637,7 @@ class Stream(WebRTCConnectionMixin):
                 click.style("INFO", fg="green")
                 + ":\t  Keyboard interruption in main thread... closing server."
             )
-            r = httpx.post(
-                URL + "/unregister",
-                json={"url": host, "code": code},
-                headers={"Authorization": token or get_token() or ""},
-            )
+            unregister()
             t.join(timeout=5)
             for tunnel in CURRENT_TUNNELS:
                 tunnel.kill()

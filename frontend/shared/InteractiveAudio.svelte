@@ -304,7 +304,7 @@
                     </div>
                 {:else if stream_state === "open"}
                     <div class="icon-with-text">
-                        <div class="icon color-primary" title="stop recording">
+                        <div class="icon" title="stop recording">
                             <PulsingIcon
                                 audio_source_callback={() => stream}
                                 stream_state={"open"}
