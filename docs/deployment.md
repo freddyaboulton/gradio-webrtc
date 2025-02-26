@@ -1,4 +1,4 @@
-When deploying in a cloud environment (like Hugging Face Spaces, EC2, etc), you need to set up a TURN server to relay the WebRTC traffic. This guide will cover the different options for setting up a TURN server.
+When deploying in cloud environments with firewalls (like Hugging Face Spaces, RunPod), your WebRTC connections may be blocked from making direct connections. In these cases, you need a TURN server to relay the audio/video traffic between users. This guide covers different options for setting up FastRTC to connect to a TURN server.
 
 !!! tip
     The `rtc_configuration` parameter of the `Stream` class also be passed to the [`WebRTC`](../userguide/gradio) component directly if you're building a standalone gradio app.
