@@ -17,4 +17,4 @@ demo/scratch
 .vscode
 .DS_Store
 test/
-.env
+.venv*
