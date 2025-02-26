@@ -41,6 +41,7 @@ def upload_space(dir_path: str):
         "llama_code_editor",
         "phonic_chat",
         "gemini_audio_video",
+        "moonshine_live",
     ]
 
     path: Path = Path(dir_path)
