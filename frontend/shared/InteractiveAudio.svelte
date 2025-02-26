@@ -154,6 +154,13 @@
                     _time_limit = null;
                     stop(pc);
                     break;
+                case "failed":
+                    console.info("failed");
+                    stream_state = "closed";
+                    _time_limit = null;
+                    dispatch("error", "Connection failed!");
+                    stop(pc);
+                    break;
                 default:
                     break;
             }
@@ -209,6 +216,7 @@
             })
             .catch(() => {
                 console.info("catching");
+                clearTimeout(timeoutId);
                 stream_state = "closed";
             });
     }
