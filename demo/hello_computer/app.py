@@ -4,8 +4,8 @@ import os
 from pathlib import Path
 
 import gradio as gr
+import huggingface_hub
 import numpy as np
-import openai
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse, StreamingResponse
@@ -24,9 +24,9 @@ load_dotenv()
 curr_dir = Path(__file__).parent
 
 
-client = openai.OpenAI(
+client = huggingface_hub.InferenceClient(
     api_key=os.environ.get("SAMBANOVA_API_KEY"),
-    base_url="https://api.sambanova.ai/v1",
+    provider="sambanova",
 )
 model = get_stt_model()
 
@@ -49,7 +49,7 @@ def response(
     conversation_state.append({"role": "user", "content": text})
 
     request = client.chat.completions.create(
-        model="Meta-Llama-3.2-3B-Instruct",
+        model="meta-llama/Llama-3.2-3B-Instruct",
         messages=conversation_state,  # type: ignore
         temperature=0.1,
         top_p=0.1,

@@ -1,4 +1,4 @@
 fastrtc[vad, stt]
 python-dotenv
-openai
+huggingface_hub>=0.29.0
 twilio
