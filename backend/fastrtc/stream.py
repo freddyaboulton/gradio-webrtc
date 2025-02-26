@@ -42,6 +42,8 @@ class UIArgs(TypedDict):
     """Color of the icon button. Default is var(--color-accent) of the demo theme."""
     pulse_color: NotRequired[str]
     """Color of the pulse animation. Default is var(--color-accent) of the demo theme."""
+    icon_radius: NotRequired[int]
+    """Border radius of the icon button expressed as a percentage of the button size. Default is 50%."""
 
 
 class Stream(WebRTCConnectionMixin):
@@ -322,6 +324,7 @@ class Stream(WebRTCConnectionMixin):
                                 icon=ui_args.get("icon"),
                                 icon_button_color=ui_args.get("icon_button_color"),
                                 pulse_color=ui_args.get("pulse_color"),
+                                icon_radius=ui_args.get("icon_radius"),
                             )
                             for component in additional_output_components:
                                 if component not in same_components:
@@ -358,6 +361,10 @@ class Stream(WebRTCConnectionMixin):
                                 rtc_configuration=self.rtc_configuration,
                                 mode="send-receive",
                                 modality="audio",
+                                icon=ui_args.get("icon"),
+                                icon_button_color=ui_args.get("icon_button_color"),
+                                pulse_color=ui_args.get("pulse_color"),
+                                icon_radius=ui_args.get("icon_radius"),
                             )
                             for component in additional_input_components:
                                 if component not in same_components:
@@ -400,6 +407,7 @@ class Stream(WebRTCConnectionMixin):
                                 icon=ui_args.get("icon"),
                                 icon_button_color=ui_args.get("icon_button_color"),
                                 pulse_color=ui_args.get("pulse_color"),
+                                icon_radius=ui_args.get("icon_radius"),
                             )
                             for component in additional_input_components:
                                 if component not in same_components:
@@ -443,6 +451,7 @@ class Stream(WebRTCConnectionMixin):
                                 icon=ui_args.get("icon"),
                                 icon_button_color=ui_args.get("icon_button_color"),
                                 pulse_color=ui_args.get("pulse_color"),
+                                icon_radius=ui_args.get("icon_radius"),
                             )
                             for component in additional_input_components:
                                 if component not in same_components:
@@ -552,6 +561,7 @@ class Stream(WebRTCConnectionMixin):
         port: int = 8000,
         **kwargs,
     ):
+        import atexit
         import secrets
         import threading
         import time
@@ -563,7 +573,6 @@ class Stream(WebRTCConnectionMixin):
         from gradio.networking import setup_tunnel
         from gradio.tunneling import CURRENT_TUNNELS
         from huggingface_hub import get_token
-        import atexit
 
         app = FastAPI()
 

@@ -149,14 +149,14 @@ class WebRTCConnectionMixin:
 
         if isinstance(self.event_handler, StreamHandlerBase):
             handler = self.event_handler.copy()
-            handler.emit = webrtc_error_handler(handler.emit)
-            handler.receive = webrtc_error_handler(handler.receive)
-            handler.start_up = webrtc_error_handler(handler.start_up)
-            handler.shutdown = webrtc_error_handler(handler.shutdown)
+            handler.emit = webrtc_error_handler(handler.emit)  # type: ignore
+            handler.receive = webrtc_error_handler(handler.receive)  # type: ignore
+            handler.start_up = webrtc_error_handler(handler.start_up)  # type: ignore
+            handler.shutdown = webrtc_error_handler(handler.shutdown)  # type: ignore
             if hasattr(handler, "video_receive"):
-                handler.video_receive = webrtc_error_handler(handler.video_receive)
+                handler.video_receive = webrtc_error_handler(handler.video_receive)  # type: ignore
             if hasattr(handler, "video_emit"):
-                handler.video_emit = webrtc_error_handler(handler.video_emit)
+                handler.video_emit = webrtc_error_handler(handler.video_emit)  # type: ignore
         else:
             handler = webrtc_error_handler(cast(Callable, self.event_handler))
 

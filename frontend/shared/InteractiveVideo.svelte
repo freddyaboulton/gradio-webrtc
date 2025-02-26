@@ -63,6 +63,7 @@
 		{icon_button_color}
 		{pulse_color}
 		{button_labels}
+		{icon_radius}
 		on:error
 		on:start_recording
 		on:stop_recording

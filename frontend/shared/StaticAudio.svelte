@@ -18,6 +18,7 @@
     export let icon: string | undefined = undefined;
     export let icon_button_color: string = "var(--color-accent)";
     export let pulse_color: string = "var(--color-accent)";
+    export let icon_radius: number = 50;
 
     export let server: {
         offer: (body: any) => Promise<any>;
@@ -65,6 +66,7 @@
             });
             let stream = null;
             const timeoutId = setTimeout(() => {
+                // @ts-ignore
                 on_change_cb({ type: "connection_timeout" });
             }, 5000);
 
@@ -120,6 +122,7 @@
             {icon}
             {icon_button_color}
             {pulse_color}
+            {icon_radius}
         />
     </div>
 {/if}
