@@ -197,6 +197,7 @@ class WebRTCConnectionMixin:
                         conn.stop()
                 self.pcs.discard(pc)
             if pc.connectionState == "connected":
+                self.connection_timeouts[body["webrtc_id"]].set()
                 if self.time_limit is not None:
                     asyncio.create_task(self.wait_for_time_limit(pc, self.time_limit))
 
