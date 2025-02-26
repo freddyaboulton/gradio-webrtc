@@ -155,6 +155,12 @@
 						stop(pc);
 						await access_webcam();
 						break;
+					case "failed":
+						stream_state = "closed";
+						_time_limit = null;
+						dispatch("error", "Connection failed!");
+						stop(pc);
+						break;
 					default:
 						break;
 				}

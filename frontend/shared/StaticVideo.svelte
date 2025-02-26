@@ -47,6 +47,11 @@
 				case "disconnected":
 					stop(pc);
 					break;
+				case "failed":
+					stream_state = "closed";
+					dispatch("error", "Connection failed!");
+					stop(pc);
+					break;
 				default:
 					break;
 			}

@@ -109,7 +109,7 @@ async def stream_updates(webrtc_id: str):
 
 ### Handling Errors
 
-When connecting via `WebRTC`, the server will respond to the `/webrtc/offer` route with a JSON response. If there are too many connections, the server will respond with a 429 error.
+When connecting via `WebRTC`, the server will respond to the `/webrtc/offer` route with a JSON response. If there are too many connections, the server will respond with a 200 error.
 
 ```json
 {
@@ -122,6 +122,8 @@ When connecting via `WebRTC`, the server will respond to the `/webrtc/offer` rou
 
 Over `WebSocket`, the server will send the same message before closing the connection.
 
+!!! tip
+    The server will sends a 200 status code because otherwise the gradio client will not be able to process the json response and display the error.
 
 <style>
 .config-selector {
