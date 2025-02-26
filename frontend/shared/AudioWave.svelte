@@ -11,6 +11,7 @@
   export let icon_button_color: string = "var(--color-accent)";
   export let pulse_color: string = "var(--color-accent)";
   export let pending: boolean = false;
+  export let icon_radius: number = 50;
 
   let audioContext: AudioContext;
   let analyser: AnalyserNode;
@@ -34,6 +35,7 @@
   });
 
   function setupAudioContext() {
+    // @ts-ignore
     audioContext = new (window.AudioContext || window.webkitAudioContext)();
     analyser = audioContext.createAnalyser();
     const source = audioContext.createMediaStreamSource(
@@ -58,6 +60,7 @@
     );
     for (let i = 0; i < bars.length; i++) {
       const barHeight = (dataArray[i] / 255) * 2;
+      // @ts-ignore
       bars[i].style.transform = `scaleY(${Math.max(0.1, barHeight)})`;
     }
 
@@ -78,6 +81,7 @@
           {pulse_color}
           {icon}
           {icon_button_color}
+          {icon_radius}
           {audio_source_callback}
         />
       </div>

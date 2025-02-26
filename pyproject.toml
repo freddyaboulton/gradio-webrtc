@@ -8,7 +8,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "fastrtc"
-version = "0.0.5.post2"
+version = "0.0.6"
 description = "The realtime communication library for Python"
 readme = "README.md"
 license = "apache-2.0"
@@ -83,3 +83,4 @@ packages = ["/backend/fastrtc"]
 
 [tool.ruff]
 target-version = "py310"
+extend-exclude = ["demo/phonic_chat"]

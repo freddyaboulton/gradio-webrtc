@@ -33,6 +33,7 @@
     export let icon: string | undefined = undefined;
     export let icon_button_color: string = "var(--color-accent)";
     export let pulse_color: string = "var(--color-accent)";
+    export let icon_radius: number = 50;
     export let button_labels: { start: string; stop: string; waiting: string };
     let pending = false;
 
@@ -291,6 +292,7 @@
             {icon_button_color}
             {pulse_color}
             {pending}
+            {icon_radius}
         />
         <StreamingBar time_limit={_time_limit} />
         <div class="button-wrap" class:pulse={stopword_recognized}>

@@ -1,14 +1,15 @@
 import asyncio
 import fractions
+import functools
+import inspect
 import io
 import json
 import logging
 import tempfile
+import traceback
 from contextvars import ContextVar
 from typing import Any, Callable, Literal, Protocol, TypedDict, cast
-import functools
-import traceback
-import inspect
+
 import av
 import numpy as np
 from numpy.typing import NDArray

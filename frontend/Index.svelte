@@ -38,6 +38,7 @@
 	export let icon: string | undefined = undefined;
 	export let icon_button_color: string = "var(--color-accent)";
 	export let pulse_color: string = "var(--color-accent)";
+	export let icon_radius: number = 50;
 
 	const on_change_cb = (msg: "change" | "tick" | any) => {
 		if (
@@ -124,6 +125,7 @@
 			{icon}
 			{icon_button_color}
 			{pulse_color}
+			{icon_radius}
 			i18n={gradio.i18n}
 			on:tick={() => gradio.dispatch("tick")}
 			on:error={({ detail }) => gradio.dispatch("error", detail)}
@@ -178,6 +180,7 @@
 			{icon}
 			{reject_cb}
 			{icon_button_color}
+			{icon_radius}
 			{pulse_color}
 			{button_labels}
 			on:tick={() => gradio.dispatch("tick")}

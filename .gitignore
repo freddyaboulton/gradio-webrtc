@@ -18,3 +18,4 @@ demo/scratch
 .DS_Store
 test/
 .venv*
+.env

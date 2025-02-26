@@ -87,6 +87,7 @@ class WebRTC(Component, WebRTCConnectionMixin):
         icon: str | None = None,
         icon_button_color: str | None = None,
         pulse_color: str | None = None,
+        icon_radius: int | None = None,
         button_labels: dict | None = None,
     ):
         """
@@ -119,6 +120,7 @@ class WebRTC(Component, WebRTCConnectionMixin):
             icon_button_color: Color of the icon button. Default is var(--color-accent) of the demo theme.
             pulse_color: Color of the pulse animation. Default is var(--color-accent) of the demo theme.
             button_labels: Text to display on the audio or video start, stop, waiting buttons. Dict with keys "start", "stop", "waiting" mapping to the text to display on the buttons.
+            icon_radius: Border radius of the icon button expressed as a percentage of the button size. Default is 50%
         """
         self.time_limit = time_limit
         self.height = height
@@ -129,6 +131,7 @@ class WebRTC(Component, WebRTCConnectionMixin):
         self.mode = mode
         self.modality = modality
         self.icon_button_color = icon_button_color
+        self.icon_radius = icon_radius
         self.pulse_color = pulse_color
         self.rtp_params = rtp_params or {}
         self.button_labels = {

@@ -7,6 +7,7 @@
   export let icon: string | ComponentType = undefined;
   export let icon_button_color: string = "var(--color-accent)";
   export let pulse_color: string = "var(--color-accent)";
+  export let icon_radius: number = 50;
 
   let audioContext: AudioContext;
   let analyser: AnalyserNode;
@@ -27,6 +28,7 @@
   });
 
   function setupAudioContext() {
+    // @ts-ignore
     audioContext = new (window.AudioContext || window.webkitAudioContext)();
     analyser = audioContext.createAnalyser();
     const source = audioContext.createMediaStreamSource(
@@ -77,7 +79,12 @@
       style:background={icon_button_color}
     >
       {#if typeof icon === "string"}
-        <img src={icon} alt="Audio visualization icon" class="icon-image" />
+        <img
+          src={icon}
+          alt="Audio visualization icon"
+          class="icon-image"
+          style:border-radius={`${icon_radius}%`}
+        />
       {:else if icon === undefined}
         <div></div>
       {:else}
@@ -123,7 +130,6 @@
     width: 100%;
     height: 100%;
     object-fit: contain;
-    border-radius: 50%;
   }
 
   .pulse-ring {

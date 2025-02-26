@@ -5,16 +5,16 @@ import time
 from io import BytesIO
 
 import gradio as gr
-from gradio.utils import get_space
 import numpy as np
-from google import genai
 from dotenv import load_dotenv
 from fastrtc import (
     AsyncAudioVideoStreamHandler,
     Stream,
-    get_twilio_turn_credentials,
     WebRTC,
+    get_twilio_turn_credentials,
 )
+from google import genai
+from gradio.utils import get_space
 from PIL import Image
 
 load_dotenv()
