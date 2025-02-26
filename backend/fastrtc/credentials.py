@@ -8,7 +8,7 @@ def get_hf_turn_credentials(token=None):
     if token is None:
         token = os.getenv("HF_TOKEN")
     credentials = requests.get(
-        "https://freddyaboulton-turn-server-login.hf.space/credentials",
+        "https://fastrtc-turn-server-login.hf.space/credentials",
         headers={"X-HF-Access-Token": token},
     )
     if not credentials.status_code == 200:
