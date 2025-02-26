@@ -286,8 +286,7 @@ class WebRTCConnectionMixin:
 
         # handle offer
         await pc.setRemoteDescription(offer)
-        task = asyncio.create_task(self.connection_timeout(pc, body["webrtc_id"], 30))
-        task.add_done_callback(lambda _: print("connection timeout!"))
+        asyncio.create_task(self.connection_timeout(pc, body["webrtc_id"], 30))
         # send answer
         answer = await pc.createAnswer()
         await pc.setLocalDescription(answer)  # type: ignore
