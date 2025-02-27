@@ -25,6 +25,7 @@ from .utils import (
     audio_to_bytes,
     audio_to_file,
     audio_to_float32,
+    audio_to_int16,
     wait_for_item,
 )
 from .webrtc import (
@@ -43,6 +44,7 @@ __all__ = [
     "audio_to_bytes",
     "audio_to_file",
     "audio_to_float32",
+    "audio_to_int16",
     "get_hf_turn_credentials",
     "get_twilio_turn_credentials",
     "get_turn_credentials",
