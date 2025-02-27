@@ -19,3 +19,4 @@ demo/scratch
 test/
 .venv*
 .env
+*.history

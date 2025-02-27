@@ -28,7 +28,9 @@ async def transcribe(audio: tuple[int, np.ndarray]):
     transcript = await groq_client.audio.transcriptions.create(
         file=("audio-file.mp3", audio_to_bytes(audio)),
         model="whisper-large-v3-turbo",
+        # model="whisper-large-v3",
         response_format="verbose_json",
+        language="ko",
     )
     yield AdditionalOutputs(transcript.text)
 

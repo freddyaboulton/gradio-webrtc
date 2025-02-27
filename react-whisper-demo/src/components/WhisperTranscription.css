@@ -1,0 +1,128 @@
+.whisper-transcription {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.transcript-container {
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  padding: 1.5rem;
+  height: 300px;
+  overflow-y: auto;
+  margin-bottom: 1.5rem;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  background-color: white;
+}
+
+.controls {
+  text-align: center;
+  margin: 1.5rem 0;
+}
+
+.control-button {
+  background: var(--primary-gradient);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  font-size: 0.95rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 500;
+  min-width: 180px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.control-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(230, 100, 101, 0.15);
+}
+
+.control-button:active {
+  transform: translateY(0);
+}
+
+/* Transcript text styling */
+.transcript-container p {
+  margin: 0.4rem 0;
+  padding: 0.6rem;
+  background: var(--background-cream);
+  border-radius: 4px;
+  line-height: 1.4;
+  font-size: 0.95rem;
+}
+
+/* Custom scrollbar - made thinner */
+.transcript-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.transcript-container::-webkit-scrollbar-track {
+  background: var(--background-cream);
+  border-radius: 3px;
+}
+
+.transcript-container::-webkit-scrollbar-thumb {
+  background: #e66465;
+  border-radius: 3px;
+  opacity: 0.8;
+}
+
+.transcript-container::-webkit-scrollbar-thumb:hover {
+  background: #f9a45c;
+}
+
+/* Add styles for toast notifications */
+.error-toast {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 16px 24px;
+  border-radius: 4px;
+  font-size: 14px;
+  z-index: 1000;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  background-color: #f44336;
+  color: white;
+}
+
+/* Button content styling */
+.button-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-width: 180px;
+}
+
+/* Spinner animation */
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid white;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Pulse circle for audio level visualization */
+.pulse-circle {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: white;
+  opacity: 0.2;
+  flex-shrink: 0;
+  transition: transform 0.1s ease;
+} 

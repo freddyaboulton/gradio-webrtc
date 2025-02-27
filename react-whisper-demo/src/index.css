@@ -1,0 +1,18 @@
+:root {
+  --primary-gradient: linear-gradient(135deg, #f9a45c 0%, #e66465 100%);
+  --background-cream: #faf8f5;
+  --text-dark: #2d2d2d;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: var(--background-cream);
+  color: var(--text-dark);
+  min-height: 100vh;
+}
+
+* {
+  box-sizing: border-box;
+} 
