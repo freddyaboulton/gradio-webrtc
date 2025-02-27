@@ -1,5 +1,5 @@
 site_name: FastRTC
-site_url: https://sitename.example
+site_url: https://fastrtc.org
 repo_name: fastrtc
 repo_url: https://github.com/freddyaboulton/gradio-webrtc
 theme:
