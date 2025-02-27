@@ -50,3 +50,5 @@ markdown_extensions:
       emoji_generator: !!python/name:material.extensions.emoji.to_svg
   - admonition
   - pymdownx.details
+extra_files:
+  - robots.txt
