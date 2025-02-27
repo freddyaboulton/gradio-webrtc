@@ -33,6 +33,7 @@ A collection of applications built with FastRTC. Click on the tags below to find
   <button class="tag-button" data-tag="groq"><code>Groq</code></button>
   <button class="tag-button" data-tag="elevenlabs"><code>ElevenLabs</code></button>
   <button class="tag-button" data-tag="elevenlabs"><code>Kyutai</code></button>
+  <button class="tag-button" data-tag="agentic"><code>Agentic</code></button>
 </div>
 
 <script>
@@ -130,6 +131,21 @@ document.querySelectorAll('.tag-button').forEach(button => {
     
     [:octicons-code-16: Code](https://huggingface.co/spaces/fastrtc/llama-code-editor/blob/main/app.py)
 
+-   :speaking_head:{ .lg .middle } __SmolAgents with Voice__
+{: data-tags="audio,llm,voice-chat,agentic"}
+
+    ---
+
+    Build a voice-based smolagent to find a coworking space!
+
+    <video width=98% src="https://github.com/user-attachments/assets/ddf39ef7-fa7b-417e-8342-de3b9e311891" controls style="text-align: center"></video>
+
+    [:octicons-arrow-right-24: Demo](https://huggingface.co/spaces/fastrtc/talk-to-claude)
+
+    [:octicons-arrow-right-24: Gradio UI](https://huggingface.co/spaces/fastrtc/talk-to-claude-gradio)
+    
+    [:octicons-code-16: Code](https://huggingface.co/spaces/fastrtc/talk-to-claude/blob/main/app.py)
+
 -   :speaking_head:{ .lg .middle } __Talk to Claude__
 {: data-tags="audio,llm,voice-chat"}
 
@@ -139,11 +155,11 @@ document.querySelectorAll('.tag-button').forEach(button => {
 
     <video width=98% src="https://github.com/user-attachments/assets/fb6ef07f-3ccd-444a-997b-9bc9bdc035d3" controls style="text-align: center"></video>
 
-    [:octicons-arrow-right-24: Demo](https://huggingface.co/spaces/fastrtc/talk-to-claude)
+    [:octicons-arrow-right-24: Demo](https://huggingface.co/spaces/burtenshaw/coworking_agent)
 
-    [:octicons-arrow-right-24: Gradio UI](https://huggingface.co/spaces/fastrtc/talk-to-claude-gradio)
+    [:octicons-arrow-right-24: Gradio UI](https://huggingface.co/spaces/burtenshaw/coworking_agent)
     
-    [:octicons-code-16: Code](https://huggingface.co/spaces/fastrtc/talk-to-claude/blob/main/app.py)
+    [:octicons-code-16: Code](https://huggingface.co/spaces/burtenshaw/coworking_agent/blob/main/app.py)
 
 -   :musical_note:{ .lg .middle } __LLM Voice Chat__
 {: data-tags="audio,llm,voice-chat,groq,elevenlabs"}
