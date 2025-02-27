@@ -10,7 +10,7 @@ from fastrtc import Stream
 import gradio as gr
 import numpy as np
 
-def detection(image):
+def detection(image, slider):
     return np.flip(image, axis=0)
 
 stream = Stream(

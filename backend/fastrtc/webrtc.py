@@ -122,6 +122,7 @@ class WebRTC(Component, WebRTCConnectionMixin):
             button_labels: Text to display on the audio or video start, stop, waiting buttons. Dict with keys "start", "stop", "waiting" mapping to the text to display on the buttons.
             icon_radius: Border radius of the icon button expressed as a percentage of the button size. Default is 50%
         """
+        WebRTCConnectionMixin.__init__(self)
         self.time_limit = time_limit
         self.height = height
         self.width = width
@@ -230,15 +231,9 @@ class WebRTC(Component, WebRTCConnectionMixin):
             inputs = [inputs]
             inputs = list(inputs)
 
-        def handler(webrtc_id: str, *args):
-            if self.additional_outputs[webrtc_id].queue.qsize() > 0:
-                next_outputs = self.additional_outputs[webrtc_id].queue.get_nowait()
-                return fn(*args, *next_outputs.args)  # type: ignore
-            return (
-                tuple([None for _ in range(len(outputs))])
-                if isinstance(outputs, Iterable)
-                else None
-            )
+        async def handler(webrtc_id: str, *args):
+            async for next_outputs in self.output_stream(webrtc_id):
+                yield fn(*args, *next_outputs.args)  # type: ignore
 
         return self.state_change(  # type: ignore
             fn=handler,
@@ -247,9 +242,9 @@ class WebRTC(Component, WebRTCConnectionMixin):
             js=js,
             concurrency_limit=concurrency_limit,
             concurrency_id=concurrency_id,
-            show_progress=show_progress,
+            show_progress="minimal",
             queue=queue,
-            trigger_mode="multiple",
+            trigger_mode="once",
         )
 
     def stream(

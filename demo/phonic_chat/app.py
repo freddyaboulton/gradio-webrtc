@@ -1,7 +1,3 @@
-import subprocess
-
-subprocess.run(["pip", "install", "fastrtc==0.0.4.post1"])
-
 import asyncio
 import base64
 import os
@@ -80,12 +76,11 @@ class PhonicHandler(AsyncStreamHandler):
         return super().shutdown()
 
 
-def add_to_chatbot(state, chatbot, message):
-    state.append(message)
-    return state, gr.skip()
+def add_to_chatbot(chatbot, message):
+    chatbot.append(message)
+    return chatbot
 
 
-state = gr.State(value=[])
 chatbot = gr.Chatbot(type="messages", value=[])
 stream = Stream(
     handler=PhonicHandler(),
@@ -99,7 +94,7 @@ stream = Stream(
             info="Select a voice from the dropdown",
         )
     ],
-    additional_outputs=[state, chatbot],
+    additional_outputs=[chatbot],
     additional_outputs_handler=add_to_chatbot,
     ui_args={
         "title": "Phonic Chat (Powered by FastRTC ⚡️)",
@@ -109,8 +104,8 @@ stream = Stream(
     time_limit=90 if get_space() else None,
 )
 
-with stream.ui:
-    state.change(lambda s: s, inputs=state, outputs=chatbot)
+# with stream.ui:
+#     state.change(lambda s: s, inputs=state, outputs=chatbot)
 
 if __name__ == "__main__":
     if (mode := os.getenv("MODE")) == "UI":
