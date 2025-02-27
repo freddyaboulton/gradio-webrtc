@@ -1,7 +1,7 @@
 site_name: FastRTC
 site_url: https://fastrtc.org
 repo_name: fastrtc
-repo_url: https://github.com/freddyaboulton/gradio-webrtc
+repo_url: https://github.com/freddyaboulton/fastrtc
 theme:
   name: material
   custom_dir: overrides
