@@ -148,6 +148,7 @@
 			{icon}
 			{icon_button_color}
 			{pulse_color}
+			{icon_radius}
 			{button_labels}
 			on:clear={() => gradio.dispatch("clear")}
 			on:play={() => gradio.dispatch("play")}

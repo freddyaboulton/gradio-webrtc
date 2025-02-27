@@ -30,6 +30,7 @@
 	export let icon: string | undefined | ComponentType = undefined;
 	export let icon_button_color: string = "var(--color-accent)";
 	export let pulse_color: string = "var(--color-accent)";
+	export let icon_radius: number = 50;
 
 	const dispatch = createEventDispatcher<{
 		change: FileData | null;
@@ -62,8 +63,8 @@
 		{icon}
 		{icon_button_color}
 		{pulse_color}
-		{button_labels}
 		{icon_radius}
+		{button_labels}
 		on:error
 		on:start_recording
 		on:stop_recording

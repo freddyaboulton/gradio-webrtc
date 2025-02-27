@@ -35,7 +35,6 @@ from fastrtc.tracks import (
 )
 from fastrtc.utils import (
     AdditionalOutputs,
-    DataChannel,
     create_message,
     webrtc_error_handler,
 )
@@ -64,18 +63,20 @@ class OutputQueue:
 
 
 class WebRTCConnectionMixin:
-    pcs: set[RTCPeerConnection] = set([])
-    relay = MediaRelay()
-    connections: dict[str, list[Track]] = defaultdict(list)
-    data_channels: dict[str, DataChannel] = {}
-    additional_outputs: dict[str, OutputQueue] = defaultdict(OutputQueue)
-    handlers: dict[str, HandlerType | Callable] = {}
-    connection_timeouts: dict[str, asyncio.Event] = defaultdict(asyncio.Event)
-    concurrency_limit: int | float
-    event_handler: HandlerType
-    time_limit: float | int | None
-    modality: Literal["video", "audio", "audio-video"]
-    mode: Literal["send", "receive", "send-receive"]
+    def __init__(self):
+        self.pcs = set([])
+        self.relay = MediaRelay()
+        self.connections = defaultdict(list)
+        self.data_channels = {}
+        self.additional_outputs = defaultdict(OutputQueue)
+        self.handlers = {}
+        self.connection_timeouts = defaultdict(asyncio.Event)
+        # These attributes should be set by subclasses:
+        self.concurrency_limit: int | float | None
+        self.event_handler: HandlerType | None
+        self.time_limit: float | None
+        self.modality: Literal["video", "audio", "audio-video"]
+        self.mode: Literal["send", "receive", "send-receive"]
 
     @staticmethod
     async def wait_for_time_limit(pc: RTCPeerConnection, time_limit: float):

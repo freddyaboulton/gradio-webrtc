@@ -63,7 +63,7 @@ class AppState:
 
 ReplyFnGenerator = (
     Callable[
-        [tuple[int, NDArray[np.int16]], list[dict[Any, Any]]],
+        [tuple[int, NDArray[np.int16]], Any],
         Generator[EmitType, None, None],
     ]
     | Callable[
@@ -75,7 +75,7 @@ ReplyFnGenerator = (
         AsyncGenerator[EmitType, None],
     ]
     | Callable[
-        [tuple[int, NDArray[np.int16]], list[dict[Any, Any]]],
+        [tuple[int, NDArray[np.int16]], Any],
         AsyncGenerator[EmitType, None],
     ]
 )

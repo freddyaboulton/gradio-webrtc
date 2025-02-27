@@ -62,6 +62,7 @@ class Stream(WebRTCConnectionMixin):
         additional_outputs: list[Component] | None = None,
         ui_args: UIArgs | None = None,
     ):
+        WebRTCConnectionMixin.__init__(self)
         self.mode = mode
         self.modality = modality
         self.rtp_params = rtp_params

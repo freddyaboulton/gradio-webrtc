@@ -33,6 +33,7 @@
 	export let rtp_params: RTCRtpParameters = {} as RTCRtpParameters;
 	export let icon: string | undefined | ComponentType = undefined;
 	export let icon_button_color: string = "var(--color-accent)";
+	export let icon_radius: number = 50;
 	export let pulse_color: string = "var(--color-accent)";
 	export let button_labels: { start: string; stop: string; waiting: string };
 
@@ -242,6 +243,7 @@
 				icon={icon || Mic}
 				{icon_button_color}
 				{pulse_color}
+				{icon_radius}
 			/>
 		</div>
 	{/if}
