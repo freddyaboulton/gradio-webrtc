@@ -71,7 +71,7 @@ document.querySelectorAll('.tag-button').forEach(button => {
 
     [:octicons-arrow-right-24: Gradio UI](https://huggingface.co/spaces/fastrtc/gemini-audio-video)
     
-    [:octicons-code-16: Code](https://github.com/freddyaboulton/fastrtc/blob/main/demo/gemini_audio_video/app.py)
+    [:octicons-code-16: Code](https://huggingface.co/spaces/fastrtc/gemini-audio-video/blob/main/app.py)
 
 -   :speaking_head:{ .lg .middle } __Google Gemini Real Time Voice API__
 {: data-tags="audio,real-time-api,voice-chat"}
