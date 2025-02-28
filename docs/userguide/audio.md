@@ -1,7 +1,7 @@
 
 ## Reply On Pause
 
-Typically, you want to run a python function whenever a user has stopped speaking. This can be done by wrapping a python generator with the `ReplyOnPause` class and passing it to the `handler` argument of the `Stream` object.
+Typically, you want to run a python function whenever a user has stopped speaking. This can be done by wrapping a python generator with the `ReplyOnPause` class and passing it to the `handler` argument of the `Stream` object. The `ReplyOnPause` class will handle the voice detection and turn taking logic automatically!
 
 === "Code"
     ```python
@@ -29,12 +29,8 @@ Typically, you want to run a python function whenever a user has stopped speakin
 
     2. The generator must yield audio chunks as a tuple of (sampling_rate, numpy audio array). Each numpy audio array must have a shape of (1, num_samples).
 
-
-The `ReplyOnPause` class will handle the voice detection and turn taking logic automatically!
-
-!!! warning "Argument Order"
-
-    The first argument to the function must be the audio
+!!! tip "Asynchronous"
+    You can also use an async generator with `ReplyOnPause`.
 
 !!! tip "Parameters"
     You can customize the voice detection parameters by passing in `algo_options` and `model_options` to the `ReplyOnPause` class.
