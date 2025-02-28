@@ -47,14 +47,20 @@ This file was automatically generated - do not edit
         {% include "partials/alternate.html" %}
         {% endif %}
 
-        <!-- Add HF and Gradio logos before search -->
         <div style="display: flex; align-items: center; margin-right: 1rem;">
-            <img src="/hf-logo.svg"
-                onerror="this.onerror=null; this.src='https://huggingface.co/datasets/freddyaboulton/bucket/resolve/main/hf-logo.svg';"
-                style="height: 24px; margin-right: 10px;">
-            <img src="/gradio-logo.svg"
-                onerror="this.onerror=null; this.src='https://huggingface.co/datasets/freddyaboulton/bucket/resolve/main/gradio-logo.svg';"
-                style="height: 24px;">
+            <a href="https://hf.co/fastrtc" target="_blank" rel="noopener noreferrer">
+                <img src="/hf-logo.svg"
+                    onerror="this.onerror=null; this.src='https://huggingface.co/datasets/freddyaboulton/bucket/resolve/main/hf-logo.svg';"
+                    style="height: 24px; margin-right: 10px;">
+            </a>
+            <a href="https://gradio.app" target="_blank" rel="noopener noreferrer">
+                <img src="/gradio-logo.svg"
+                    onerror="this.onerror=null; this.src='https://huggingface.co/datasets/freddyaboulton/bucket/resolve/main/gradio-logo.svg';"
+                    style="height: 24px; margin-right: 10px;">
+            </a>
+            <a href="https://discord.gg/TSWU7HyaYu" target="_blank" rel="noopener noreferrer">
+                <img src="/Discord-Symbol-White.svg" style="height: 16px; margin-right: 10px;">
+            </a>
         </div>
 
         {% if "material/search" in config.plugins %}
