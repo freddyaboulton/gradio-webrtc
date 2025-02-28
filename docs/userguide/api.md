@@ -45,7 +45,7 @@ Over both WebRTC and WebSocket, the server can send messages of the following fo
 
 - `send_input`: Send any input data for the handler to the server. See [`Additional Inputs`](#additional-inputs) for more details.
 - `fetch_output`: An instance of [`AdditionalOutputs`](#additional-outputs) is sent to the server.
-- `stopword`: The stopword has been detected. See [`ReplyOnStopWords`](../audio/#reply-on-stopwords) for more details.
+- `stopword`: The stopword has been detected. See [`ReplyOnStopWords`](audio.md/#reply-on-stopwords) for more details.
 - `error`: An error occurred. The `data` will be a string containing the error message.
 - `warning`: A warning occurred. The `data` will be a string containing the warning message.
 - `log`: A log message. The `data` will be a string containing the log message.
@@ -85,7 +85,7 @@ The updated data will be passed to the handler on the **next** call.
 
 ### Additional Outputs
 
-The `fetch_output` message is sent to the client whenever an instance of [`AdditionalOutputs`](../streams/#additional-outputs) is available. You can access the latest output data by calling the `fetch_latest_output` method of the `Stream` object. 
+The `fetch_output` message is sent to the client whenever an instance of [`AdditionalOutputs`](streams.md/#additional-outputs) is available. You can access the latest output data by calling the `fetch_latest_output` method of the `Stream` object. 
 
 However, rather than fetching each output manually, a common pattern is to fetch the entire stream of output data by calling the `output_stream` method.
 

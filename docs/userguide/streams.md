@@ -81,7 +81,7 @@ The `handler` argument is the main argument of the `Stream` object. A handler sh
 
 The `Stream` has three main methods:
 
-- `.ui.launch()`: Launch a built-in UI for easily testing and sharing your stream. Built with [Gradio](https://www.gradio.app/). You can change the UI by setting the `ui` property of the `Stream` object. Also see the [Gradio guide](../gradio.md) for building Gradio apss with fastrtc.
+- `.ui.launch()`: Launch a built-in UI for easily testing and sharing your stream. Built with [Gradio](https://www.gradio.app/). You can change the UI by setting the `ui` property of the `Stream` object. Also see the [Gradio guide](gradio) for building Gradio apss with fastrtc.
 - `.fastphone()`: Get a free temporary phone number to call into your stream. Hugging Face token required.
 - `.mount(app)`: Mount the stream on a [FastAPI](https://fastapi.tiangolo.com/) app. Perfect for integrating with your already existing production system or for building a custom UI.
 
@@ -93,7 +93,7 @@ The `Stream` has three main methods:
 You can add additional inputs to your stream using the `additional_inputs` argument. These inputs will be displayed in the generated Gradio UI and they will be passed to the handler as additional arguments.
 
 !!! tip
-    For audio `StreamHandlers`, please read the special [note](../audio#requesting-inputs) on requesting inputs.
+    For audio `StreamHandlers`, please read the special [note](audio.md#requesting-inputs) on requesting inputs.
 
 In the automatic gradio UI, these inputs will be the same python type corresponding to the Gradio component. In our case, we used a `gr.Slider` as the additional input, so it will be passed as a float. See the [Gradio documentation](https://www.gradio.app/docs/gradio) for a complete list of components and their corresponding types.
 
@@ -216,7 +216,7 @@ This will print out a phone number along with your temporary code you can use to
 
 !!! warning
 
-    See this [section](../audio#telephone-integration) on making sure your stream handler is compatible for telephone usage.
+    See this [section](audio.md#telephone-integration) on making sure your stream handler is compatible for telephone usage.
 
 !!! tip
 
