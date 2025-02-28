@@ -32,12 +32,12 @@ Stream(
 !!! warning
 
     This is a shared resource so we make no latency/availability guarantees.
-    For more robust options, see the Twilio and self-hosting options below.
+    For more robust options, see the Twilio, Cloudflare and self-hosting options below.
 
 
 ## Twilio API
 
-The easiest way to do this is to use a service like Twilio.
+An easy way to do this is to use a service like Twilio.
 
 Create a **free** [account](https://login.twilio.com/u/signup) and the install the `twilio` package with pip (`pip install twilio`). You can then connect from the WebRTC component like so:
 
@@ -77,6 +77,52 @@ Stream(
     # env variables but you can also pass in the tokens as parameters
     rtc_configuration = get_twilio_turn_credentials()
     ```
+
+## Cloudflare Calls API
+
+Cloudflare also offers a managed TURN server with [Cloudflare Calls](https://www.cloudflare.com/en-au/developer-platform/products/cloudflare-calls/).
+
+Create a **free** [account](https://developers.cloudflare.com/fundamentals/setup/account/create-account/) and head to the [Calls section in your dashboard](https://dash.cloudflare.com/?to=/:account/calls).
+
+Choose `Create -> TURN App`, give it a name (like `fastrtc-demo`), and then hit the Create button.
+
+Take note of the Turn Token ID (often exported as `TURN_KEY_ID`) and API Token (exported as `TURN_KEY_API_TOKEN`).
+
+You can then connect from the WebRTC component like so:
+
+```python
+from fastrtc import Stream
+import requests
+import os
+
+turn_key_id = os.environ.get("TURN_KEY_ID")
+turn_key_api_token = os.environ.get("TURN_KEY_API_TOKEN")
+ttl = 86400 # Can modify TTL, here it's set to 24 hours
+
+response = requests.post(
+    f"https://rtc.live.cloudflare.com/v1/turn/keys/{turn_key_id}/credentials/generate",
+    headers={
+        "Authorization": f"Bearer {turn_key_api_token}",
+        "Content-Type": "application/json",
+    },
+    json={"ttl": ttl},  
+)
+if response.ok:
+    ice_servers = [response.json()["iceServers"]]
+else:
+    raise Exception(
+        f"Failed to get TURN credentials: {response.status_code} {response.text}"
+    )
+
+rtc_configuration = {"iceServers": ice_servers}
+
+stream = Stream(
+    handler=...,
+    rtc_configuration=rtc_configuration,
+    modality="audio",
+    mode="send-receive",
+)
+```
 
 ## Self Hosting
 
