@@ -151,96 +151,40 @@ The API is similar to `ReplyOnPause` with the addition of a `stop_words` paramet
 
 It is also possible to create asynchronous stream handlers. This is very convenient for accessing async APIs from major LLM developers, like Google and OpenAI. The main difference is that `receive`, `emit`, and `start_up` are now defined with `async def`.
 
-Here is a complete example of using `AsyncStreamHandler` for using the Google Gemini real time API:
+Here is aa simple example of using `AsyncStreamHandler`:
 
 === "Code"
     ``` py
 
-    from fastrtc import AsyncStreamHandler
+    from fastrtc import AsyncStreamHandler, wait_for_item
     import asyncio
-    import base64
-    import os
-    import google.generativeai as genai
-    from google.generativeai.types import (
-        LiveConnectConfig, SpeechConfig, 
-        VoiceConfig, PrebuiltVoiceConfig
-    )
 
-    class GeminiHandler(AsyncStreamHandler):
+    class AsyncEchoHandler(AsyncStreamHandler):
         """Handler for the Gemini API"""
+        
+        def __init__(self) -> None:
+            super().__init__()
+            self.queue = asyncio.Queue()
 
-        def __init__(
-            self,
-            expected_layout: Literal["mono"] = "mono",
-            output_sample_rate: int = 24000,
-            output_frame_size: int = 480,
-        ) -> None:
-            super().__init__(
-                expected_layout,
-                output_sample_rate,
-                output_frame_size,
-                input_sample_rate=16000,
-            )
-            self.input_queue: asyncio.Queue = asyncio.Queue()
-            self.output_queue: asyncio.Queue = asyncio.Queue()
-            self.quit: asyncio.Event = asyncio.Event()
+        async def receive(self, frame: tuple[int, np.ndarray]) -> None: 
+            self.queue.put(frame)
 
-        def copy(self) -> "GeminiHandler":
-            return GeminiHandler(
-                expected_layout="mono",
-                output_sample_rate=self.output_sample_rate,
-                output_frame_size=self.output_frame_size,
-            )
-
-        async def start_up(self):
-            await self.wait_for_args()
-            api_key, voice_name = self.latest_args[1:]
-            client = genai.Client(
-                api_key=api_key or os.getenv("GEMINI_API_KEY"),
-                http_options={"api_version": "v1alpha"},
-            )
-            config = LiveConnectConfig(
-                response_modalities=["AUDIO"],  # type: ignore
-                speech_config=SpeechConfig(
-                    voice_config=VoiceConfig(
-                        prebuilt_voice_config=PrebuiltVoiceConfig(
-                            voice_name=voice_name,
-                        )
-                    )
-                ),
-            )
-            async with client.aio.live.connect(
-                model="gemini-2.0-flash-exp", config=config
-            ) as session:
-                async for audio in session.start_stream(
-                    stream=self.stream(), mime_type="audio/pcm"
-                ):
-                    if audio.data:
-                        array = np.frombuffer(audio.data, dtype=np.int16)
-                        self.output_queue.put_nowait(array)
-
-        async def stream(self) -> AsyncGenerator[bytes, None]:
-            while not self.quit.is_set():
-                try:
-                    audio = await asyncio.wait_for(self.input_queue.get(), 0.1)
-                    yield audio
-                except (asyncio.TimeoutError, TimeoutError):
-                    pass
-
-        async def receive(self, frame: tuple[int, np.ndarray]) -> None:
-            _, array = frame
-            array = array.squeeze()
-            audio_message = encode_audio(array)
-            self.input_queue.put_nowait(audio_message)
-
-        async def emit(self) -> tuple[int, np.ndarray]:
-            array = await self.output_queue.get()
-            return (self.output_sample_rate, array)
-
-        def shutdown(self) -> None:
-            self.quit.set()
-            self.args_set.clear()
+        async def emit(self) -> None: # (2)
+            return await wait_for_item(self.queue)
+        
+        def copy(self):
+            return AsyncEchoHandler()
+        
+        async def shutdown(self): # (3)
+            pass
+        
+        def start_up(self) -> None: # (4)
+            pass
     ```
+
+!!! tip
+    See [Talk To Gemini](https://huggingface.co/spaces/fastrtc/talk-to-gemini), [Talk To Openai](https://huggingface.co/spaces/fastrtc/talk-to-openai) for complete examples of `AsyncStreamHandler`s.
+
 
 ## Text To Speech
 
